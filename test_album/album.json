@@ -3,6 +3,7 @@
     "year": 2022,
     "album": "Test album",
     "highlight_color": "#770077",
+    "artwork": "album_cover.png",
     "tracks": [
     {
         "filename": "test track.wav",
@@ -26,10 +27,13 @@
     {
         "filename": "test track.wav",
         "title": "This track is hidden",
+        "artwork": "hidden_track.png",
         "hidden": true
     },
     {
-        "filename": "test track.wav"
+        "filename": "test track.wav",
+        "artwork": "single_track.png",
+        "lyrics": "lyric-file.txt"
     },
     {
         "filename": "test track.wav",

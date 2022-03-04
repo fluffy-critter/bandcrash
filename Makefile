@@ -1,4 +1,4 @@
-all: setup version format pylint
+all: setup version format mypy pylint
 
 .PHONY: setup
 setup:
@@ -17,6 +17,10 @@ test:
 .PHONY: pylint
 pylint:
 	poetry run pylint blamscamp
+
+.PHONY: mypy
+mypy:
+	poetry run mypy -p blamscamp --ignore-missing-imports
 
 .PHONY: preflight
 preflight:
