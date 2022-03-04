@@ -14,14 +14,52 @@ pip install blamscamp
 
 `blamscamp --help` should guide you the rest of the way there.
 
-See the [sample album JSON file](test_album/album.json) for a rough example of how to format the album spec file. Supported attributes are (currently):
+## Building an album
 
-* `artist`: The name of the artist (can be overriddedn per-track)
-* `title`: The title of the album or track
-* `year`: The release year
-* `lyrics`: The lyrics of the track, in the form of an array of lines
-* `hidden`: Whether a track should be hidden from the web player entirely (default: `false`)
-* `preview`: Whether a track should be played in the player (default: `true`)
+Make a directory with all of your source audio files and artwork and so on. Create a JSON file named `album.json` (which can be overridden) that looks something like this:
+
+```json
+{
+    "artist": "The artist of the album",
+    "title": "The title of the album",
+    "bg_color": "black",
+    "fg_color": "white",
+    "highlight_color": "#cc00ff",
+    "artwork": "album_cover.jpg",
+    "tracks": [{
+        "filename": "the first track.wav",
+        "title": "The First Track",
+        "artwork": "track1_cover.jpg",
+        "lyrics": ["This is the first line",
+            "This is the second line",
+            "This is the third line",
+            "",
+            "This is the second verse",
+            "This song just keeps getting worse"],
+        "hidden": false,
+        "preview": true
+    }]
+}
+```
+
+Basically, the top-level album contains the following properties (all optional):
+
+* `artist`: The artist for the album as a whole
+* `title`: The album's title
+* `bg_color`, `fg_color`, `highlight_color`: The color theme for the player
+* `artwork`: an image file to use for the album's cover art
+* `tracks`: an array of track descriptions, in album order
+
+Each track element contains:
+
+* `title`: The title of the track
+* `artist`: The artist of this track, if different from the album as a whole
+* `artwork`: Track-specific cover art (e.g. for a single)
+* `lyrics`: An array of strings, one line of lyrics per string; alternately, this can be the name of a text file to read the lyrics from
+* `hidden`: A boolean for whether to hide this track from the web player entirely (e.g. a purchase bonus); defaults to `false`
+* `preview`: A boolen for whether to generate a preview for the web player; defaults to `true`
+
+See the [sample album JSON file](https://github.com/fluffy-critter/pyBlamscamp/blob/main/test_album/album.json) for a rough example.
 
 ## Contributing
 
