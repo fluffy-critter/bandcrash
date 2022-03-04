@@ -9,6 +9,11 @@ format:
 	poetry run isort .
 	poetry run autopep8 -r --in-place .
 
+.PHONY: test
+test:
+	rm -rf test_output
+	poetry run blamscamp test_album test_output
+
 .PHONY: pylint
 pylint:
 	poetry run pylint blamscamp
