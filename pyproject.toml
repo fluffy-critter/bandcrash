@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "blamscamp"
+version = "0.1.0"
+description = "Tools for publishing music to itch.io"
+authors = ["fluffy <fluffy@beesbuzz.biz>"]
+license = "CC0"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+mutagen = "^1.45.1"
+Pillow = "^9.0.1"
+awesome-slugify = "^1.6.5"
+Jinja2 = "^3.0.3"
+
+[tool.poetry.dev-dependencies]
+autopep8 = "^1.6.0"
+isort = "^5.10.1"
+pylint = "^2.12.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+blamscamp = 'blamscamp.__init__:main'
