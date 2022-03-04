@@ -1,8 +1,8 @@
+# pyBlamscamp
+
 ![CC0 license badge](https://licensebuttons.net/p/zero/1.0/88x31.png)
 
-## pyBlamscamp
-
-This is forked from/based on [blamscamp](https://github.com/blackle/blamscamp), with an intention towards being a standalone program you run on your computer to automatically encode an album of songs into a bunch of different formats for distribution on various platforms, such as [itch.io](https://itch.io/), or for hosting on your own website.
+This is based on [blamscamp](https://github.com/blackle/blamscamp), with an intention towards being a standalone program you run on your computer to automatically encode an album of songs into a bunch of different formats for distribution on various platforms, such as [itch.io](https://itch.io/), or for hosting on your own website.
 
 To use it, you'll need to install LAME, oggenc, and FLAC; on macOS you can install these via [homebrew](https://brew.sh/), on Linux you can use your system's package manager, and on Windows you're on your own.
 
@@ -28,12 +28,6 @@ See the [sample album JSON file](test_album/album.json) for a rough example of h
 Pull requests are welcome! But please note the following:
 
 The generated blamscamp player must not receive any added dependencies. The generator must stay as a single, self-contained file that is as small as reasonably possible. The point is for the generated file to be lightweight. Stick to Vanilla JS.
-
-## Roadmap
-
-* Add album art and per-track art
-* Full support for ogg and flac
-* Automatically publish to itch.io via [butler](https://itch.io/docs/butler/)
 
 ## License
 
