@@ -1,0 +1,133 @@
+:root {
+  --background: /* {{ '*/' ~ album.bg_color or 'white' ~ '/*' }} */;
+  --foreground: /* {{ '*/' ~ album.fg_color or 'black' ~ '/*' }} */;
+  --highlight: /* {{ '*/' ~ album.highlight_color or '#770000' ~ '/*' }} */;
+}
+
+a[href] {
+  color: var(--highlight);
+}
+
+body {
+  font-family: sans-serif;
+  background: var(--background);
+  color: var(--foreground);
+  display: flex;
+  flex-flow: row nowrap;
+}
+
+.column_left {
+  flex: 1 1 auto;
+}
+.column_right {
+  width: 250px;
+  flex: 0 0 auto;
+}
+
+.cover {
+  width: 100%;
+}
+
+li, .player {
+  display: flex;
+  align-items: center;
+}
+
+.song_list button.play, .player button.play {
+  overflow: hidden;
+  margin: 5px;
+  border-radius: 0px;
+  border: 1px solid grey;
+  background-color: white;
+  text-align: center;
+  vertical-align: middle;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.song_list button.play {
+  width: 20px;
+  height: 20px;
+}
+
+.player button.play {
+  width: 50px;
+  height: 50px;
+}
+
+.player_tools {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0px 10px;
+}
+
+.player_tools p {
+  margin: 5px 2px;
+}
+
+.song_list {
+  margin: 5px 20px;
+  padding: 0;
+}
+
+.song_list p {
+    margin: 0 5px;
+}
+
+.song_list i, .album, .artist, .title {
+  color: var(--highlight);
+}
+
+h1, h2, h3, .player {
+  margin: 5px 10px;
+}
+
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 10px;
+  border: 1px solid grey;
+  background: #eee;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+
+.slider:hover {
+  opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 30px;
+  height: 15px;
+  background: white;
+  border: 1px solid grey;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.slider::-moz-range-thumb {
+  width: 30px;
+  height: 15px;
+  background: white;
+  border: 1px solid grey;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+button.playing {
+  background-size: contain;
+  background-position: center;
+  background-image: url('data:image/svg+xml,%3Csvg%20width%3D%22100mm%22%20height%3D%22100mm%22%20viewBox%3D%220%200%20100%20100%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill%3D%22%23000%22%20d%3D%22M55.29%2019.29h16.63v61.42H55.29zm-27.21%200h16.63v61.42H28.08z%22%2F%3E%3C%2Fsvg%3E');
+}
+
+button.paused {
+  background-size: contain;
+  background-position: center;
+  background-image: url('data:image/svg+xml,%3Csvg%20width%3D%22100mm%22%20height%3D%22100mm%22%20viewBox%3D%220%200%20100%20100%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill%3D%22%23000%22%20d%3D%22M23%2020v61l54-30z%22%2F%3E%3C%2Fsvg%3E');
+}

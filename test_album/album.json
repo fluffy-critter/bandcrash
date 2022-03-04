@@ -1,0 +1,39 @@
+{
+    "artist": "Test artist",
+    "year": 2022,
+    "album": "Test album",
+    "highlight_color": "#770077",
+    "tracks": [
+    {
+        "filename": "test track.wav",
+        "lyrics": ["I'm not sure just how I feel",
+            "When everything's just fine",
+            "Blah blah blah blah so surreal",
+            "Something borrowed time",
+            "",
+            "How you doing, now?!"
+        ]
+    },
+    {
+        "filename": "test track.wav",
+        "title": "This has a title"
+    },
+    {
+        "filename": "test track.wav",
+        "title": "This has no preview",
+        "preview": false
+    },
+    {
+        "filename": "test track.wav",
+        "title": "This track is hidden",
+        "hidden": true
+    },
+    {
+        "filename": "test track.wav",
+    },
+    {
+        "filename": "test track.wav",
+        "title": "A different artist",
+        "artist": "Sluggy Puppernutters"
+    }]
+}
