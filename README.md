@@ -9,7 +9,7 @@ To use it, you'll need to install LAME, oggenc, and FLAC; on macOS you can insta
 You'll also need to install [Python](https://python.org), after which you can install pyBlamscamp with:
 
 ```
-pip install pyBlamscamp
+pip install blamscamp
 ```
 
 `blamscamp --help` should guide you the rest of the way there.
