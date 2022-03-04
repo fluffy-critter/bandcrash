@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>{{album.title}} by {{album.artist}}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="blamscamp player [:[blamscamp_version]:]" />
+    <script src="player.js"></script>
+    <link rel="stylesheet" href="player.css">
+  </head>
+  <body>
+    <div class="column_left">
+      {% if album.title %}
+      <h1><span class="album">{{album.title}}</span></h1>
+      {% endif %}
+      {% if album.artist %}
+      <h3>by <span class="artist">{{album.artist}}</span></h3>
+      {% endif %}
+
+      {% if album.cover_art %}
+      <img class="cover" src="{{album.cover_art}}"
+        srcset="{{album.cover_art}} 1x, {{album.cover_art_2x}} 2x">
+      {% endif %}
+
+      <div class="player">
+        <button class="play paused"> </button>
+        <div class="player_tools">
+          <p class="title"></p>
+          <input type="range" min="0" max="1000" value="0" class="slider">
+        </div>
+      </div>
+      <ol class="song_list">
+        {% for track in album.tracks %}
+        {% if not track.hidden %}
+        <li>
+          {% if track.preview_mp3 %}
+            <button class="play paused" data-song="{{ track.preview_mp3 }}" title="{{loop.index}}. {{track.title}}"> </button>
+          {% endif %}
+            <span class="title">
+              {% if track.artist %}
+              {{ track.artist }}:
+              {% endif %}
+              {% if track.title %}
+              {{ track.title }}
+              {% else %}
+              (Track {{loop.index}})
+              {% endif %}
+            </span>
+          <span class="duration">{{track.duration}}</span>
+        </li>
+        {% endif %}
+        {% endfor %}
+      </ul>
+      <p class="madewith">made with <a href="https://github.com/fluffy-critter/pyBlamscamp">pyBlamscamp</a></p>
+    </div>
+  </body>
+</html>
