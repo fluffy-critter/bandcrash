@@ -5,11 +5,11 @@ import argparse
 import base64
 import functools
 import json
+import logging
 import os
 import os.path
 import subprocess
 import typing
-import logging
 
 import jinja2
 
@@ -17,7 +17,8 @@ from . import __version__, images
 from .util import is_newer, slugify_filename
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
-LOGGER=logging.getLogger("__name__")
+LOGGER = logging.getLogger("__name__")
+
 
 def check_executable(name):
     """ Check to see if an executable is available """
@@ -26,7 +27,7 @@ def check_executable(name):
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return True
     except FileNotFoundError:
-        LOGGER.warning(f"Warning: encoder binary %s not found", name)
+        LOGGER.warning("Warning: encoder binary %s not found", name)
         return False
 
 
@@ -83,7 +84,7 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
 
     if is_newer(in_path, out_path):
         subprocess.run(['lame', *encode_args.split(),
-                    in_path, out_path], check=True)
+                        in_path, out_path], check=True)
 
     try:
         tags = id3.ID3(out_path)
@@ -152,7 +153,7 @@ def encode_ogg(in_path, out_path, idx, album, track, encode_args, cover_art=None
 
     if is_newer(in_path, out_path):
         subprocess.run(['oggenc', *encode_args.split(),
-                    in_path, '-o', out_path], check=True)
+                        in_path, '-o', out_path], check=True)
 
     tags = oggvorbis.OggVorbis(out_path)
     tag_vorbis(tags, idx, album, track)
@@ -173,7 +174,7 @@ def encode_flac(in_path, out_path, idx, album, track, encode_args, cover_art=Non
 
     if is_newer(in_path, out_path):
         subprocess.run(['flac', *encode_args.split(),
-                    in_path, '-f', '-o', out_path], check=True)
+                        in_path, '-f', '-o', out_path], check=True)
 
     tags = flac.FLAC(out_path)
     tag_vorbis(tags.tags, idx, album, track)
@@ -285,7 +286,15 @@ def main():
     if options.do_preview:
         make_web_preview(os.path.join(options.output_dir, 'preview'), album)
 
+    if options.butler_target:
+        for target in ('preview', 'mp3', 'ogg', 'flac'):
+            if getattr(options, f'do_{target}'):
+                subprocess.run(['butler', 'push', os.path.join(
+                    options.output_dir, target), f'{options.butler_target}:{target}'],
+                    check=True)
+
     LOGGER.info("Done")
+
 
 if __name__ == '__main__':
     main()
