@@ -165,7 +165,7 @@ def encode_flac(in_path, out_path, idx, album, track, encode_args, cover_art=Non
     from mutagen import flac
 
     subprocess.run(['flac', *encode_args.split(),
-                    in_path, '-o', out_path], check=True)
+                    in_path, '-f', '-o', out_path], check=True)
 
     tags = flac.FLAC(out_path)
     tag_vorbis(tags.tags, idx, album, track)
