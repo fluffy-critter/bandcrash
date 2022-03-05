@@ -9,12 +9,15 @@ import os
 import os.path
 import subprocess
 import typing
+import logging
 
 import jinja2
 
 from . import __version__, images
-from .util import slugify_filename
+from .util import is_newer, slugify_filename
 
+logging.basicConfig(level=logging.INFO, format='%(message)s')
+LOGGER=logging.getLogger("__name__")
 
 def check_executable(name):
     """ Check to see if an executable is available """
@@ -23,7 +26,7 @@ def check_executable(name):
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return True
     except FileNotFoundError:
-        print(f"Warning: {name} not found")
+        LOGGER.warning(f"Warning: encoder binary %s not found", name)
         return False
 
 
@@ -54,9 +57,9 @@ def parse_args(*args):
                              help=f"Don't generate {info}")
         feature.set_defaults(**{fname: check_executable(executable)})
 
-        parser.add_argument(f'--{name}-encoder', type=str,
-                            help=f"Encoder to use for {info}",
-                            default=executable)
+        # parser.add_argument(f'--{name}-encoder', type=str,
+        #                     help=f"Encoder to use for {info}",
+        #                     default=executable)
 
         parser.add_argument(f'--{name}-encoder-args', type=str,
                             help=f"Arguments to pass to the {info} encoder",
@@ -78,7 +81,8 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
     """ Encode a track as mp3 """
     from mutagen import id3
 
-    subprocess.run(['lame', *encode_args.split(),
+    if is_newer(in_path, out_path):
+        subprocess.run(['lame', *encode_args.split(),
                     in_path, out_path], check=True)
 
     try:
@@ -109,6 +113,7 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
             'APIC', [id3.APIC(data=img_data)])
 
     tags.save(out_path, v2_version=3)
+    LOGGER.info("Finished writing %s", out_path)
 
 
 def tag_vorbis(tags, idx, album, track):
@@ -145,7 +150,8 @@ def encode_ogg(in_path, out_path, idx, album, track, encode_args, cover_art=None
     """ Encode a track as ogg vorbis """
     from mutagen import oggvorbis
 
-    subprocess.run(['oggenc', *encode_args.split(),
+    if is_newer(in_path, out_path):
+        subprocess.run(['oggenc', *encode_args.split(),
                     in_path, '-o', out_path], check=True)
 
     tags = oggvorbis.OggVorbis(out_path)
@@ -158,13 +164,15 @@ def encode_ogg(in_path, out_path, idx, album, track, encode_args, cover_art=None
             base64.b64encode(picture_data).decode("ascii")]
 
     tags.save(out_path)
+    LOGGER.info("Finished writing %s", out_path)
 
 
 def encode_flac(in_path, out_path, idx, album, track, encode_args, cover_art=None):
     """ Encode a track as ogg vorbis """
     from mutagen import flac
 
-    subprocess.run(['flac', *encode_args.split(),
+    if is_newer(in_path, out_path):
+        subprocess.run(['flac', *encode_args.split(),
                     in_path, '-f', '-o', out_path], check=True)
 
     tags = flac.FLAC(out_path)
@@ -174,6 +182,7 @@ def encode_flac(in_path, out_path, idx, album, track, encode_args, cover_art=Non
         tags.add_picture(get_flac_picture(track['artwork_path'], cover_art))
 
     tags.save(out_path)
+    LOGGER.info("Finished writing %s", out_path)
 
 
 def make_web_preview(output_dir, album):
@@ -187,8 +196,7 @@ def make_web_preview(output_dir, album):
         with open(os.path.join(output_dir, tmpl), 'w', encoding='utf8') as outfile:
             outfile.write(template.render(album=album))
 
-    with open(os.path.join(output_dir, 'album.json'), 'w', encoding='utf8') as outfile:
-        json.dump(album, outfile, indent=4)
+    LOGGER.info("Finished generating web preview at %s", output_dir)
 
 
 def main():
@@ -277,6 +285,7 @@ def main():
     if options.do_preview:
         make_web_preview(os.path.join(options.output_dir, 'preview'), album)
 
+    LOGGER.info("Done")
 
 if __name__ == '__main__':
     main()
