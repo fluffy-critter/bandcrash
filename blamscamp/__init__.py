@@ -47,7 +47,7 @@ def parse_args(*args):
     def add_encoder(name, executable, info, args):
         """ Add a feature group to the CLI """
         feature = parser.add_mutually_exclusive_group(required=False)
-        fname=f'do_{name}'
+        fname = f'do_{name}'
         feature.add_argument(f'--{name}', dest=fname, action='store_true',
                              help=f"Generate {info}")
         feature.add_argument(f'--no-{name}', dest=fname, action='store_false',
@@ -125,6 +125,7 @@ def tag_vorbis(tags, idx, album, track):
         if val:
             tags[frame] = val
 
+
 def get_flac_picture(artwork_path, size):
     """ Generate a FLAC picture frame """
     from mutagen import flac, id3
@@ -139,6 +140,7 @@ def get_flac_picture(artwork_path, size):
 
     return pic
 
+
 def encode_ogg(in_path, out_path, idx, album, track, encode_args, cover_art=None):
     """ Encode a track as ogg vorbis """
     from mutagen import oggvorbis
@@ -150,8 +152,10 @@ def encode_ogg(in_path, out_path, idx, album, track, encode_args, cover_art=None
     tag_vorbis(tags, idx, album, track)
 
     if cover_art and 'artwork_path' in track:
-        picture_data = get_flac_picture(track['artwork_path'], cover_art).write()
-        tags['metadata_block_picture'] = [base64.b64encode(picture_data).decode("ascii")]
+        picture_data = get_flac_picture(
+            track['artwork_path'], cover_art).write()
+        tags['metadata_block_picture'] = [
+            base64.b64encode(picture_data).decode("ascii")]
 
     tags.save(out_path)
 
