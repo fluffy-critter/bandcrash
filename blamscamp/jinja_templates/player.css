@@ -1,7 +1,7 @@
 :root {
-  --background: /* {{ '*/' ~ album.bg_color or 'white' ~ '/*' }} */;
-  --foreground: /* {{ '*/' ~ album.fg_color or 'black' ~ '/*' }} */;
-  --highlight: /* {{ '*/' ~ album.highlight_color or '#770000' ~ '/*' }} */;
+  --background: /* {{ '*/' ~ (album.bg_color or 'white') ~ '/*' }} */;
+  --foreground: /* {{ '*/' ~ (album.fg_color or 'black') ~ '/*' }} */;
+  --highlight: /* {{ '*/' ~ (album.highlight_color or '#770000') ~ '/*' }} */;
 }
 
 a[href] {
@@ -26,6 +26,8 @@ body {
 
 img#coverart {
   float: right;
+  max-width: 33%;
+  height: auto;
 }
 
 img.trackart {
@@ -134,4 +136,9 @@ button.paused {
   background-size: contain;
   background-position: center;
   background-image: url('data:image/svg+xml,%3Csvg%20width%3D%22100mm%22%20height%3D%22100mm%22%20viewBox%3D%220%200%20100%20100%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill%3D%22%23000%22%20d%3D%22M23%2020v61l54-30z%22%2F%3E%3C%2Fsvg%3E');
+}
+
+.madewith {
+  font-size: small;
+  font-style: italic;
 }
