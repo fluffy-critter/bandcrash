@@ -12,10 +12,20 @@ window.addEventListener("load", () => {
     let last_played = -1;
     let slider_locked = false;
 
+    const cover_art = document.querySelector("#coverart");
+    var album_art;
+    if (cover_art) {
+        album_art = { 'src': cover_art.src, 'srcset': cover_art.srcset };
+    } else {
+        album_art = { };
+    }
+
     function reset_player() {
         last_played = -1;
         player_title.textContent = play_buttons[0].parentElement.querySelector(".title").textContent;
         audio.src = play_buttons[0].dataset.song;
+        cover_art.src = album_art.src;
+        cover_art.srcset = album_art.srcset;
         window.setTimeout(() => slider.value = 0, 0);
     }
 
@@ -36,6 +46,12 @@ window.addEventListener("load", () => {
         set_button_state(big_button, true);
         if (last_played != -1) {
             set_button_state(play_buttons[last_played], true);
+        }
+
+        var track_art = play_buttons[last_played].getElementsByClassName('trackart')[0] || album_art;
+        if (track_art) {
+            cover_art.src = track_art.src;
+            cover_art.srcset = track_art.srcset;
         }
     };
     audio.onpause = (event) => {

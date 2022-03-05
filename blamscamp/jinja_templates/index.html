@@ -18,9 +18,12 @@
       <h3>by <span class="artist">{{album.artist}}</span></h3>
       {% endif %}
 
-      {% if album.cover_art %}
-      <img class="cover" src="{{album.cover_art}}"
-        srcset="{{album.cover_art}} 1x, {{album.cover_art_2x}} 2x">
+      {% if album.artwork_preview %}
+      <img id="coverart" src="{{album.artwork_preview[0]}}"
+        srcset="{{album.artwork_preview[0]}} 1x, {{album.artwork_preview[1]}} 2x"
+        loading="lazy">
+      {% else %}
+      <img id="coverart" loading="lazy">
       {% endif %}
 
       <div class="player">
@@ -35,7 +38,11 @@
         {% if not track.hidden %}
         <li>
           {% if track.preview_mp3 %}
-            <button class="play paused" data-song="{{ track.preview_mp3 }}" title="{{loop.index}}. {{track.title}}"> </button>
+            <button class="play paused" data-song="{{ track.preview_mp3 }}" title="{{loop.index}}. {{track.title}}">
+              {% if track.artwork_preview %}
+              <img class="trackart" src="{{track.artwork_preview[0]}}" srcset="{{track.artwork_preview[0]}} 1x, {{track.artwork_preview[1]}} 2x">
+              {% endif %}
+            </button>
           {% endif %}
             <span class="title">
               {% if track.artist %}

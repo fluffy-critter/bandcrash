@@ -24,8 +24,12 @@ body {
   flex: 0 0 auto;
 }
 
-.cover {
-  width: 100%;
+img#coverart {
+  float: right;
+}
+
+img.trackart {
+  display: none;
 }
 
 li, .player {
