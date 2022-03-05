@@ -2,6 +2,7 @@
 # pylint:disable=too-many-arguments,import-outside-toplevel
 
 import argparse
+import base64
 import functools
 import json
 import os
@@ -13,6 +14,17 @@ import jinja2
 
 from . import __version__, images
 from .util import slugify_filename
+
+
+def check_executable(name):
+    """ Check to see if an executable is available """
+    try:
+        subprocess.run([name], check=False,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    except FileNotFoundError:
+        print(f"Warning: {name} not found")
+        return False
 
 
 def parse_args(*args):
@@ -32,15 +44,28 @@ def parse_args(*args):
                         help="Name of the album JSON file, relative to input_dir",
                         default='album.json')
 
-    parser.add_argument('--preview-encoder-args', type=str,
-                        help="MP3 lameenc arguments for the web-based preview player",
-                        default='-b 32 -V 5 -q 5 -m j')
-    parser.add_argument('--mp3-encoder-args', type=str,
-                        help="MP3 lameenc arguments for the purchased mp3 version",
-                        default='-V 0 -q 0 -m j')
-    parser.add_argument('--ogg-encoder-args', type=str,
-                        help="oggenc arguments for the purchased ogg version",
-                        default='')
+    def add_encoder(name, executable, info, args):
+        """ Add a feature group to the CLI """
+        feature = parser.add_mutually_exclusive_group(required=False)
+        fname=f'do_{name}'
+        feature.add_argument(f'--{name}', dest=fname, action='store_true',
+                             help=f"Generate {info}")
+        feature.add_argument(f'--no-{name}', dest=fname, action='store_false',
+                             help=f"Don't generate {info}")
+        feature.set_defaults(**{fname: check_executable(executable)})
+
+        parser.add_argument(f'--{name}-encoder', type=str,
+                            help=f"Encoder to use for {info}",
+                            default=executable)
+
+        parser.add_argument(f'--{name}-encoder-args', type=str,
+                            help=f"Arguments to pass to the {info} encoder",
+                            default=args)
+
+    add_encoder('preview', 'lame', 'web preview', '-b 32 -V 5 -q 5 -m j')
+    add_encoder('mp3', 'lame', 'mp3 album', '-V 0 -q 0 -m j')
+    add_encoder('ogg', 'oggenc', 'ogg album', '')
+    add_encoder('flac', 'flac', 'flac album', '')
 
     parser.add_argument('--butler-target', '-b', type=str,
                         help="Butler push target prefix",
@@ -51,7 +76,6 @@ def parse_args(*args):
 
 def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None):
     """ Encode a track as mp3 """
-    import mutagen
     from mutagen import id3
 
     subprocess.run(['lame', *encode_args.split(),
@@ -70,6 +94,7 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
         id3.TPE2: album.get('artist'),
 
         id3.TRCK: str(idx),
+        id3.TIT1: track.get('title'),
 
         id3.USLT: '\n'.join(track['lyrics']) if 'lyrics' in track else None,
     }
@@ -77,7 +102,6 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
     for frame, val in frames.items():
         if val:
             tags.setall(frame.__name__, [frame(text=val)])
-    print(tags)
 
     if cover_art and 'artwork_path' in track:
         img_data = images.generate_blob(track['artwork_path'], cover_art)
@@ -87,21 +111,65 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
     tags.save(out_path, v2_version=3)
 
 
-def encode_ogg(in_path, out_path, idx, album, track, encode_args):
+def tag_vorbis(tags, idx, album, track):
+    """ Add a vorbis comment section to an ogg/flac file """
+    frames = {
+        'ARTIST': track.get('artist', album.get('artist')),
+        'ALBUM': album.get('title'),
+        'TITLE': track.get('title'),
+        'TRACKNUMBER': str(idx),
+        'LYRICS': '\n'.join(track['lyrics']) if 'lyrics' in track else None,
+    }
+
+    for frame, val in frames.items():
+        if val:
+            tags[frame] = val
+
+def get_flac_picture(artwork_path, size):
+    """ Generate a FLAC picture frame """
+    from mutagen import flac, id3
+    img = images.generate_image(artwork_path, size)
+
+    pic = flac.Picture()
+    pic.type = id3.PictureType.COVER_FRONT
+    pic.width = img.width
+    pic.height = img.height
+    pic.mime = "image/jpeg"
+    pic.data = images.generate_blob(artwork_path, size, ext='jpeg')
+
+    return pic
+
+def encode_ogg(in_path, out_path, idx, album, track, encode_args, cover_art=None):
     """ Encode a track as ogg vorbis """
-    from mutagen import ogg
+    from mutagen import oggvorbis
 
     subprocess.run(['oggenc', *encode_args.split(),
-                    in_path, '-o', out_path,
-                    '-N', str(idx)], check=True)
+                    in_path, '-o', out_path], check=True)
 
-    # TODO: add tags
+    tags = oggvorbis.OggVorbis(out_path)
+    tag_vorbis(tags, idx, album, track)
+
+    if cover_art and 'artwork_path' in track:
+        picture_data = get_flac_picture(track['artwork_path'], cover_art).write()
+        tags['metadata_block_picture'] = [base64.b64encode(picture_data).decode("ascii")]
+
+    tags.save(out_path)
 
 
-def encode_flac(in_path, out_path, idx, album, track):
+def encode_flac(in_path, out_path, idx, album, track, encode_args, cover_art=None):
     """ Encode a track as ogg vorbis """
+    from mutagen import flac
 
-    # TODO
+    subprocess.run(['flac', *encode_args.split(),
+                    in_path, '-o', out_path], check=True)
+
+    tags = flac.FLAC(out_path)
+    tag_vorbis(tags.tags, idx, album, track)
+
+    if cover_art and 'artwork_path' in track:
+        tags.add_picture(get_flac_picture(track['artwork_path'], cover_art))
+
+    tags.save(out_path)
 
 
 def make_web_preview(output_dir, album):
@@ -118,6 +186,7 @@ def make_web_preview(output_dir, album):
 
 def main():
     """ Main entry point """
+    # pylint:disable=too-many-branches
     options = parse_args()
 
     json_path = os.path.join(options.input_dir, options.json)
@@ -125,7 +194,9 @@ def main():
         album = json.load(json_file)
 
     for subdir in ('preview', 'mp3', 'ogg', 'flac'):
-        os.makedirs(os.path.join(options.output_dir, subdir), exist_ok=True)
+        if getattr(options, f'do_{subdir}'):
+            os.makedirs(os.path.join(
+                options.output_dir, subdir), exist_ok=True)
 
     @functools.lru_cache()
     def gen_art_preview(in_path: str) -> typing.Tuple[str, str]:
@@ -146,6 +217,7 @@ def main():
 
     for idx, track in enumerate(album['tracks'], start=1):
         title = track.get('title', f'track {idx}')
+        track['title'] = title
 
         base_filename = f'{idx:02d} '
         if 'artist' in track:
@@ -165,11 +237,12 @@ def main():
             track['artwork_path'] = track_art
 
         if 'lyrics' in track and isinstance(track['lyrics'], str):
-            with open(os.path.join(options.input_dir, track['lyrics']), 'r') as lyricfile:
+            with open(os.path.join(options.input_dir, track['lyrics']), 'r',
+                      encoding='utf8') as lyricfile:
                 track['lyrics'] = [line.rstrip() for line in lyricfile]
 
         # generate preview track, if desired
-        if not track.get('hidden') and track.get('preview', True):
+        if options.do_preview and not track.get('hidden') and track.get('preview', True):
             if 'artwork' in track:
                 track['preview_artwork'] = gen_art_preview(
                     os.path.join(options.input_dir, track['artwork']))
@@ -179,19 +252,23 @@ def main():
                        idx, album, track, options.preview_encoder_args,
                        cover_art=300)
 
-        encode_mp3(input_filename,
-                   out_path('mp3'),
-                   idx, album, track, options.mp3_encoder_args, cover_art=1500)
+        if options.do_mp3:
+            encode_mp3(input_filename,
+                       out_path('mp3'),
+                       idx, album, track, options.mp3_encoder_args, cover_art=1500)
 
-        encode_ogg(input_filename,
-                   out_path('ogg'),
-                   idx, album, track, options.ogg_encoder_args)
+        if options.do_ogg:
+            encode_ogg(input_filename,
+                       out_path('ogg'),
+                       idx, album, track, options.ogg_encoder_args, cover_art=1500)
 
-        encode_flac(input_filename,
-                    out_path('flac'),
-                    idx, album, track)
+        if options.do_flac:
+            encode_flac(input_filename,
+                        out_path('flac'),
+                        idx, album, track, options.flac_encoder_args, cover_art=1500)
 
-    make_web_preview(os.path.join(options.output_dir, 'preview'), album)
+    if options.do_preview:
+        make_web_preview(os.path.join(options.output_dir, 'preview'), album)
 
 
 if __name__ == '__main__':

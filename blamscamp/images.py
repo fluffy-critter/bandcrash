@@ -5,7 +5,6 @@ import io
 import os.path
 
 import PIL.Image
-import slugify
 
 from .util import slugify_filename
 

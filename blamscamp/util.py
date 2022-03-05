@@ -1,9 +1,9 @@
 """ Common functions """
+from slugify import Slugify  # type:ignore
 
 
 def slugify_filename(fname: str) -> str:
     """ Generate a safe filename """
-    from slugify import Slugify  # type:ignore
     fier = Slugify()
     fier.separator = '-'
     fier.safe_chars = ' ._'
