@@ -187,6 +187,9 @@ def make_web_preview(output_dir, album):
         with open(os.path.join(output_dir, tmpl), 'w', encoding='utf8') as outfile:
             outfile.write(template.render(album=album))
 
+    with open(os.path.join(output_dir, 'album.json'), 'w', encoding='utf8') as outfile:
+        json.dump(album, outfile, indent=4)
+
 
 def main():
     """ Main entry point """
@@ -248,7 +251,7 @@ def main():
         # generate preview track, if desired
         if options.do_preview and not track.get('hidden') and track.get('preview', True):
             if 'artwork' in track:
-                track['preview_artwork'] = gen_art_preview(
+                track['artwork_preview'] = gen_art_preview(
                     os.path.join(options.input_dir, track['artwork']))
             track['preview_mp3'] = f'{base_filename}.mp3'
             encode_mp3(input_filename,
