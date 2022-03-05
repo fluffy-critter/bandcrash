@@ -47,7 +47,7 @@ blamscamp/__version__.py: pyproject.toml
 		`poetry version | cut -f2 -d\ ` > blamscamp/__version__.py
 
 .PHONY: build
-build: version preflight pylint flake8
+build: version preflight pylint
 	poetry build
 
 .PHONY: clean
