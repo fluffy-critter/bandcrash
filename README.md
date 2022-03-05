@@ -12,7 +12,13 @@ You'll also need to install [Python](https://python.org), after which you can in
 pip install blamscamp
 ```
 
-`blamscamp --help` should guide you the rest of the way there.
+`blamscamp --help` will provide a lot more detailed information. For the most part you should be able to just do:
+
+```
+blamscamp input_dir output_dir
+```
+
+and the rest will Just Work™.
 
 ## Building an album
 
@@ -60,6 +66,24 @@ Each track element contains:
 * `preview`: A boolen for whether to generate a preview for the web player; defaults to `true`
 
 See the [sample album JSON file](https://github.com/fluffy-critter/pyBlamscamp/blob/main/test_album/album.json) for a rough example.
+
+## Publishing to Itch
+
+Here's the process for publishing an album to [itch.io](https://itch.io):
+
+1. Install [butler](https://itch.io/docs/butler/) and log in with `butler login`
+1. [Create a new project](https://itch.io/game/new)
+2. Set it as a "soundtrack," with the kind of project being "HTML"
+3. Set your pricing, add the artwork etc., and save. Don't do any uploading from this interface.
+4. Run `blamscamp` with a `-b user/project` flag; for example:
+
+    ```sh
+    blamscamp novembeat\ 2021/wav novembeat\ 2021/out -b fluffy/novembeat-2021
+    ```
+5. Wait a moment for itch to finish processing; you can use `butler status user/project` (e.g. `butler status fluffy/novembeat-2021`)
+6. Reload your project edit page; you should now have a few targets, such as `preview`, `mp3`, etc.
+7. Set the `preview` target to "This file will be played in the browser". Set all the other targets to "soundtrack" and, optionally, change the display name.
+8. View the project page, and when you're ready to publish, publish!
 
 ## Contributing
 
