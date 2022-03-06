@@ -103,6 +103,7 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
         id3.TRCK: str(idx),
         id3.TIT1: track.get('title'),
 
+        id3.TCON: track.get('genre', album.get('genre')),
         id3.USLT: '\n'.join(track['lyrics']) if 'lyrics' in track else None,
     }
 
@@ -126,6 +127,7 @@ def tag_vorbis(tags, idx, album, track):
         'ALBUM': album.get('title'),
         'TITLE': track.get('title'),
         'TRACKNUMBER': str(idx),
+        'GENRE': track.get('genre', album.get('genre')),
         'LYRICS': '\n'.join(track['lyrics']) if 'lyrics' in track else None,
     }
 
