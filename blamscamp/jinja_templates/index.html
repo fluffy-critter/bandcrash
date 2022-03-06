@@ -30,33 +30,35 @@
             <input type="range" min="0" max="1000" value="0" class="slider">
         </div>
     </div>
-    <ol class="song_list">
-        {% for track in album.tracks %}
-        {% if not track.hidden %}
-        <li>
-            {% if track.preview_mp3 %}
-            <button class="play paused" data-song="{{ track.preview_mp3 }}" title="{{loop.index}}. {{track.title}}">
-                {% if track.artwork_preview %}
-                <img class="trackart" src="{{track.artwork_preview[0]}}" srcset="{{track.artwork_preview[0]}} 1x, {{track.artwork_preview[1]}} 2x">
+    <div class="tracklist">
+        <ol class="song_list">
+            {% for track in album.tracks %}
+            {% if not track.hidden %}
+            <li>
+                {% if track.preview_mp3 %}
+                <button class="play paused" data-song="{{ track.preview_mp3 }}" title="{{loop.index}}. {{track.title}}">
+                    {% if track.artwork_preview %}
+                    <img class="trackart" src="{{track.artwork_preview[0]}}" srcset="{{track.artwork_preview[0]}} 1x, {{track.artwork_preview[1]}} 2x">
+                    {% endif %}
+                </button>
                 {% endif %}
-            </button>
+                <span class="title">
+                    {% if track.artist %}
+                    {{ track.artist }}:
+                    {% endif %}
+                    {% if track.title %}
+                    {{ track.title }}
+                    {% else %}
+                    (Track {{loop.index}})
+                    {% endif %}
+                </span>
+                <span class="duration">{{track.duration}}</span>
+            </li>
             {% endif %}
-            <span class="title">
-                {% if track.artist %}
-                {{ track.artist }}:
-                {% endif %}
-                {% if track.title %}
-                {{ track.title }}
-                {% else %}
-                (Track {{loop.index}})
-                {% endif %}
-            </span>
-            <span class="duration">{{track.duration}}</span>
-        </li>
-        {% endif %}
-        {% endfor %}
+            {% endfor %}
         </ol>
-        <p class="madewith">made with <a href="https://github.com/fluffy-critter/pyBlamscamp">pyBlamscamp</a></p>
+    </div>
+    <p class="madewith">made with <a href="https://github.com/fluffy-critter/pyBlamscamp">pyBlamscamp</a></p>
 </body>
 
 </html>
