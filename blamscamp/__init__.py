@@ -13,8 +13,7 @@ import typing
 
 import jinja2
 
-from . import __version__, images
-from .util import is_newer, slugify_filename
+from . import __version__, images, util
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 LOGGER = logging.getLogger("__name__")
@@ -38,6 +37,9 @@ def parse_args(*args):
 
     parser.add_argument('--version', action='version',
                         version="%(prog)s " + __version__.__version__)
+
+    parser.add_argument('--init', action='store_true',
+                        help="Attempt to populate the JSON file automatically")
 
     parser.add_argument('input_dir', type=str,
                         help="Directory with the source files")
@@ -82,7 +84,7 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
     """ Encode a track as mp3 """
     from mutagen import id3
 
-    if is_newer(in_path, out_path):
+    if util.is_newer(in_path, out_path):
         subprocess.run(['lame', *encode_args.split(),
                         in_path, out_path], check=True)
 
@@ -151,7 +153,7 @@ def encode_ogg(in_path, out_path, idx, album, track, encode_args, cover_art=None
     """ Encode a track as ogg vorbis """
     from mutagen import oggvorbis
 
-    if is_newer(in_path, out_path):
+    if util.is_newer(in_path, out_path):
         subprocess.run(['oggenc', *encode_args.split(),
                         in_path, '-o', out_path], check=True)
 
@@ -172,7 +174,7 @@ def encode_flac(in_path, out_path, idx, album, track, encode_args, cover_art=Non
     """ Encode a track as ogg vorbis """
     from mutagen import flac
 
-    if is_newer(in_path, out_path):
+    if util.is_newer(in_path, out_path):
         subprocess.run(['flac', *encode_args.split(),
                         in_path, '-f', '-o', out_path], check=True)
 
@@ -200,14 +202,101 @@ def make_web_preview(output_dir, album):
     LOGGER.info("Finished generating web preview at %s", output_dir)
 
 
+def populate_json_file(input_dir: str, json_path: str):
+    """ Attempt to populate the JSON file, creating a new one if it doesn't exist """
+    # pylint:disable=too-many-locals,too-many-branches
+    try:
+        with open(json_path, 'r', encoding='utf8') as stream:
+            album = json.load(stream)
+            LOGGER.info("Loaded existing %s with %d tracks",
+                        json_path, len(album['tracks']))
+    except FileNotFoundError:
+        LOGGER.info("%s not found, initializing empty file", json_path)
+        album = {
+            'title': 'ALBUM TITLE',
+            'artist': 'ALBUM ARTIST',
+            'tracks': []
+        }
+
+    tracks: typing.List[typing.Dict[str, typing.Any]] = album['tracks']
+
+    # already-known tracks
+    known_audio = {track['filename']
+                   for track in tracks if 'filename' in track}
+
+    # newly-discovered tracks
+    discovered = []
+    art = set()
+    for file in os.scandir(input_dir):
+        _, ext = os.path.splitext(file.name)
+        if file.name not in known_audio and ext.lower() in ('.wav', '.aif', '.aiff', '.flac'):
+            discovered.append(file.name)
+        if ext.lower() in ('.jpg', '.jpeg', '.png'):
+            art.add(file.name)
+
+    # sort the tracks by any discovered numerical prefix
+    discovered.sort(key=util.guess_track_title)
+
+    for newtrack in discovered:
+        tracks.append({'filename': newtrack})
+
+    # Attempt to derive information that's missing
+    for track in tracks:
+        if 'filename' in track:
+            # Get the title from the track
+            if 'title' not in track:
+                track['title'] = util.guess_track_title(
+                    track['filename'])[1].title()
+
+            # Check for any matching lyric .txt files
+            if 'lyrics' not in track:
+                basename, _ = os.path.splitext(track['filename'])
+                lyrics_txt = f'{basename}.txt'
+                if os.path.isfile(lyrics_txt):
+                    track['lyrics'] = lyrics_txt
+
+            # Check for any matching track artwork
+            if 'artwork' not in track:
+                for art_file in art:
+                    art_basename, _ = os.path.splitext(art_file)
+                    if basename.lower() == art_basename.lower():
+                        track['artwork'] = art_file
+                        art.remove(art_file)
+                        break
+
+    # Try to guess some album art
+    if 'artwork' not in album:
+        for art_file in art:
+            basename, _ = os.path.splitext(art_file)
+            name_heuristic = False
+            for check in ('cover', 'album', 'artwork'):
+                if check in basename.lower():
+                    name_heuristic = True
+            if name_heuristic:
+                album['artwork'] = art_file
+                art.remove(art_file)
+                break
+    if 'artwork' not in album and len(art) == 1:
+        (album['artwork'],) = art
+
+    with open(json_path, 'w', encoding='utf8') as output:
+        json.dump(album, output, indent=4)
+
+    return album
+
+
 def main():
     """ Main entry point """
     # pylint:disable=too-many-branches
     options = parse_args()
 
     json_path = os.path.join(options.input_dir, options.json)
-    with open(json_path, 'r', encoding='utf8') as json_file:
-        album = json.load(json_file)
+
+    if options.init:
+        album = populate_json_file(options.input_dir, json_path)
+    else:
+        with open(json_path, 'r', encoding='utf8') as json_file:
+            album = json.load(json_file)
 
     for subdir in ('preview', 'mp3', 'ogg', 'flac'):
         if getattr(options, f'do_{subdir}'):
@@ -239,7 +328,7 @@ def main():
         if 'artist' in track:
             base_filename += f"{track['artist']} - "
         base_filename += title
-        base_filename = slugify_filename(base_filename)
+        base_filename = util.slugify_filename(base_filename)
 
         def out_path(fmt, ext=None):
             # pylint:disable=cell-var-from-loop

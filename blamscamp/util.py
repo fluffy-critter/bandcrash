@@ -1,6 +1,8 @@
 """ Common functions """
 import os
 import os.path
+import re
+import typing
 
 from slugify import Slugify  # type:ignore
 
@@ -19,3 +21,11 @@ def slugify_filename(fname: str) -> str:
     fier.safe_chars = ' ._'
     fier.max_length = 64
     return fier(fname)
+
+
+def guess_track_title(fname: str) -> typing.Tuple[int, str]:
+    """ Get the track number and title from a filename """
+    basename, _ = os.path.splitext(fname)
+    if match := re.match(r'([0-9]+)([^0-9]*)$', basename):
+        return int(match.group(1)), match.group(2).strip().title()
+    return 0, basename.title()

@@ -7,7 +7,7 @@ license = "CC0"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.8"
 mutagen = "^1.45.1"
 Pillow = "^9.0.1"
 awesome-slugify = "^1.6.5"

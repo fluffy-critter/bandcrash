@@ -12,7 +12,8 @@ format:
 .PHONY: test
 test:
 	rm -rf test_output
-	poetry run blamscamp test_album test_output
+	poetry run blamscamp tests/album test_output/album
+	poetry run blamscamp --init tests/derived test_output/derived --json derived.json
 
 .PHONY: pylint
 pylint:
