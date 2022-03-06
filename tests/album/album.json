@@ -4,6 +4,7 @@
     "album": "Test album",
     "highlight_color": "#770077",
     "artwork": "album_cover.png",
+    "genre": "blipcore",
     "tracks": [
     {
         "filename": "test track.wav",
@@ -33,7 +34,8 @@
     {
         "filename": "test track.wav",
         "artwork": "single_track.png",
-        "lyrics": "lyric-file.txt"
+        "lyrics": "lyric-file.txt",
+        "genre": "lo-fi jazzcore"
     },
     {
         "filename": "test track.wav",
