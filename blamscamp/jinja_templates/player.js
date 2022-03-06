@@ -1,3 +1,4 @@
+
 window.addEventListener("load", () => {
     function set_button_state(button, playing) {
         button.classList.add(playing ? "playing" : "paused");
@@ -19,6 +20,15 @@ window.addEventListener("load", () => {
     } else {
         album_art = { };
     }
+
+    // terrible hack
+    const tracklist = document.querySelector('.tracklist');
+    const footer = document.querySelector('.madewith');
+    function onResize() {
+        tracklist.style.height = (footer.offsetTop - tracklist.offsetTop) + "px";
+    }
+    onResize();
+    window.addEventListener("resize", onResize);
 
     function reset_player() {
         last_played = -1;
