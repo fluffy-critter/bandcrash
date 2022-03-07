@@ -30,7 +30,7 @@ img#coverart {
     float: right;
     max-width: 33%;
     height: auto;
-    margin-left: 1ex;
+    margin: 0 1ex;
     position: relative;
     z-index: 20;
 }
@@ -91,6 +91,7 @@ li,
     left: 0;
     right: 0;
     overflow-y: auto;
+    scrollbar-width: thin;
 }
 
 .song_list p {
