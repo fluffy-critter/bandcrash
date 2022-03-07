@@ -52,16 +52,19 @@ Basically, the top-level album contains the following properties (all optional):
 
 * `artist`: The artist for the album as a whole
 * `title`: The album's title
+* `year`: The release year
+* `artwork`: an image file to use for the album's cover art (relative or absolute paths okay)
 * `bg_color`, `fg_color`, `highlight_color`: The color theme for the player
-* `artwork`: an image file to use for the album's cover art
+* `genre`: The genre of the album as a whole
 * `tracks`: an array of track descriptions, in album order
 
-Each track element contains:
+Each track entry contains:
 
 * `title`: The title of the track
 * `artist`: The artist of this track, if different from the album as a whole
-* `artwork`: Track-specific cover art (e.g. for a single)
-* `lyrics`: An array of strings, one line of lyrics per string; alternately, this can be the name of a text file to read the lyrics from
+* `genre`: The genre of this track, if different than the album
+* `artwork`: Track-specific cover art
+* `lyrics`: An array of strings, one line of lyrics per string; alternately, the name of a text file to read the lyrics from (relative or absolute paths okay)
 * `hidden`: A boolean for whether to hide this track from the web player entirely (e.g. a purchase bonus); defaults to `false`
 * `preview`: A boolen for whether to generate a preview for the web player; defaults to `true`
 
@@ -74,16 +77,22 @@ Here's the process for publishing an album to [itch.io](https://itch.io):
 1. Install [butler](https://itch.io/docs/butler/) and log in with `butler login`
 1. [Create a new project](https://itch.io/game/new)
 2. Set it as a "soundtrack," with the kind of project being "HTML"
-3. Set your pricing, add the artwork etc., and save. Don't do any uploading from this interface.
+3. Set your pricing, add preview artwork, etc., and save. Don't do any uploading from this interface.
 4. Run `blamscamp` with a `-b user/project` flag; for example:
 
     ```sh
-    blamscamp novembeat\ 2021/wav novembeat\ 2021/out -b fluffy/novembeat-2021
+    blamscamp novembeat-2021/wav novembeat-2021/out -b fluffy/novembeat-2021
     ```
 5. Wait a moment for itch to finish processing; you can use `butler status user/project` (e.g. `butler status fluffy/novembeat-2021`)
 6. Reload your project edit page; you should now have a few targets, such as `preview`, `mp3`, etc.
 7. Set the `preview` target to "This file will be played in the browser". Set all the other targets to "soundtrack" and, optionally, change the display name.
 8. View the project page, and when you're ready to publish, publish!
+
+### Recommended "embed options"
+
+* Set it to "embed in page" with "manually set size"
+* Enable "mobile friendly" (with orientation "default") and "automatically start on page load"
+* Disable "fullscreen button" and "enable scrollbars"
 
 ## Contributing
 
