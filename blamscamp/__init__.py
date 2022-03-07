@@ -3,11 +3,13 @@
 
 import argparse
 import base64
+import collections
 import functools
 import json
 import logging
 import os
 import os.path
+import shutil
 import subprocess
 import typing
 
@@ -72,6 +74,13 @@ def parse_args(*args):
     add_encoder('mp3', 'lame', 'mp3 album', '-V 0 -q 0 -m j')
     add_encoder('ogg', 'oggenc', 'ogg album', '')
     add_encoder('flac', 'flac', 'flac album', '')
+
+    feature = parser.add_mutually_exclusive_group(required=False)
+    feature.add_argument('--cleanup', dest='clean_extra', action='store_true',
+                         help="Clean up extra files in the destination directory")
+    feature.add_argument('--no-cleanup', dest='clean_extra', action='store_false',
+                         help="Keep stale files")
+    feature.set_defaults(clean_extra=True)
 
     parser.add_argument('--butler-target', '-b', type=str,
                         help="Butler push target prefix",
@@ -190,7 +199,7 @@ def encode_flac(in_path, out_path, idx, album, track, encode_args, cover_art=Non
     LOGGER.info("Finished writing %s", out_path)
 
 
-def make_web_preview(output_dir, album):
+def make_web_preview(output_dir, album, protections):
     """ Generate the embedded preview player """
     env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(os.path.join(
@@ -200,6 +209,7 @@ def make_web_preview(output_dir, album):
         template = env.get_template(tmpl)
         with open(os.path.join(output_dir, tmpl), 'w', encoding='utf8') as outfile:
             outfile.write(template.render(album=album))
+            protections.add(tmpl)
 
     LOGGER.info("Finished generating web preview at %s", output_dir)
 
@@ -287,12 +297,27 @@ def populate_json_file(input_dir: str, json_path: str):
     return album
 
 
+def clean_subdir(path: str, allowed: typing.Set[str]):
+    """ Clean up a subdirectory of extraneous files """
+    LOGGER.debug("Allowed in %s: %s", path, allowed)
+    for file in os.scandir(path):
+        if file.name not in allowed:
+            LOGGER.info("Removing extraneous file %s", file.path)
+            if file.is_dir():
+                shutil.rmtree(file)
+            else:
+                os.remove(file)
+
+
 def main():
     """ Main entry point """
-    # pylint:disable=too-many-branches
+    # pylint:disable=too-many-branches,too-many-statements,too-many-locals
     options = parse_args()
 
     json_path = os.path.join(options.input_dir, options.json)
+
+    protections: typing.Dict[str, typing.Set[str]
+                             ] = collections.defaultdict(set)
 
     if options.init:
         album = populate_json_file(options.input_dir, json_path)
@@ -300,8 +325,10 @@ def main():
         with open(json_path, 'r', encoding='utf8') as json_file:
             album = json.load(json_file)
 
+    formats = set()
     for subdir in ('preview', 'mp3', 'ogg', 'flac'):
         if getattr(options, f'do_{subdir}'):
+            formats.add(subdir)
             os.makedirs(os.path.join(
                 options.output_dir, subdir), exist_ok=True)
 
@@ -321,6 +348,7 @@ def main():
     if 'artwork' in album:
         album['artwork_preview'] = gen_art_preview(
             os.path.join(options.input_dir, album['artwork']))
+        protections['preview'] |= set(album['artwork_preview'])
 
     for idx, track in enumerate(album['tracks'], start=1):
         title = track.get('title', f'track {idx}')
@@ -334,6 +362,7 @@ def main():
 
         def out_path(fmt, ext=None):
             # pylint:disable=cell-var-from-loop
+            protections[fmt].add(f'{base_filename}.{ext or fmt}')
             return os.path.join(options.output_dir, fmt, f'{base_filename}.{ext or fmt}')
 
         input_filename = os.path.join(options.input_dir, track['filename'])
@@ -353,6 +382,7 @@ def main():
             if 'artwork' in track:
                 track['artwork_preview'] = gen_art_preview(
                     os.path.join(options.input_dir, track['artwork']))
+                protections['preview'] |= set(track['artwork_preview'])
             track['preview_mp3'] = f'{base_filename}.mp3'
             encode_mp3(input_filename,
                        out_path('preview', 'mp3'),
@@ -375,14 +405,19 @@ def main():
                         idx, album, track, options.flac_encoder_args, cover_art=1500)
 
     if options.do_preview:
-        make_web_preview(os.path.join(options.output_dir, 'preview'), album)
+        make_web_preview(os.path.join(options.output_dir,
+                         'preview'), album, protections['preview'])
+
+    if options.clean_extra:
+        for target in formats:
+            clean_subdir(os.path.join(options.output_dir, target),
+                         protections[target])
 
     if options.butler_target:
-        for target in ('preview', 'mp3', 'ogg', 'flac'):
-            if getattr(options, f'do_{target}'):
-                subprocess.run(['butler', 'push', os.path.join(
-                    options.output_dir, target), f'{options.butler_target}:{target}'],
-                    check=True)
+        for target in formats:
+            subprocess.run(['butler', 'push', os.path.join(
+                options.output_dir, target), f'{options.butler_target}:{target}'],
+                check=True)
 
     LOGGER.info("Done")
 
