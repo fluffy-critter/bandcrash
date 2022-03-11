@@ -148,7 +148,7 @@ def tag_vorbis(tags, idx, album, track):
         frames.update({
             'ARTIST': track.get('cover_of', album.get('cover_of')),
             'PERFORMER': track.get('artist', album.get('artist'))
-            })
+        })
 
     for frame, val in frames.items():
         if val:
