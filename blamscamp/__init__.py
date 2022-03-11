@@ -89,13 +89,31 @@ def parse_args(*args):
     return parser.parse_args(*args)
 
 
+def run_encoder(outfile, args):
+    """ Run an encoder; if the encode process fails, delete the file
+
+    :param str outfile: The output file path
+    :param list args: The entire arglist (including output file path)
+    """
+    try:
+        subprocess.run(args, check=True)
+    except Exception as err:
+        LOGGER.error("Got error encoding %s: %s", outfile, err)
+        os.remove(outfile)
+        raise
+    except KeyboardInterrupt:
+        LOGGER.error("User aborted while encoding %s", outfile)
+        os.remove(outfile)
+        raise
+
+
 def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None):
     """ Encode a track as mp3 """
     from mutagen import id3
 
     if util.is_newer(in_path, out_path):
-        subprocess.run(['lame', *encode_args.split(),
-                        in_path, out_path], check=True)
+        run_encoder(out_path, ['lame', *encode_args.split(),
+                               in_path, out_path])
 
     try:
         tags = id3.ID3(out_path)
@@ -175,8 +193,8 @@ def encode_ogg(in_path, out_path, idx, album, track, encode_args, cover_art=None
     from mutagen import oggvorbis
 
     if util.is_newer(in_path, out_path):
-        subprocess.run(['oggenc', *encode_args.split(),
-                        in_path, '-o', out_path], check=True)
+        run_encoder(out_path, ['oggenc', *encode_args.split(),
+                               in_path, '-o', out_path])
 
     tags = oggvorbis.OggVorbis(out_path)
     tag_vorbis(tags, idx, album, track)
@@ -196,8 +214,8 @@ def encode_flac(in_path, out_path, idx, album, track, encode_args, cover_art=Non
     from mutagen import flac
 
     if util.is_newer(in_path, out_path):
-        subprocess.run(['flac', *encode_args.split(),
-                        in_path, '-f', '-o', out_path], check=True)
+        run_encoder(out_path, ['flac', *encode_args.split(),
+                               in_path, '-f', '-o', out_path])
 
     tags = flac.FLAC(out_path)
     tag_vorbis(tags.tags, idx, album, track)
