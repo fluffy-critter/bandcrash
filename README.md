@@ -55,18 +55,21 @@ Basically, the top-level album contains the following properties (all optional):
 * `year`: The release year
 * `artwork`: an image file to use for the album's cover art (relative or absolute paths okay)
 * `bg_color`, `fg_color`, `highlight_color`: The color theme for the player
-* `genre`: The genre of the album as a whole
+* `genre`: The default genre for all tracks
 * `tracks`: an array of track descriptions, in album order
 
-Each track entry contains:
+And each track contains (all optional except `filename`):
 
+* `filename`: The audio file to encode into the final output track (ideally wav or aif)
 * `title`: The title of the track
-* `artist`: The artist of this track, if different from the album as a whole
-* `genre`: The genre of this track, if different than the album
+* `artist`: The performing artist of this track
+* `cover_of`: The original artist that this track is a cover of, if any
+* `genre`: The genre of this track
 * `artwork`: Track-specific cover art
 * `lyrics`: An array of strings, one line of lyrics per string; alternately, the name of a text file to read the lyrics from (relative or absolute paths okay)
 * `hidden`: A boolean for whether to hide this track from the web player entirely (e.g. a purchase bonus); defaults to `false`
 * `preview`: A boolen for whether to generate a preview for the web player; defaults to `true`
+* `about`: Detailed commentary about the track
 
 See the [sample album JSON file](https://github.com/fluffy-critter/pyBlamscamp/blob/main/test_album/album.json) for a rough example.
 
