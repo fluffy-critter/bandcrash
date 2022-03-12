@@ -17,7 +17,7 @@ import jinja2
 
 from . import __version__, images, util
 
-logging.basicConfig(level=logging.INFO, format='%(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(message)s')
 LOGGER = logging.getLogger("__name__")
 
 
@@ -401,9 +401,8 @@ def main():
             track['artwork_path'] = track_art
 
         if 'lyrics' in track and isinstance(track['lyrics'], str):
-            with open(os.path.join(options.input_dir, track['lyrics']), 'r',
-                      encoding='utf8') as lyricfile:
-                track['lyrics'] = [line.rstrip() for line in lyricfile]
+            track['lyrics'] = util.read_lines(
+                os.path.join(options.input_dir, track['lyrics']))
 
         # generate preview track, if desired
         if options.do_preview and not track.get('hidden') and track.get('preview', True):

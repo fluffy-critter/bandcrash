@@ -40,6 +40,7 @@
     {
         "filename": "test track.wav",
         "title": "A different artist",
-        "artist": "Sluggy Puppernutters"
+        "artist": "Sluggy Puppernutters",
+        "lyrics": "lyrics-iso8859.txt"
     }]
 }

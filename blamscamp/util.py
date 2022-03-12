@@ -1,10 +1,14 @@
 """ Common functions """
+import logging
 import os
 import os.path
 import re
 import typing
 
+import chardet
 from slugify import Slugify  # type:ignore
+
+LOGGER = logging.getLogger(__name__)
 
 
 def is_newer(src: str, dest: str) -> bool:
@@ -29,3 +33,18 @@ def guess_track_title(fname: str) -> typing.Tuple[int, str]:
     if match := re.match(r'([0-9]+)([^0-9]*)$', basename):
         return int(match.group(1)), match.group(2).strip().title()
     return 0, basename.title()
+
+
+def read_lines(fname: str) -> list[str]:
+    """ Read a text file into a list of strings, with encoding detection """
+    try:
+        with open(fname, 'r', encoding='utf-8') as file:
+            return [line.rstrip() for line in file]
+    except UnicodeDecodeError:
+        LOGGER.debug("File %s wasn't valid utf-8; detecting encoding", fname)
+        with open(fname, 'rb') as rawfile:
+            data = rawfile.read()
+        encoding = chardet.detect(data)['encoding']
+        LOGGER.debug("%s appears to be %s", fname, encoding)
+        with open(fname, 'r', encoding=encoding) as file:
+            return [line.rstrip() for line in file]
