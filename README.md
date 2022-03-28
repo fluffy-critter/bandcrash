@@ -59,6 +59,14 @@ Make a directory with all of your source audio files and artwork and so on. Crea
 }
 ```
 
+You can also automatically generate a stub `album.json` file with:
+
+```
+blamscamp --init input_dir output_dir
+```
+
+which will try to guess the track order and titles from the audio files in `input_dir`.
+
 Basically, the top-level album contains the following properties (all optional):
 
 * `artist`: The artist for the album as a whole
