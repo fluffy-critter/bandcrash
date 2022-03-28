@@ -2,7 +2,18 @@
 
 ![CC0 license badge](https://licensebuttons.net/p/zero/1.0/88x31.png)
 
-This is based on [blamscamp](https://github.com/blackle/blamscamp), with an intention towards being a standalone program you run on your computer to automatically encode an album of songs into a bunch of different formats for distribution on various platforms, such as [itch.io](https://itch.io/), or for hosting on your own website.
+pyBlamscamp is a standalone program that automatically encodes an album of songs into a bunch of different formats for distribution on various platforms, such as [itch.io](https://itch.io/), or for hosting on your own website. The embedded player is originally based on the one from [Blamscamp](https://github.com/blackle/blamscamp), although it has been pretty thoroughly modified at this point.
+
+[See it in action](https://fluffy.itch.io/novembeat-2021)!
+
+## Features
+
+* Output as mp3, ogg, FLAC, and web preview (HTML5+mp3 at a lower bitrate)
+* Optionally upload everything to your page on itch using [butler](https://itch.io/docs/butler/)
+* High-quality encoding and metadata, with support for cover songs, per-track artwork, embedded lyrics, and more
+* Web player also supports per-track artwork
+
+## Usage
 
 To use it, you'll need to install LAME, oggenc, and FLAC; on macOS you can install these via [homebrew](https://brew.sh/), on Linux you can use your system's package manager, and on Windows you're on your own.
 
@@ -97,11 +108,35 @@ Here's the process for publishing an album to [itch.io](https://itch.io):
 * Enable "mobile friendly" (with orientation "default") and "automatically start on page load"
 * Disable "fullscreen button" and "enable scrollbars"
 
+## Publishing to other sites
+
+If you have a website of your own, upload the `preview` directory to your site somewhere, and then embed it using an iframe, e.g.
+
+```html
+<iframe src="/path/to/album" width=640 height=360></iframe>
+```
+
+You can also embed the itch version on another website; go to the itch page, right-click the frame, and then your browser should provide some option for "show only this frame" or "open frame in tab" or the like. This should give you a URL that you can embed on another site, such as `https://v6p9d9t4.ssl.hwcdn.net/html/5375791-530391/index.html`, which you can embed with:
+
+```html
+<iframe src="https://v6p9d9t4.ssl.hwcdn.net/html/5375791-530391/index.html" width=640 height=360></iframe>
+```
+
+although note that this URL may disappear or be otherwise unsupported.
+
 ## Contributing
 
 Pull requests are welcome! But please note the following:
 
 The generated blamscamp player must not receive any added dependencies. The generator must stay as a single, self-contained file that is as small as reasonably possible. The point is for the generated file to be lightweight. Stick to Vanilla JS.
+
+### Roadmap
+
+See the [github issues](https://github.com/fluffy-critter/pyBlamscamp/issues) for details, but roughly:
+
+* Local GUI and/or web UI to make setting up the `album.json` easier (and easier installation, especially on Windows!)
+* Improved player
+* Easy embedding into  websites
 
 ## License
 
