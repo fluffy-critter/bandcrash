@@ -90,7 +90,7 @@ And each track contains (all optional except `filename`):
 * `preview`: A boolen for whether to generate a preview for the web player; defaults to `true`
 * `about`: Detailed commentary about the track
 
-See the [sample album JSON file](https://github.com/fluffy-critter/pyBlamscamp/blob/main/test_album/album.json) for a rough example.
+See the [sample album JSON file](https://github.com/fluffy-critter/pyBlamscamp/blob/main/tests/album/album.json) for a rough example.
 
 ## Publishing to Itch
 
