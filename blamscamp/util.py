@@ -35,7 +35,7 @@ def guess_track_title(fname: str) -> typing.Tuple[int, str]:
     return 0, basename.title()
 
 
-def read_lines(fname: str) -> list[str]:
+def read_lines(fname: str) -> typing.List[str]:
     """ Read a text file into a list of strings, with encoding detection """
     try:
         with open(fname, 'r', encoding='utf-8') as file:
