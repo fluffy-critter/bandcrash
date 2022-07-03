@@ -17,7 +17,7 @@ import jinja2
 
 from . import __version__, images, util
 
-logging.basicConfig(level=logging.DEBUG, format='%(message)s')
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 LOGGER = logging.getLogger("__name__")
 
 
