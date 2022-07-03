@@ -32,7 +32,7 @@ def check_executable(name):
         return False
 
 
-def parse_args(*args):
+def parse_args(post_init):
     """ Parse the command line arguments """
     parser = argparse.ArgumentParser(
         description="Generate purchasable albums for independent storefronts")
@@ -45,7 +45,7 @@ def parse_args(*args):
 
     parser.add_argument('input_dir', type=str,
                         help="Directory with the source files")
-    parser.add_argument('output_dir', type=str,
+    parser.add_argument('output_dir', type=str, nargs=None if post_init else '?',
                         help="Directory to store the output files into")
 
     parser.add_argument('--json', '-j', type=str,
@@ -86,7 +86,7 @@ def parse_args(*args):
                         help="Butler push target prefix",
                         default='')
 
-    return parser.parse_args(*args)
+    return parser.parse_args()
 
 
 def run_encoder(outfile, args):
@@ -340,7 +340,7 @@ def clean_subdir(path: str, allowed: typing.Set[str]):
 def main():
     """ Main entry point """
     # pylint:disable=too-many-branches,too-many-statements,too-many-locals
-    options = parse_args()
+    options = parse_args(False)
 
     json_path = os.path.join(options.input_dir, options.json)
 
@@ -349,9 +349,12 @@ def main():
 
     if options.init:
         album = populate_json_file(options.input_dir, json_path)
-    else:
-        with open(json_path, 'r', encoding='utf8') as json_file:
-            album = json.load(json_file)
+        if not options.output_dir:
+            return
+    
+    options = parse_args(True)
+    with open(json_path, 'r', encoding='utf8') as json_file:
+        album = json.load(json_file)
 
     formats = set()
     for subdir in ('preview', 'mp3', 'ogg', 'flac'):
