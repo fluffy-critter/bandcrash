@@ -351,7 +351,7 @@ def main():
         album = populate_json_file(options.input_dir, json_path)
         if not options.output_dir:
             return
-    
+
     options = parse_args(True)
     with open(json_path, 'r', encoding='utf8') as json_file:
         album = json.load(json_file)
