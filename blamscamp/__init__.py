@@ -86,6 +86,10 @@ def parse_args(post_init):
                         help="Butler push target prefix",
                         default='')
 
+    parser.add_argument('--channel-prefix', '-p', type=str,
+        help="Prefix for the Butler channel name",
+        default='')
+
     return parser.parse_args()
 
 
@@ -445,8 +449,9 @@ def main():
 
     if options.butler_target:
         for target in formats:
+            channel=f'{options.channel_prefix}{target}'
             subprocess.run(['butler', 'push', os.path.join(
-                options.output_dir, target), f'{options.butler_target}:{target}'],
+                options.output_dir, target), f'{options.butler_target}:{channel}'],
                 check=True)
 
     LOGGER.info("Done")
