@@ -121,7 +121,7 @@ Here's the process for publishing an album to [itch.io](https://itch.io):
 If you have a website of your own, upload the `preview` directory to your site somewhere, and then embed it using an iframe, e.g.
 
 ```html
-<iframe src="/path/to/album" width=640 height=360></iframe>
+<iframe src="/path/to/album/" width=640 height=360></iframe>
 ```
 
 If you do this, it's also highly recommended that you add OpenGraph tags to the enclosing page, for example tags like these in the `<head>`:
@@ -131,10 +131,11 @@ If you do this, it's also highly recommended that you add OpenGraph tags to the 
 <meta property="og:type" content="album">
 <meta property="og:site_name" content="My Band Name">
 <!-- This should be an absolute link to the page that the <iframe> points to, i.e. the preview index.html -->
-<meta property="og:video" content="https://example.com/albums/my_awesome_album/preview/">
+<meta property="og:video" content="https://example.com/path/to/album/">
 <meta property="og:video:height" content="480">
 <meta property="og:video:width" content="640">
-<meta property="twitter:player" content="https://example.com/albums/my_awesome_album/preview/">
+<!-- Twitter prefers their own meta tags although these might not be necessary -->
+<meta property="twitter:player" content="https://example.com/path/to/album/">
 <meta property="twitter:player:height" content="480">
 <meta property="twitter:player:width" content="640">
 ```
