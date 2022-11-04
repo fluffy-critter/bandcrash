@@ -124,13 +124,22 @@ If you have a website of your own, upload the `preview` directory to your site s
 <iframe src="/path/to/album" width=640 height=360></iframe>
 ```
 
-You can also embed the itch version on another website; go to the itch page, right-click the frame, and then your browser should provide some option for "show only this frame" or "open frame in tab" or the like. This should give you a URL that you can embed on another site, such as `https://v6p9d9t4.ssl.hwcdn.net/html/5375791-530391/index.html`, which you can embed with:
+If you do this, it's also highly recommended that you add OpenGraph tags to the enclosing page, for example tags like these in the `<head>`:
 
 ```html
-<iframe src="https://v6p9d9t4.ssl.hwcdn.net/html/5375791-530391/index.html" width=640 height=360></iframe>
+<meta property="og:title" content="My Awesome Album">
+<meta property="og:type" content="album">
+<meta property="og:site_name" content="My Band Name">
+<!-- This should be an absolute link to the page that the <iframe> points to, i.e. the preview index.html -->
+<meta property="og:video" content="https://example.com/albums/my_awesome_album/preview/">
+<meta property="og:video:height" content="480">
+<meta property="og:video:width" content="640">
+<meta property="twitter:player" content="https://example.com/albums/my_awesome_album/preview/">
+<meta property="twitter:player:height" content="480">
+<meta property="twitter:player:width" content="640">
 ```
 
-although note that this URL may disappear or be otherwise unsupported.
+This will allow you to link to the page from many social networks (including Facebook, Twitter, and Mastodon) and have it embed correctly.
 
 ## Contributing
 
