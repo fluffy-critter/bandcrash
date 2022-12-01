@@ -116,6 +116,26 @@ def run_encoder(outfile, args):
         raise
 
 
+def generate_id3_apic(album, track, size):
+    """ Generate the APIC tags for an mp3 track """
+    from mutagen import id3
+
+    art_tags = []
+    for container, picture_type, desc in (
+        (album, id3.PictureType.COVER_FRONT, 'Front Cover'),
+        (track, id3.PictureType.OTHER, 'Song Cover')
+    ):
+        if 'artwork_path' in container:
+            img_data = images.generate_blob(container['artwork_path'],
+                                            size=size, ext='jpeg')
+            art_tags.append(id3.APIC(id3.Encoding.UTF8,
+                                     'image/jpeg',
+                                     picture_type,
+                                     desc,
+                                     img_data))
+    return art_tags
+
+
 def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None):
     """ Encode a track as mp3 """
     from mutagen import id3
@@ -152,15 +172,11 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
             LOGGER.debug("%s: Setting %s to %s", out_path, frame.__name__, val)
             tags.setall(frame.__name__, [frame(text=val)])
 
-    if cover_art and 'artwork_path' in track:
-        img_data = images.generate_blob(
-            track['artwork_path'], size=cover_art, ext='jpeg')
-        tags.setall(
-            'APIC', [id3.APIC(id3.Encoding.UTF8,
-                              'image/jpeg',
-                              id3.PictureType.COVER_FRONT,
-                              'Front cover',
-                              img_data)])
+    if cover_art:
+        art_tags = generate_id3_apic(album, track, cover_art)
+        if art_tags:
+            LOGGER.debug("%s: Adding %d artworks", out_path, len(art_tags))
+            tags.setall('APIC', art_tags)
 
     tags.save(out_path, v2_version=3)
     LOGGER.info("Finished writing %s", out_path)
@@ -401,6 +417,10 @@ def main():
             os.path.join(options.input_dir, album['artwork']))
         protections['preview'] |= set(album['artwork_preview'])
 
+    if 'artwork' in album:
+        album['artwork_path'] = os.path.join(
+            options.input_dir, album['artwork'])
+
     for idx, track in enumerate(album['tracks'], start=1):
         title = track.get('title', f'track {idx}')
         track['title'] = title
@@ -418,10 +438,9 @@ def main():
 
         input_filename = os.path.join(options.input_dir, track['filename'])
 
-        track_art = track.get('artwork', album.get('artwork'))
-        if track_art:
-            track_art = os.path.join(options.input_dir, track_art)
-            track['artwork_path'] = track_art
+        if 'artwork' in track:
+            track['artwork_path'] = os.path.join(
+                options.input_dir, track['artwork'])
 
         if 'lyrics' in track and isinstance(track['lyrics'], str):
             track['lyrics'] = util.read_lines(
