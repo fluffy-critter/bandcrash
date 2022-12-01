@@ -148,7 +148,7 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
     if cover_art and 'artwork_path' in track:
         img_data = images.generate_blob(track['artwork_path'], cover_art)
         tags.setall(
-            'APIC', [id3.APIC(data=img_data)])
+            'APIC', [id3.APIC(data=img_data, mime='image/jpeg', type=0)])
 
     tags.save(out_path, v2_version=3)
     LOGGER.info("Finished writing %s", out_path)
@@ -380,7 +380,7 @@ def main():
         return (images.generate_rendition(in_path, out_dir, 150),
                 images.generate_rendition(in_path, out_dir, 300))
 
-    if 'artwork' in album:
+    if 'artwork' in album and 'preview' in formats:
         album['artwork_preview'] = gen_art_preview(
             os.path.join(options.input_dir, album['artwork']))
         protections['preview'] |= set(album['artwork_preview'])
