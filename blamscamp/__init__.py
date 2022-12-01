@@ -17,8 +17,9 @@ import jinja2
 
 from . import __version__, images, util
 
-logging.basicConfig(level=logging.INFO, format='%(message)s')
-LOGGER = logging.getLogger("__name__")
+LOG_LEVELS = [logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG]
+
+LOGGER = logging.getLogger(__name__)
 
 
 def check_executable(name):
@@ -36,6 +37,10 @@ def parse_args(post_init):
     """ Parse the command line arguments """
     parser = argparse.ArgumentParser(
         description="Generate purchasable albums for independent storefronts")
+
+    parser.add_argument("-v", "--verbosity", action="count",
+                        help="increase output verbosity",
+                        default=0)
 
     parser.add_argument('--version', action='version',
                         version="%(prog)s " + __version__.__version__)
@@ -133,6 +138,7 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
         id3.TOPE: track.get('cover_of', album.get('cover_of')),
 
         id3.TRCK: str(idx),
+        id3.TIT1: track.get('group'),
         id3.TIT2: track.get('title'),
 
         id3.TCON: track.get('genre', album.get('genre')),
@@ -143,12 +149,18 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
 
     for frame, val in frames.items():
         if val:
+            LOGGER.debug("%s: Setting %s to %s", out_path, frame.__name__, val)
             tags.setall(frame.__name__, [frame(text=val)])
 
     if cover_art and 'artwork_path' in track:
-        img_data = images.generate_blob(track['artwork_path'], cover_art)
+        img_data = images.generate_blob(
+            track['artwork_path'], size=cover_art, ext='jpeg')
         tags.setall(
-            'APIC', [id3.APIC(data=img_data, mime='image/jpeg', type=0)])
+            'APIC', [id3.APIC(id3.Encoding.UTF8,
+                              'image/jpeg',
+                              id3.PictureType.COVER_FRONT,
+                              'Front cover',
+                              img_data)])
 
     tags.save(out_path, v2_version=3)
     LOGGER.info("Finished writing %s", out_path)
@@ -301,7 +313,7 @@ def populate_json_file(input_dir: str, json_path: str):
 
             # Check for any matching track artwork
             if 'artwork' not in track:
-                for art_file in art:
+                for art_file in art.copy():
                     art_basename, _ = os.path.splitext(art_file)
                     if basename.lower() == art_basename.lower():
                         track['artwork'] = art_file
@@ -310,7 +322,7 @@ def populate_json_file(input_dir: str, json_path: str):
 
     # Try to guess some album art
     if 'artwork' not in album:
-        for art_file in art:
+        for art_file in art.copy():
             basename, _ = os.path.splitext(art_file)
             name_heuristic = False
             for check in ('cover', 'album', 'artwork'):
@@ -345,6 +357,10 @@ def main():
     """ Main entry point """
     # pylint:disable=too-many-branches,too-many-statements,too-many-locals
     options = parse_args(False)
+
+    logging.basicConfig(level=LOG_LEVELS[min(
+        options.verbosity, len(LOG_LEVELS) - 1)],
+        format='%(message)s')
 
     json_path = os.path.join(options.input_dir, options.json)
 

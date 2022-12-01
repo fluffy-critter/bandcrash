@@ -1,7 +1,7 @@
 {
     "artist": "Test artist",
     "year": 2022,
-    "album": "Test album",
+    "title": "Test album",
     "highlight_color": "#770077",
     "artwork": "album_cover.png",
     "genre": "blipcore",
@@ -35,12 +35,14 @@
         "filename": "test track.wav",
         "artwork": "single_track.png",
         "lyrics": "lyric-file.txt",
-        "genre": "lo-fi jazzcore"
+        "genre": "lo-fi jazzcore",
+        "group": "Meows I Have Known"
     },
     {
         "filename": "test track.wav",
         "title": "A different artist",
         "artist": "Sluggy Puppernutters",
-        "lyrics": "lyrics-iso8859.txt"
+        "lyrics": "lyrics-iso8859.txt",
+        "group": "Meows I Have Known"
     }]
 }
