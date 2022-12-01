@@ -16,8 +16,8 @@ test:
 	mkdir -p test_output/album/mp3/dir_should_be_removed
 	touch test_output/album/mp3/extraneous-file.txt
 	touch test_output/album/mp3/dir_should_be_removed/extraneous-file.txt
-	poetry run blamscamp tests/album test_output/album
-	poetry run blamscamp --init tests/derived test_output/derived --json derived.json
+	poetry run blamscamp -vvv tests/album test_output/album
+	poetry run blamscamp -vvv --init tests/derived test_output/derived --json derived.json
 
 .PHONY: pylint
 pylint:
