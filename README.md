@@ -80,6 +80,7 @@ Basically, the top-level album contains the following properties (all optional):
 And each track contains (all optional except `filename`):
 
 * `filename`: The audio file to encode into the final output track (ideally wav or aif)
+* `group`: The title of the track's grouping (i.e. a work with multiple movements)
 * `title`: The title of the track
 * `artist`: The performing artist of this track
 * `cover_of`: The original artist that this track is a cover of, if any
