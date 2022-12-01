@@ -133,7 +133,7 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
         id3.TOPE: track.get('cover_of', album.get('cover_of')),
 
         id3.TRCK: str(idx),
-        id3.TIT1: track.get('title'),
+        id3.TIT2: track.get('title'),
 
         id3.TCON: track.get('genre', album.get('genre')),
         id3.USLT: '\n'.join(track['lyrics']) if 'lyrics' in track else None,
