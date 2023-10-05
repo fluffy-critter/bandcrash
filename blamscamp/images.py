@@ -29,7 +29,7 @@ def generate_image(in_path: str, size: int) -> PIL.Image:
         out_w = image.width
         out_h = image.height
 
-    return image.resize(size=(out_w, out_h), resample=PIL.Image.LANCZOS)
+    return image.resize(size=(out_w, out_h), resample=PIL.Image.Resampling.LANCZOS)
 
 
 @functools.lru_cache()
@@ -81,13 +81,13 @@ def fix_orientation(image: PIL.Image) -> PIL.Image:
     exif_transpose_sequences = [
         [],
         [],
-        [PIL.Image.FLIP_LEFT_RIGHT],
-        [PIL.Image.ROTATE_180],
-        [PIL.Image.FLIP_TOP_BOTTOM],
-        [PIL.Image.FLIP_LEFT_RIGHT, PIL.Image.ROTATE_90],
-        [PIL.Image.ROTATE_270],
-        [PIL.Image.FLIP_TOP_BOTTOM, PIL.Image.ROTATE_90],
-        [PIL.Image.ROTATE_90],
+        [PIL.Image.Transpose.FLIP_LEFT_RIGHT],
+        [PIL.Image.Transpose.ROTATE_180],
+        [PIL.Image.Transpose.FLIP_TOP_BOTTOM],
+        [PIL.Image.Transpose.FLIP_LEFT_RIGHT, PIL.Image.Transpose.ROTATE_90],
+        [PIL.Image.Transpose.ROTATE_270],
+        [PIL.Image.Transpose.FLIP_TOP_BOTTOM, PIL.Image.Transpose.ROTATE_90],
+        [PIL.Image.Transpose.ROTATE_90],
     ]
 
     try:
