@@ -9,7 +9,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.8"
 mutagen = "^1.45.1"
-Pillow = "^9.0.1"
+Pillow = "^10.0.1"
 awesome-slugify = "^1.6.5"
 Jinja2 = "^3.0.3"
 chardet = "^4.0.0"
