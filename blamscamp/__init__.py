@@ -528,12 +528,12 @@ def main():
             futures['done'].append(pool.submit(
                 submit_butler,
                 os.path.join(options.output_dir, target),
-                          f'{options.butler_target}:{channel}',
-                          futures[f'dist{target}']))
+                f'{options.butler_target}:{channel}',
+                futures[f'dist{target}']))
 
     LOGGER.debug('%s', futures)
 
-    remaining_tasks=[f for f in itertools.chain(
+    remaining_tasks = [f for f in itertools.chain(
         *futures.values()) if not f.done()]
     if remaining_tasks:
         LOGGER.info("Waiting for all tasks to complete... (%d pending)",
