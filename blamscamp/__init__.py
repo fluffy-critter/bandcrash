@@ -4,7 +4,9 @@
 import argparse
 import base64
 import collections
+import concurrent.futures
 import functools
+import itertools
 import json
 import logging
 import os
@@ -56,6 +58,11 @@ def parse_args(post_init):
     parser.add_argument('--json', '-j', type=str,
                         help="Name of the album JSON file, relative to input_dir",
                         default='album.json')
+
+    parser.add_argument('--num-threads', '-t', type=int,
+                        dest='num_threads',
+                        help="Maximum number of concurrent threads",
+                        default=os.cpu_count())
 
     def add_encoder(name, executable, info, args):
         """ Add a feature group to the CLI """
@@ -220,7 +227,7 @@ def get_flac_picture(artwork_path, size):
     return pic
 
 
-def encode_ogg(in_path, out_path, idx, album, track, encode_args, cover_art=None):
+def encode_ogg(in_path, out_path, idx, album, track, encode_args, cover_art):
     """ Encode a track as ogg vorbis """
     from mutagen import oggvorbis
 
@@ -241,7 +248,7 @@ def encode_ogg(in_path, out_path, idx, album, track, encode_args, cover_art=None
     LOGGER.info("Finished writing %s", out_path)
 
 
-def encode_flac(in_path, out_path, idx, album, track, encode_args, cover_art=None):
+def encode_flac(in_path, out_path, idx, album, track, encode_args, cover_art):
     """ Encode a track as ogg vorbis """
     from mutagen import flac
 
@@ -259,11 +266,15 @@ def encode_flac(in_path, out_path, idx, album, track, encode_args, cover_art=Non
     LOGGER.info("Finished writing %s", out_path)
 
 
-def make_web_preview(output_dir, album, protections):
+def make_web_preview(output_dir, album, protections, futures):
     """ Generate the embedded preview player """
+    LOGGER.info("Preview: Waiting for %s (%d tasks)", output_dir, len(futures))
+    concurrent.futures.wait(futures)
+    LOGGER.info("Preview: Building player in %s", output_dir)
+
     env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(os.path.join(
-            os.path.dirname(__file__),       'jinja_templates')))
+            os.path.dirname(__file__), 'jinja_templates')))
 
     for tmpl in ('index.html', 'player.js', 'player.css'):
         template = env.get_template(tmpl)
@@ -357,8 +368,12 @@ def populate_json_file(input_dir: str, json_path: str):
     return album
 
 
-def clean_subdir(path: str, allowed: typing.Set[str]):
+def clean_subdir(path: str, allowed: typing.Set[str], futures):
     """ Clean up a subdirectory of extraneous files """
+    LOGGER.info("Cleanup: Waiting for %s (%d tasks)", path, len(futures))
+    concurrent.futures.wait(futures)
+    LOGGER.info("Cleaning up directory %s", path)
+
     LOGGER.debug("Allowed in %s: %s", path, allowed)
     for file in os.scandir(path):
         if file.name not in allowed:
@@ -367,6 +382,15 @@ def clean_subdir(path: str, allowed: typing.Set[str]):
                 shutil.rmtree(file)
             else:
                 os.remove(file)
+
+
+def submit_butler(output_dir, channel, futures):
+    """ Submit the directory to itch.io via butler """
+    LOGGER.info("Butler: Waiting for %s (%d tasks)", output_dir, len(futures))
+    concurrent.futures.wait(futures)
+
+    LOGGER.info("Butler: pushing '%s' to channel '%s'", output_dir, channel)
+    subprocess.run(['butler', 'push', output_dir, channel], check=True)
 
 
 def main():
@@ -398,6 +422,11 @@ def main():
             formats.add(subdir)
             os.makedirs(os.path.join(
                 options.output_dir, subdir), exist_ok=True)
+
+    pool = concurrent.futures.ThreadPoolExecutor(
+        max_workers=options.num_threads)
+
+    futures = collections.defaultdict(list)
 
     @functools.lru_cache()
     def gen_art_preview(in_path: str) -> typing.Tuple[str, str]:
@@ -453,42 +482,63 @@ def main():
                     os.path.join(options.input_dir, track['artwork']))
                 protections['preview'] |= set(track['artwork_preview'])
             track['preview_mp3'] = f'{base_filename}.mp3'
-            encode_mp3(input_filename,
-                       out_path('preview', 'mp3'),
-                       idx, album, track, options.preview_encoder_args,
-                       cover_art=300)
+            futures['preview'].append(pool.submit(
+                encode_mp3,
+                input_filename,
+                out_path('preview', 'mp3'),
+                idx, album, track, options.preview_encoder_args,
+                cover_art=300))
 
         if options.do_mp3:
-            encode_mp3(input_filename,
-                       out_path('mp3'),
-                       idx, album, track, options.mp3_encoder_args, cover_art=1500)
+            futures['mp3'].append(pool.submit(
+                encode_mp3,
+                input_filename,
+                out_path('mp3'),
+                idx, album, track, options.mp3_encoder_args, cover_art=1500))
 
         if options.do_ogg:
-            encode_ogg(input_filename,
-                       out_path('ogg'),
-                       idx, album, track, options.ogg_encoder_args, cover_art=1500)
+            futures['ogg'].append(pool.submit(
+                encode_ogg,
+                input_filename,
+                out_path('ogg'),
+                idx, album, track, options.ogg_encoder_args, cover_art=1500))
 
         if options.do_flac:
-            encode_flac(input_filename,
-                        out_path('flac'),
-                        idx, album, track, options.flac_encoder_args, cover_art=1500)
+            futures['flac'].append(pool.submit(
+                encode_flac,
+                input_filename,
+                out_path('flac'),
+                idx, album, track, options.flac_encoder_args, cover_art=1500))
 
     if options.do_preview:
-        make_web_preview(os.path.join(options.output_dir,
-                         'preview'), album, protections['preview'])
+        futures['done'].append(pool.submit(make_web_preview,
+                                           os.path.join(options.output_dir,
+                                                        'preview'),
+                                           album, protections['preview'], futures['preview']))
 
     if options.clean_extra:
         for target in formats:
-            clean_subdir(os.path.join(options.output_dir, target),
-                         protections[target])
+            futures[f'dist{target}'].append(pool.submit(
+                clean_subdir, os.path.join(options.output_dir, target),
+                protections[target], futures[target]))
 
     if options.butler_target:
         for target in formats:
             channel = f'{options.channel_prefix}{target}'
-            subprocess.run(['butler', 'push', os.path.join(
-                options.output_dir, target), f'{options.butler_target}:{channel}'],
-                check=True)
+            futures['done'].append(pool.submit(
+                submit_butler,
+                os.path.join(options.output_dir, target),
+                          f'{options.butler_target}:{channel}',
+                          futures[f'dist{target}']))
 
+    LOGGER.debug('%s', futures)
+
+    remaining_tasks=[f for f in itertools.chain(
+        *futures.values()) if not f.done()]
+    if remaining_tasks:
+        LOGGER.info("Waiting for all tasks to complete... (%d pending)",
+                    len(remaining_tasks))
+        concurrent.futures.wait(remaining_tasks)
     LOGGER.info("Done")
 
 
