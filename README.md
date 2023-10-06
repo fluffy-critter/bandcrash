@@ -1,6 +1,6 @@
 # Bandcrash (formerly pyBlamscamp)
 
-Bandcrash is a standalone program that automatically encodes an album of songs into a bunch of different formats for distribution on various platforms, such as [itch.io](https://itch.io/), or for hosting on your own website. The embedded player is originally based on the one from [Blamscamp](https://github.com/blackle/blamscamp) by @blackle, although it has been pretty thoroughly modified at this point.
+Bandcrash is a standalone program that automatically encodes an album of songs into a bunch of different formats for distribution on various platforms, such as [itch.io](https://itch.io/), or for hosting on your own website. The embedded player is originally based on the one from [Blamscamp](https://github.com/blackle/blamscamp) by [@blackle](https://github.com/blackle), although it has been pretty thoroughly modified at this point.
 
 [See it in action](https://fluffy.itch.io/novembeat-2021)!
 
@@ -169,5 +169,5 @@ Currently the only connection between Bandcrash and Bandscamp is that Bandcrash 
 
 ## Credits
 
-* Main code: @fluffy-critter
-* Original player code and this project's name: @blackle
+* Main code: [@fluffy-critter](https://github.com/fluffy-critter)
+* Original player code and this project's name: [@blackle](https://github.com/blackle)
