@@ -39,7 +39,6 @@ img.trackart {
     display: none;
 }
 
-li,
 .player {
     display: flex;
     align-items: center;
@@ -82,7 +81,7 @@ li,
 
 .song_list {
     margin: 5px 20px;
-    padding: 0;
+    padding: 0 1em;
 }
 
 .tracklist {
