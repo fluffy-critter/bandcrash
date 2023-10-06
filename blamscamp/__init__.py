@@ -19,8 +19,6 @@ import jinja2
 
 from . import __version__, images, util
 
-LOG_LEVELS = [logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG]
-
 LOGGER = logging.getLogger(__name__)
 
 
@@ -108,7 +106,7 @@ def run_encoder(outfile, args):
     :param list args: The entire arglist (including output file path)
     """
     try:
-        subprocess.run(args, check=True)
+        subprocess.run(args, check=True, stdout=subprocess.DEVNULL)
     except Exception as err:
         LOGGER.error("Got error encoding %s: %s", outfile, err)
         os.remove(outfile)
@@ -144,7 +142,7 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
     from mutagen import id3
 
     if util.is_newer(in_path, out_path):
-        run_encoder(out_path, ['lame', *encode_args.split(),
+        run_encoder(out_path, ['lame', *encode_args.split(), '--nohist',
                                in_path, out_path])
 
     try:
@@ -262,11 +260,34 @@ def encode_flac(in_path, out_path, idx, album, track, encode_args, cover_art):
     LOGGER.info("Finished writing %s", out_path)
 
 
-def make_web_preview(output_dir, album, protections, futures):
+def make_web_preview(input_dir, output_dir, album, protections, futures):
     """ Generate the embedded preview player """
     LOGGER.info("Preview: Waiting for %s (%d tasks)", output_dir, len(futures))
     concurrent.futures.wait(futures)
     LOGGER.info("Preview: Building player in %s", output_dir)
+
+    @functools.lru_cache()
+    def gen_art_preview(in_path: str) -> typing.Tuple[str, str]:
+        """ Generate web preview art for the given file
+
+        :param str in_path: Input path of the source file
+        :param str out_dir: Output directory
+
+        :returns: tuple of the 1x and 2x renditions of the artwork
+        """
+        return (images.generate_rendition(in_path, output_dir, 150),
+                images.generate_rendition(in_path, output_dir, 300))
+
+    if 'artwork' in album:
+        album['artwork_preview'] = gen_art_preview(
+            os.path.join(input_dir, album['artwork']))
+        protections.add(album['artwork_preview'])
+
+    for track in album['tracks']:
+        if 'artwork' in track:
+            track['artwork_preview'] = gen_art_preview(
+                os.path.join(input_dir, track['artwork']))
+            protections.add(track['artwork_preview'])
 
     env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(os.path.join(
@@ -389,78 +410,8 @@ def submit_butler(output_dir, channel, futures):
     subprocess.run(['butler', 'push', output_dir, channel], check=True)
 
 
-def main(args=None):
-    """ Main entry point """
-    # pylint:disable=too-many-branches,too-many-statements,too-many-locals
-    options = parse_args(False, args)
-
-    logging.basicConfig(level=LOG_LEVELS[min(
-        options.verbosity, len(LOG_LEVELS) - 1)],
-        format='%(message)s')
-
-    json_path = os.path.join(options.input_dir, options.json)
-
-    if options.init:
-        album = populate_json_file(options.input_dir, json_path)
-        if not options.output_dir:
-            return
-
-    options = parse_args(True)
-    with open(json_path, 'r', encoding='utf8') as json_file:
-        album = json.load(json_file)
-
-    pool = concurrent.futures.ThreadPoolExecutor(
-        max_workers=options.num_threads)
-
-    futures = collections.defaultdict(list)
-
-    process(options, album, pool, futures)
-
-    remaining_tasks = [f for f in itertools.chain(
-        *futures.values()) if not f.done()]
-    if remaining_tasks:
-        LOGGER.info("Waiting for all tasks to complete... (%d pending)",
-                    len(remaining_tasks))
-        concurrent.futures.wait(remaining_tasks)
-    LOGGER.info("Done")
-
-
-def process(options, album, pool, futures):
-    """
-    Process the album given the parsed options and the loaded album data
-    """
-
-    formats = set()
-    for subdir in ('preview', 'mp3', 'ogg', 'flac'):
-        if getattr(options, f'do_{subdir}'):
-            formats.add(subdir)
-            os.makedirs(os.path.join(
-                options.output_dir, subdir), exist_ok=True)
-
-    protections: typing.Dict[str, typing.Set[str]
-                             ] = collections.defaultdict(set)
-
-    @functools.lru_cache()
-    def gen_art_preview(in_path: str) -> typing.Tuple[str, str]:
-        """ Generate web preview art for the given file
-
-        :param str in_path: Input path of the source file
-        :param str out_dir: Output directory
-
-        :returns: tuple of the 1x and 2x renditions of the artwork
-        """
-        out_dir = os.path.join(options.output_dir, 'preview')
-        return (images.generate_rendition(in_path, out_dir, 150),
-                images.generate_rendition(in_path, out_dir, 300))
-
-    if 'artwork' in album and 'preview' in formats:
-        album['artwork_preview'] = gen_art_preview(
-            os.path.join(options.input_dir, album['artwork']))
-        protections['preview'] |= set(album['artwork_preview'])
-
-    if 'artwork' in album:
-        album['artwork_path'] = os.path.join(
-            options.input_dir, album['artwork'])
+def encode_tracks(options, album, protections, pool, futures):
+    """ run the track encode process """
 
     for idx, track in enumerate(album['tracks'], start=1):
         title = track.get('title', f'track {idx}')
@@ -489,10 +440,6 @@ def process(options, album, pool, futures):
 
         # generate preview track, if desired
         if options.do_preview and not track.get('hidden') and track.get('preview', True):
-            if 'artwork' in track:
-                track['artwork_preview'] = gen_art_preview(
-                    os.path.join(options.input_dir, track['artwork']))
-                protections['preview'] |= set(track['artwork_preview'])
             track['preview_mp3'] = f'{base_filename}.mp3'
             futures['preview'].append(pool.submit(
                 encode_mp3,
@@ -522,8 +469,31 @@ def process(options, album, pool, futures):
                 out_path('flac'),
                 idx, album, track, options.flac_encoder_args, cover_art=1500))
 
+
+def process(options, album, pool, futures):
+    """
+    Process the album given the parsed options and the loaded album data
+    """
+
+    formats = set()
+    for subdir in ('preview', 'mp3', 'ogg', 'flac'):
+        if getattr(options, f'do_{subdir}'):
+            formats.add(subdir)
+            os.makedirs(os.path.join(
+                options.output_dir, subdir), exist_ok=True)
+
+    protections: typing.Dict[str, typing.Set[str]
+                             ] = collections.defaultdict(set)
+
+    if 'artwork' in album:
+        album['artwork_path'] = os.path.join(
+            options.input_dir, album['artwork'])
+
+    encode_tracks(options, album, protections, pool, futures)
+
     if options.do_preview:
         futures['done'].append(pool.submit(make_web_preview,
+                                           options.input_dir,
                                            os.path.join(options.output_dir,
                                                         'preview'),
                                            album, protections['preview'], futures['preview']))
@@ -542,8 +512,3 @@ def process(options, album, pool, futures):
                 os.path.join(options.output_dir, target),
                 f'{options.butler_target}:{channel}',
                 futures[f'dist{target}']))
-
-
-
-if __name__ == '__main__':
-    main()
