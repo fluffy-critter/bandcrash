@@ -35,7 +35,7 @@ def check_executable(name):
         return False
 
 
-def parse_args(post_init):
+def parse_args(post_init, args=None):
     """ Parse the command line arguments """
     parser = argparse.ArgumentParser(
         description="Generate purchasable albums for independent storefronts")
@@ -74,10 +74,6 @@ def parse_args(post_init):
                              help=f"Don't generate {info}")
         feature.set_defaults(**{fname: check_executable(executable)})
 
-        # parser.add_argument(f'--{name}-encoder', type=str,
-        #                     help=f"Encoder to use for {info}",
-        #                     default=executable)
-
         parser.add_argument(f'--{name}-encoder-args', type=str,
                             help=f"Arguments to pass to the {info} encoder",
                             default=args)
@@ -102,7 +98,7 @@ def parse_args(post_init):
                         help="Prefix for the Butler channel name",
                         default='')
 
-    return parser.parse_args()
+    return parser.parse_args(args)
 
 
 def run_encoder(outfile, args):
@@ -393,19 +389,16 @@ def submit_butler(output_dir, channel, futures):
     subprocess.run(['butler', 'push', output_dir, channel], check=True)
 
 
-def main():
+def main(args=None):
     """ Main entry point """
     # pylint:disable=too-many-branches,too-many-statements,too-many-locals
-    options = parse_args(False)
+    options = parse_args(False, args)
 
     logging.basicConfig(level=LOG_LEVELS[min(
         options.verbosity, len(LOG_LEVELS) - 1)],
         format='%(message)s')
 
     json_path = os.path.join(options.input_dir, options.json)
-
-    protections: typing.Dict[str, typing.Set[str]
-                             ] = collections.defaultdict(set)
 
     if options.init:
         album = populate_json_file(options.input_dir, json_path)
@@ -416,6 +409,27 @@ def main():
     with open(json_path, 'r', encoding='utf8') as json_file:
         album = json.load(json_file)
 
+    pool = concurrent.futures.ThreadPoolExecutor(
+        max_workers=options.num_threads)
+
+    futures = collections.defaultdict(list)
+
+    process(options, album, pool, futures)
+
+    remaining_tasks = [f for f in itertools.chain(
+        *futures.values()) if not f.done()]
+    if remaining_tasks:
+        LOGGER.info("Waiting for all tasks to complete... (%d pending)",
+                    len(remaining_tasks))
+        concurrent.futures.wait(remaining_tasks)
+    LOGGER.info("Done")
+
+
+def process(options, album, pool, futures):
+    """
+    Process the album given the parsed options and the loaded album data
+    """
+
     formats = set()
     for subdir in ('preview', 'mp3', 'ogg', 'flac'):
         if getattr(options, f'do_{subdir}'):
@@ -423,10 +437,8 @@ def main():
             os.makedirs(os.path.join(
                 options.output_dir, subdir), exist_ok=True)
 
-    pool = concurrent.futures.ThreadPoolExecutor(
-        max_workers=options.num_threads)
-
-    futures = collections.defaultdict(list)
+    protections: typing.Dict[str, typing.Set[str]
+                             ] = collections.defaultdict(set)
 
     @functools.lru_cache()
     def gen_art_preview(in_path: str) -> typing.Tuple[str, str]:
@@ -531,15 +543,6 @@ def main():
                 f'{options.butler_target}:{channel}',
                 futures[f'dist{target}']))
 
-    LOGGER.debug('%s', futures)
-
-    remaining_tasks = [f for f in itertools.chain(
-        *futures.values()) if not f.done()]
-    if remaining_tasks:
-        LOGGER.info("Waiting for all tasks to complete... (%d pending)",
-                    len(remaining_tasks))
-        concurrent.futures.wait(remaining_tasks)
-    LOGGER.info("Done")
 
 
 if __name__ == '__main__':
