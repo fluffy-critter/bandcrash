@@ -16,16 +16,16 @@ test:
 	mkdir -p test_output/album/mp3/dir_should_be_removed
 	touch test_output/album/mp3/extraneous-file.txt
 	touch test_output/album/mp3/dir_should_be_removed/extraneous-file.txt
-	poetry run blamscamp -vvv tests/album test_output/album
-	poetry run blamscamp -vvv --init tests/derived test_output/derived --json derived.json
+	poetry run bandcrash -vvv tests/album test_output/album
+	poetry run bandcrash -vvv --init tests/derived test_output/derived --json derived.json
 
 .PHONY: pylint
 pylint:
-	poetry run pylint blamscamp
+	poetry run pylint bandcrash
 
 .PHONY: mypy
 mypy:
-	poetry run mypy -p blamscamp --ignore-missing-imports
+	poetry run mypy -p bandcrash --ignore-missing-imports
 
 .PHONY: preflight
 preflight:
@@ -44,12 +44,12 @@ preflight:
 		&& exit 1 || exit 0
 
 .PHONY: version
-version: blamscamp/__version__.py
-blamscamp/__version__.py: pyproject.toml
+version: bandcrash/__version__.py
+bandcrash/__version__.py: pyproject.toml
 	# Kind of a hacky way to get the version updated, until the poetry folks
 	# settle on a better approach
 	printf '""" version """\n__version__ = "%s"\n' \
-		`poetry version | cut -f2 -d\ ` > blamscamp/__version__.py
+		`poetry version | cut -f2 -d\ ` > bandcrash/__version__.py
 
 .PHONY: build
 build: version preflight pylint

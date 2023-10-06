@@ -313,7 +313,8 @@ def make_web_preview(input_dir, output_dir, album, protections, futures):
     for tmpl in ('index.html', 'player.js', 'player.css'):
         template = env.get_template(tmpl)
         with open(os.path.join(output_dir, tmpl), 'w', encoding='utf8') as outfile:
-            outfile.write(template.render(album=album, __version__=__version__))
+            outfile.write(template.render(
+                album=album, __version__=__version__))
             protections.add(tmpl)
 
     LOGGER.info("Finished generating web preview at %s", output_dir)
