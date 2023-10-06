@@ -5,6 +5,7 @@ description = "Tools for publishing albums to the web and digital stores"
 authors = ["fluffy <fluffy@beesbuzz.biz>"]
 license = "MIT"
 readme = "README.md"
+repository = "https://github.com/fluffy-critter/bandcrash"
 
 [tool.poetry.dependencies]
 python = "^3.8"
