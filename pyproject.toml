@@ -1,9 +1,9 @@
 [tool.poetry]
-name = "blamscamp"
+name = "bandcrash"
 version = "0.3.0"
 description = "Tools for publishing albums to the web and digital stores"
 authors = ["fluffy <fluffy@beesbuzz.biz>"]
-license = "CC0"
+license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
@@ -27,4 +27,4 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-blamscamp = 'blamscamp.__main__:main'
+blamscamp = 'bandcrash.__main__:main'
