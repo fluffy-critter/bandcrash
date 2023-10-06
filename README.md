@@ -152,6 +152,22 @@ The generated web player must not receive any added dependencies. The generator 
 See the [github issues](https://github.com/fluffy-critter/bandcrash/issues) for details, but roughly:
 
 * Local GUI and/or web UI to make setting up the `album.json` easier (and easier installation, especially on Windows!)
-* Improved player
-* Easy embedding into  websites
+* Various player improvements
+* Easy embedding into websites (opengraph et al)
 
+## FAQ
+
+### How is this different from blamscamp, scritch, etc.?
+
+[Blamscamp](https://suricrasia.online/blamscamp/) and [Scritch](https://torcado.itch.io/scritch-editor) are both great programs for publishing album previews on itch.io and other websites! However, their functionality is only to bundle already-encoded audio files into a web-based player. They don't do the difficult work of encoding and tagging your files, which can be an extremely tedious and error-prone process. Bandcrash's intention is to make the process of encoding and uploading your albums easier to as many stores as possible.
+
+### Why was it renamed?
+
+Back when this project started, it was named pyBlamscamp as the intention was to be basically a Python version of the Blamscamp GUI which would also handle encoding steps for you, but it very quickly drifted away from that and became something else. Unfortunately, the similarity of the names was incredibly confusing.
+
+Currently the only connection between Bandcrash and Bandscamp is that Bandcrash uses a highly-modified version of Bandscamp's web player. They serve different goals.
+
+## Credits
+
+* Main code: @fluffy-critter
+* Original player code and this project's name: @blackle
