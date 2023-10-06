@@ -34,7 +34,11 @@ def check_executable(name):
 
 
 def parse_args(post_init, args=None):
-    """ Parse the command line arguments """
+    """ Parse the command line arguments
+
+    :param bool post_init: Whether this is after --init has been evaluated
+    :param list args: Replace os.args (for GUIs and tests)
+     """
     parser = argparse.ArgumentParser(
         description="Generate purchasable albums for independent storefronts")
 
@@ -118,7 +122,11 @@ def run_encoder(outfile, args):
 
 
 def generate_id3_apic(album, track, size):
-    """ Generate the APIC tags for an mp3 track """
+    """ Generate the APIC tags for an mp3 track
+    :param dict album: The album's data
+    :param dict track: The track's data
+    :param int size: Maximum rendition size
+    """
     from mutagen import id3
 
     art_tags = []
@@ -138,7 +146,16 @@ def generate_id3_apic(album, track, size):
 
 
 def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None):
-    """ Encode a track as mp3 """
+    """ Encode a track as mp3
+
+    :param str in_path: Input file path
+    :param str out_path: Output file path
+    :param str idx: Track number
+    :param dict album: Album metadata
+    :param dict track: Track metadata
+    :param str encode_args: Arguments to pass along to LAME
+    :param str cover_art: Artwork rendition size
+    """
     from mutagen import id3
 
     if util.is_newer(in_path, out_path):
@@ -441,7 +458,7 @@ def encode_tracks(options, album, protections, pool, futures):
         # generate preview track, if desired
         if options.do_preview and not track.get('hidden') and track.get('preview', True):
             track['preview_mp3'] = f'{base_filename}.mp3'
-            futures['preview'].append(pool.submit(
+            futures['encode-preview'].append(pool.submit(
                 encode_mp3,
                 input_filename,
                 out_path('preview', 'mp3'),
@@ -449,21 +466,21 @@ def encode_tracks(options, album, protections, pool, futures):
                 cover_art=300))
 
         if options.do_mp3:
-            futures['mp3'].append(pool.submit(
+            futures['encode-mp3'].append(pool.submit(
                 encode_mp3,
                 input_filename,
                 out_path('mp3'),
                 idx, album, track, options.mp3_encoder_args, cover_art=1500))
 
         if options.do_ogg:
-            futures['ogg'].append(pool.submit(
+            futures['encode-ogg'].append(pool.submit(
                 encode_ogg,
                 input_filename,
                 out_path('ogg'),
                 idx, album, track, options.ogg_encoder_args, cover_art=1500))
 
         if options.do_flac:
-            futures['flac'].append(pool.submit(
+            futures['encode-flac'].append(pool.submit(
                 encode_flac,
                 input_filename,
                 out_path('flac'),
@@ -473,6 +490,21 @@ def encode_tracks(options, album, protections, pool, futures):
 def process(options, album, pool, futures):
     """
     Process the album given the parsed options and the loaded album data
+
+    :param options: Runtime options from :func:`parse_args`
+    :param dict album: Album metadata
+    :param concurrent.Futures.Executor pool: The threadpool to submit tasks to
+    :param dict futures: Pending tasks for a particular build phase; should be
+        a `collections.defaultdict(list)` or similar
+
+    Each format has the following phases:
+
+    1. encode-{format}: Encodes and tags the output files
+    2. build-{format}: Cleans up the directory and generates any additional inclusions
+        (depends on encode-{format}); this phase may be empty for some formats
+    3. butler: Pushes the build to itch.io via the butler tool
+        (depends on both encode-{format} and build-{format})
+
     """
 
     formats = set()
@@ -492,23 +524,24 @@ def process(options, album, pool, futures):
     encode_tracks(options, album, protections, pool, futures)
 
     if options.do_preview:
-        futures['done'].append(pool.submit(make_web_preview,
-                                           options.input_dir,
-                                           os.path.join(options.output_dir,
-                                                        'preview'),
-                                           album, protections['preview'], futures['preview']))
+        futures['build-preview'].append(pool.submit(make_web_preview,
+                                                    options.input_dir,
+                                                    os.path.join(options.output_dir,
+                                                                 'preview'),
+                                                    album, protections['preview'],
+                                                    futures['encode-preview']))
 
     if options.clean_extra:
         for target in formats:
-            futures[f'dist{target}'].append(pool.submit(
+            futures[f'build-{target}'].append(pool.submit(
                 clean_subdir, os.path.join(options.output_dir, target),
-                protections[target], futures[target]))
+                protections[target], futures[f'encode-{target}']))
 
     if options.butler_target:
         for target in formats:
             channel = f'{options.channel_prefix}{target}'
-            futures['done'].append(pool.submit(
+            futures['butler'].append(pool.submit(
                 submit_butler,
                 os.path.join(options.output_dir, target),
                 f'{options.butler_target}:{channel}',
-                futures[f'dist{target}']))
+                futures[f'encode-{target}'] + futures[f'build-{target}']))
