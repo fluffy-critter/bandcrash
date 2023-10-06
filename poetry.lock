@@ -49,6 +49,24 @@ regex = "*"
 Unidecode = ">=0.04.14,<0.05"
 
 [[package]]
+name = "bandcrash"
+version = "0.3.0"
+description = "Tools for publishing albums to the web and digital stores"
+optional = false
+python-versions = ">=3.8,<4.0"
+files = [
+    {file = "bandcrash-0.3.0-py3-none-any.whl", hash = "sha256:2c2e5dacc87869503e4ffd3dfaaa5843a4e7f83a243c1d1cd931fa5a29d2552f"},
+    {file = "bandcrash-0.3.0.tar.gz", hash = "sha256:6a2772e6014168e7659a07f1930753273b7c0f9a6e15f18101d140261035627d"},
+]
+
+[package.dependencies]
+awesome-slugify = ">=1.6.5,<2.0.0"
+chardet = ">=4.0.0,<5.0.0"
+Jinja2 = ">=3.0.3,<4.0.0"
+mutagen = ">=1.45.1,<2.0.0"
+Pillow = ">=10.0.1,<11.0.0"
+
+[[package]]
 name = "chardet"
 version = "4.0.0"
 description = "Universal encoding detector for Python 2 and 3"
@@ -676,4 +694,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "93860e34d765a7227ef5225e955e296fb18f997833cf14140d3684b3517623b5"
+content-hash = "9a457036095a95277515c808387e82f521467fe604e8fcadf642775e36d60185"
