@@ -1,4 +1,4 @@
-all: setup version format mypy pylint
+all: setup format
 
 .PHONY: setup
 setup:
@@ -10,7 +10,7 @@ format:
 	poetry run autopep8 -r --in-place .
 
 .PHONY: test
-test:
+test: setup
 	# this really should be done using pytest but ugh
 	rm -rf test_output
 	mkdir -p test_output/album/mp3/dir_should_be_removed
@@ -18,14 +18,6 @@ test:
 	touch test_output/album/mp3/dir_should_be_removed/extraneous-file.txt
 	poetry run blamscamp -vvv tests/album test_output/album
 	poetry run blamscamp -vvv --init tests/derived test_output/derived --json derived.json
-
-.PHONY: pylint
-pylint:
-	poetry run pylint blamscamp
-
-.PHONY: mypy
-mypy:
-	poetry run mypy -p blamscamp --ignore-missing-imports
 
 .PHONY: preflight
 preflight:
@@ -43,16 +35,8 @@ preflight:
 		&& echo "main branch differs from upstream" 1>&2 \
 		&& exit 1 || exit 0
 
-.PHONY: version
-version: blamscamp/__version__.py
-blamscamp/__version__.py: pyproject.toml
-	# Kind of a hacky way to get the version updated, until the poetry folks
-	# settle on a better approach
-	printf '""" version """\n__version__ = "%s"\n' \
-		`poetry version | cut -f2 -d\ ` > blamscamp/__version__.py
-
 .PHONY: build
-build: version preflight pylint
+build: preflight
 	poetry build
 
 .PHONY: clean
