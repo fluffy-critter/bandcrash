@@ -1,4 +1,3 @@
-
 window.addEventListener("load", () => {
     function set_button_state(button, playing) {
         button.classList.add(playing ? "playing" : "paused");
