@@ -1,6 +1,6 @@
 # Bandcrash (formerly Bandcrash)
 
-Bandcrash is a standalone program that automatically encodes an album of songs into a bunch of different formats for distribution on various platforms, such as [itch.io](https://itch.io/), or for hosting on your own website. The embedded player is originally based on the one from [Blamscamp](https://github.com/blackle/blamscamp), although it has been pretty thoroughly modified at this point.
+Bandcrash is a standalone program that automatically encodes an album of songs into a bunch of different formats for distribution on various platforms, such as [itch.io](https://itch.io/), or for hosting on your own website. The embedded player is originally based on the one from [Blamscamp](https://github.com/blackle/blamscamp) by @blackie, although it has been pretty thoroughly modified at this point.
 
 [See it in action](https://fluffy.itch.io/novembeat-2021)!
 
