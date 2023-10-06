@@ -10,7 +10,7 @@ format:
 	poetry run autopep8 -r --in-place .
 
 .PHONY: test
-test:
+test: setup
 	# this really should be done using pytest but ugh
 	rm -rf test_output
 	mkdir -p test_output/album/mp3/dir_should_be_removed
