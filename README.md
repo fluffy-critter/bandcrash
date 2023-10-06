@@ -1,8 +1,6 @@
-# pyBlamscamp
+# Bandcrash (formerly Bandcrash)
 
-![CC0 license badge](https://licensebuttons.net/p/zero/1.0/88x31.png)
-
-pyBlamscamp is a standalone program that automatically encodes an album of songs into a bunch of different formats for distribution on various platforms, such as [itch.io](https://itch.io/), or for hosting on your own website. The embedded player is originally based on the one from [Blamscamp](https://github.com/blackle/blamscamp), although it has been pretty thoroughly modified at this point.
+Bandcrash is a standalone program that automatically encodes an album of songs into a bunch of different formats for distribution on various platforms, such as [itch.io](https://itch.io/), or for hosting on your own website. The embedded player is originally based on the one from [Blamscamp](https://github.com/blackle/blamscamp), although it has been pretty thoroughly modified at this point.
 
 [See it in action](https://fluffy.itch.io/novembeat-2021)!
 
@@ -17,16 +15,16 @@ pyBlamscamp is a standalone program that automatically encodes an album of songs
 
 To use it, you'll need to install LAME, oggenc, and FLAC; on macOS you can install these via [homebrew](https://brew.sh/), on Linux you can use your system's package manager, and on Windows you're on your own.
 
-You'll also need to install [Python](https://python.org), after which you can install pyBlamscamp with:
+You'll also need to install [Python](https://python.org), after which you can install Bandcrash with:
 
 ```
-pip install blamscamp
+pip install bandcrash
 ```
 
-`blamscamp --help` will provide a lot more detailed information. For the most part you should be able to just do:
+`bandcrash --help` will provide a lot more detailed information. For the most part you should be able to just do:
 
 ```
-blamscamp input_dir output_dir
+bandcrash input_dir output_dir
 ```
 
 and the rest will Just Work™.
@@ -62,7 +60,7 @@ Make a directory with all of your source audio files and artwork and so on. Crea
 You can also automatically generate a stub `album.json` file with:
 
 ```
-blamscamp --init input_dir output_dir
+bandcrash --init input_dir output_dir
 ```
 
 which will try to guess the track order and titles from the audio files in `input_dir`.
@@ -91,7 +89,7 @@ And each track contains (all optional except `filename`):
 * `preview`: A boolen for whether to generate a preview for the web player; defaults to `true`
 * `about`: Detailed commentary about the track
 
-See the [sample album JSON file](https://github.com/fluffy-critter/pyBlamscamp/blob/main/tests/album/album.json) for a rough example.
+See the [sample album JSON file](https://github.com/fluffy-critter/Bandcrash/blob/main/tests/album/album.json) for a rough example.
 
 ## Publishing to Itch
 
@@ -101,10 +99,10 @@ Here's the process for publishing an album to [itch.io](https://itch.io):
 1. [Create a new project](https://itch.io/game/new)
 2. Set it as a "soundtrack," with the kind of project being "HTML"
 3. Set your pricing, add preview artwork, etc., and save. Don't do any uploading from this interface.
-4. Run `blamscamp` with a `-b user/project` flag; for example:
+4. Run `bandcrash` with a `-b user/project` flag; for example:
 
     ```sh
-    blamscamp novembeat-2021/wav novembeat-2021/out -b fluffy/novembeat-2021
+    bandcrash novembeat-2021/wav novembeat-2021/out -b fluffy/novembeat-2021
     ```
 5. Wait a moment for itch to finish processing; you can use `butler status user/project` (e.g. `butler status fluffy/novembeat-2021`)
 6. Reload your project edit page; you should now have a few targets, such as `preview`, `mp3`, etc.
@@ -147,16 +145,13 @@ This will allow you to link to the page from many social networks (including Fac
 
 Pull requests are welcome! But please note the following:
 
-The generated blamscamp player must not receive any added dependencies. The generator must stay as a single, self-contained file that is as small as reasonably possible. The point is for the generated file to be lightweight. Stick to Vanilla JS.
+The generated web player must not receive any added dependencies. The generator must stay as a single, self-contained file that is as small as reasonably possible. The point is for the generated file to be lightweight. Stick to Vanilla JS.
 
 ### Roadmap
 
-See the [github issues](https://github.com/fluffy-critter/pyBlamscamp/issues) for details, but roughly:
+See the [github issues](https://github.com/fluffy-critter/bandcrash/issues) for details, but roughly:
 
 * Local GUI and/or web UI to make setting up the `album.json` easier (and easier installation, especially on Windows!)
 * Improved player
 * Easy embedding into  websites
 
-## License
-
-This software is public domain.
