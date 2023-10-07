@@ -518,10 +518,10 @@ def process(options, album, pool, futures):
 
     Each format has the following phases:
 
-    1. encode-{format}: Encodes and tags the output files
-    2. clean-{format}: Cleans up the directory; depends on encode-{format}
-    3. butler: Pushes the build to itch.io via the butler tool
-        (depends on clean-{format})
+    1. encode: Encodes and tags the output files
+    2. build: Builds any extra files (e.g. the web player); depends on encode
+    2. clean: Cleans up the directory; depends and build
+    3. butler: Pushes the build to itch.io via the butler tool; depends on clean
 
     """
 
@@ -542,6 +542,11 @@ def process(options, album, pool, futures):
     # this populates encode-XXX futures
     encode_tracks(options, album, protections, pool, futures)
 
+    # make build block on encode for all targets
+    for target in formats:
+        futures[f'build-{format}'].append(pool.submit(wait_futures,
+            futures[f'encode-{format}']))
+
     if options.do_preview:
         futures['build-preview'].append(pool.submit(make_web_preview,
                                                     options.input_dir,
@@ -550,16 +555,16 @@ def process(options, album, pool, futures):
                                                     album, protections['preview'],
                                                     futures['encode-preview']))
 
+    # make clean block on build for all targets
+    for target in formats:
+        futures[f'clean-{target}'].append(pool.submit(
+            wait_futures, futures[f'build-{target}']))
+
     if options.clean_extra:
         for target in formats:
             futures[f'clean-{target}'].append(pool.submit(
                 clean_subdir, os.path.join(options.output_dir, target),
-                protections[target], futures[f'encode-{target}'] + futures[f'build-{target}']))
-    else:
-        # with no clean phase we need to make a fake one that waits for encoding to complete
-        for target in formats:
-            futures[f'clean-{target}'].append(pool.submit(
-                concurrent.futures.wait, futures[f'encode-{target}'] + futures[f'build-{target}']))
+                protections[target], futures[f'build-{target}']))
 
     if options.butler_target:
         for target in formats:
