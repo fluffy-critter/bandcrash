@@ -545,7 +545,7 @@ def process(options, album, pool, futures):
     # make build block on encode for all targets
     for target in formats:
         futures[f'build-{format}'].append(pool.submit(wait_futures,
-            futures[f'encode-{format}']))
+                                                      futures[f'encode-{format}']))
 
     if options.do_preview:
         futures['build-preview'].append(pool.submit(make_web_preview,
