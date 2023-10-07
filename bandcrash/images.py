@@ -3,11 +3,11 @@
 import functools
 import io
 import os.path
-import threading
 
 import PIL.Image
 
 from .util import slugify_filename
+
 
 def load_image(in_path: str) -> PIL.Image:
     """ Load an image into memory, pooling it """
