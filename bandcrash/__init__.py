@@ -103,6 +103,12 @@ def parse_args(post_init, args=None):
     return parser.parse_args(args)
 
 
+def wait_futures(futures):
+    """ Waits for some futures to complete. If any exceptions happen, they propagate up. """
+    for task in concurrent.futures.as_completed(futures):
+        task.result()
+
+
 def run_encoder(outfile, args):
     """ Run an encoder; if the encode process fails, delete the file
 
@@ -135,13 +141,17 @@ def generate_id3_apic(album, track, size):
         (track, id3.PictureType.OTHER, 'Song Cover')
     ):
         if 'artwork_path' in container:
-            img_data = images.generate_blob(container['artwork_path'],
-                                            size=size, ext='jpeg')
-            art_tags.append(id3.APIC(id3.Encoding.UTF8,
-                                     'image/jpeg',
-                                     picture_type,
-                                     desc,
-                                     img_data))
+            try:
+                img_data = images.generate_blob(container['artwork_path'],
+                                                size=size, ext='jpeg')
+                art_tags.append(id3.APIC(id3.Encoding.UTF8,
+                                         'image/jpeg',
+                                         picture_type,
+                                         desc,
+                                         img_data))
+            except Exception:  # pylint:disable=broad-exception-caught
+                LOGGER.exception(
+                    "Got an error converting image %s", container['artwork_path'])
     return art_tags
 
 
@@ -226,14 +236,15 @@ def tag_vorbis(tags, idx, album, track):
 def get_flac_picture(artwork_path, size):
     """ Generate a FLAC picture frame """
     from mutagen import flac, id3
-    img = images.generate_image(artwork_path, size)
+    lock, img = images.generate_image(artwork_path, size)
 
-    pic = flac.Picture()
-    pic.type = id3.PictureType.COVER_FRONT
-    pic.width = img.width
-    pic.height = img.height
-    pic.mime = "image/jpeg"
-    pic.data = images.generate_blob(artwork_path, size, ext='jpeg')
+    with lock:
+        pic = flac.Picture()
+        pic.type = id3.PictureType.COVER_FRONT
+        pic.width = img.width
+        pic.height = img.height
+        pic.mime = "image/jpeg"
+        pic.data = images.generate_blob(artwork_path, size, ext='jpeg')
 
     return pic
 
@@ -280,7 +291,7 @@ def encode_flac(in_path, out_path, idx, album, track, encode_args, cover_art):
 def make_web_preview(input_dir, output_dir, album, protections, futures):
     """ Generate the embedded preview player """
     LOGGER.info("Preview: Waiting for %s (%d tasks)", output_dir, len(futures))
-    concurrent.futures.wait(futures)
+    wait_futures(futures)
     LOGGER.info("Preview: Building player in %s", output_dir)
 
     @functools.lru_cache()
@@ -292,19 +303,24 @@ def make_web_preview(input_dir, output_dir, album, protections, futures):
 
         :returns: tuple of the 1x and 2x renditions of the artwork
         """
+        LOGGER.debug("generating preview art for %s", in_path)
         return (images.generate_rendition(in_path, output_dir, 150),
                 images.generate_rendition(in_path, output_dir, 300))
 
     if 'artwork' in album:
+        LOGGER.debug("album art")
         album['artwork_preview'] = gen_art_preview(
             os.path.join(input_dir, album['artwork']))
-        protections.add(album['artwork_preview'])
+        protections |= set(album['artwork_preview'])
+        LOGGER.debug("added preview protections %s", album['artwork_preview'])
 
     for track in album['tracks']:
         if 'artwork' in track:
             track['artwork_preview'] = gen_art_preview(
                 os.path.join(input_dir, track['artwork']))
             protections.add(track['artwork_preview'])
+            LOGGER.debug("added preview protections %s",
+                         track['artwork_preview'])
 
     env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(os.path.join(
@@ -313,11 +329,13 @@ def make_web_preview(input_dir, output_dir, album, protections, futures):
     for tmpl in ('index.html', 'player.js', 'player.css'):
         template = env.get_template(tmpl)
         with open(os.path.join(output_dir, tmpl), 'w', encoding='utf8') as outfile:
+            LOGGER.debug("generating %s", tmpl)
             outfile.write(template.render(
                 album=album, __version__=__version__))
             protections.add(tmpl)
 
-    LOGGER.info("Finished generating web preview at %s", output_dir)
+    LOGGER.info("Preview: Finished generating web preview at %s; protections=%s",
+                output_dir, protections)
 
 
 def populate_json_file(input_dir: str, json_path: str):
@@ -406,7 +424,7 @@ def populate_json_file(input_dir: str, json_path: str):
 def clean_subdir(path: str, allowed: typing.Set[str], futures):
     """ Clean up a subdirectory of extraneous files """
     LOGGER.info("Cleanup: Waiting for %s (%d tasks)", path, len(futures))
-    concurrent.futures.wait(futures)
+    wait_futures(futures)
     LOGGER.info("Cleaning up directory %s", path)
 
     LOGGER.debug("Allowed in %s: %s", path, allowed)
@@ -422,7 +440,7 @@ def clean_subdir(path: str, allowed: typing.Set[str], futures):
 def submit_butler(output_dir, channel, futures):
     """ Submit the directory to itch.io via butler """
     LOGGER.info("Butler: Waiting for %s (%d tasks)", output_dir, len(futures))
-    concurrent.futures.wait(futures)
+    wait_futures(futures)
 
     LOGGER.info("Butler: pushing '%s' to channel '%s'", output_dir, channel)
     subprocess.run(['butler', 'push', output_dir, channel], check=True)
@@ -501,10 +519,9 @@ def process(options, album, pool, futures):
     Each format has the following phases:
 
     1. encode-{format}: Encodes and tags the output files
-    2. build-{format}: Cleans up the directory and generates any additional inclusions
-        (depends on encode-{format}); this phase may be empty for some formats
+    2. clean-{format}: Cleans up the directory; depends on encode-{format}
     3. butler: Pushes the build to itch.io via the butler tool
-        (depends on both encode-{format} and build-{format})
+        (depends on clean-{format})
 
     """
 
@@ -522,6 +539,7 @@ def process(options, album, pool, futures):
         album['artwork_path'] = os.path.join(
             options.input_dir, album['artwork'])
 
+    # this populates encode-XXX futures
     encode_tracks(options, album, protections, pool, futures)
 
     if options.do_preview:
@@ -534,9 +552,14 @@ def process(options, album, pool, futures):
 
     if options.clean_extra:
         for target in formats:
-            futures[f'build-{target}'].append(pool.submit(
+            futures[f'clean-{target}'].append(pool.submit(
                 clean_subdir, os.path.join(options.output_dir, target),
-                protections[target], futures[f'encode-{target}']))
+                protections[target], futures[f'encode-{target}'] + futures[f'build-{target}']))
+    else:
+        # with no clean phase we need to make a fake one that waits for encoding to complete
+        for target in formats:
+            futures[f'clean-{target}'].append(pool.submit(
+                concurrent.futures.wait, futures[f'encode-{target}'] + futures[f'build-{target}']))
 
     if options.butler_target:
         for target in formats:
@@ -545,4 +568,4 @@ def process(options, album, pool, futures):
                 submit_butler,
                 os.path.join(options.output_dir, target),
                 f'{options.butler_target}:{channel}',
-                futures[f'encode-{target}'] + futures[f'build-{target}']))
+                futures[f'clean-{target}']))

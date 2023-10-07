@@ -40,12 +40,17 @@ def main(args=None):
 
     process(options, album, pool, futures)
 
-    remaining_tasks = [f for f in itertools.chain(
-        *futures.values()) if not f.done()]
-    if remaining_tasks:
-        LOGGER.info("Waiting for all tasks to complete... (%d pending)",
-                    len(remaining_tasks))
-        concurrent.futures.wait(remaining_tasks)
+    all_tasks = list(itertools.chain(*futures.values()))
+    remaining_tasks = [f for f in all_tasks if not f.done()]
+    LOGGER.info("Waiting for all tasks to complete... (%d/%d pending)",
+                len(remaining_tasks), len(all_tasks))
+
+    for task in concurrent.futures.as_completed(all_tasks):
+        try:
+            task.result()
+        except Exception:  # pylint:disable=broad-exception-caught
+            LOGGER.exception("Background task generated an exception")
+
     LOGGER.info("Done")
 
 

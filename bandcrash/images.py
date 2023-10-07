@@ -3,6 +3,8 @@
 import functools
 import io
 import os.path
+import threading
+import typing
 
 import PIL.Image
 
@@ -10,26 +12,27 @@ from .util import slugify_filename
 
 
 @functools.lru_cache()
-def load_image(in_path: str) -> PIL.Image:
+def load_image(in_path: str) -> typing.Tuple[threading.Lock, PIL.Image]:
     """ Load an image into memory, pooling it """
-    return PIL.Image.open(in_path)
+    return threading.Lock(), fix_orientation(PIL.Image.open(in_path))
 
 
 @functools.lru_cache()
-def generate_image(in_path: str, size: int) -> PIL.Image:
+def generate_image(in_path: str, size: int) -> typing.Tuple[threading.Lock, PIL.Image]:
     """ Given an image path, generate a rendition that fits within the size constraint
 
     :param str in_path: Path to the file
     :param int size: Maximum size (both width and height)
     """
-    image = load_image(in_path)
-    out_w = int(min(image.width*size/image.height, size))
-    out_h = int(min(image.height*size/image.width, size))
-    if out_w > image.width or out_h > image.height:
-        out_w = image.width
-        out_h = image.height
+    lock, image = load_image(in_path)
+    with lock:
+        out_w = int(min(image.width*size/image.height, size))
+        out_h = int(min(image.height*size/image.width, size))
+        if out_w > image.width or out_h > image.height:
+            out_w = image.width
+            out_h = image.height
 
-    return image.resize(size=(out_w, out_h), resample=PIL.Image.Resampling.LANCZOS)
+        return lock, image.resize(size=(out_w, out_h), resample=PIL.Image.Resampling.LANCZOS)
 
 
 @functools.lru_cache()
@@ -43,10 +46,11 @@ def generate_rendition(in_path: str, out_dir: str, size: int) -> str:
     :returns: a file path
     """
 
-    image = generate_image(in_path, size)
+    lock, image = generate_image(in_path, size)
     basename, _ = os.path.splitext(os.path.basename(in_path))
     out_file = slugify_filename(f'{basename}.{size}.jpg')
-    image.convert('RGB').save(os.path.join(out_dir, out_file))
+    with lock:
+        image.convert('RGB').save(os.path.join(out_dir, out_file))
 
     return out_file
 
@@ -62,7 +66,9 @@ def generate_blob(in_path: str, size: int, ext: str = "jpeg") -> bytes:
     :returns: In-memory compressed file
     """
     buffer = io.BytesIO()
-    generate_image(in_path, size).convert('RGB').save(buffer, format=ext)
+    lock, image = generate_image(in_path, size)
+    with lock:
+        image.convert('RGB').save(buffer, format=ext)
     return buffer.getvalue()
 
 
