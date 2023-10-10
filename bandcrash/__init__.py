@@ -428,6 +428,16 @@ def encode_tracks(options, album, protections, pool, futures):
                 idx, album, track, options.flac_encoder_args, cover_art=1500))
 
 
+def make_zipfile(input_dir, output_file, futures):
+    """ Make a .zip archive for manual uploading """
+    LOGGER.info("Zipfile: Waiting for %s (%d tasks)",
+                input_dir, len(futures))
+    wait_futures(futures)
+
+    LOGGER.info("Building %s from directory %s", output_file, input_dir)
+    shutil.make_archive(output_file, 'zip', input_dir)
+
+
 def process(options, album, pool, futures):
     """
     Process the album given the parsed options and the loaded album data
@@ -506,3 +516,18 @@ def process(options, album, pool, futures):
                 os.path.join(options.output_dir, target),
                 f'{options.butler_target}:{channel}',
                 futures[f'clean-{target}']))
+
+    if options.do_zip:
+        filename_parts = [album.get(field)
+                          for field in ('artist', 'title')
+                          if album.get(field)]
+        for target in formats:
+            fname = os.path.join(options.output_dir,
+                                 util.slugify_filename(
+                                     ' - '.join([*filename_parts, target])))
+            futures['zip'].append(pool.submit(
+                make_zipfile,
+                os.path.join(options.output_dir, target),
+                fname,
+                futures[f'clean-{target}'])
+            )
