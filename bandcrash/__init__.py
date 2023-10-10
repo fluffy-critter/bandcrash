@@ -22,87 +22,6 @@ from . import __version__, images, util
 LOGGER = logging.getLogger(__name__)
 
 
-def check_executable(name):
-    """ Check to see if an executable is available """
-    try:
-        subprocess.run([name], check=False,
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return True
-    except FileNotFoundError:
-        LOGGER.warning("Warning: encoder binary %s not found", name)
-        return False
-
-
-def parse_args(post_init, args=None):
-    """ Parse the command line arguments
-
-    :param bool post_init: Whether this is after --init has been evaluated
-    :param list args: Replace os.args (for GUIs and tests)
-     """
-    parser = argparse.ArgumentParser(
-        description="Generate purchasable albums for independent storefronts")
-
-    parser.add_argument("-v", "--verbosity", action="count",
-                        help="increase output verbosity",
-                        default=0)
-
-    parser.add_argument('--version', action='version',
-                        version="%(prog)s " + __version__.__version__)
-
-    parser.add_argument('--init', action='store_true',
-                        help="Attempt to populate the JSON file automatically")
-
-    parser.add_argument('input_dir', type=str,
-                        help="Directory with the source files")
-    parser.add_argument('output_dir', type=str, nargs=None if post_init else '?',
-                        help="Directory to store the output files into")
-
-    parser.add_argument('--json', '-j', type=str,
-                        help="Name of the album JSON file, relative to input_dir",
-                        default='album.json')
-
-    parser.add_argument('--num-threads', '-t', type=int,
-                        dest='num_threads',
-                        help="Maximum number of concurrent threads",
-                        default=os.cpu_count())
-
-    def add_encoder(name, executable, info, args):
-        """ Add a feature group to the CLI """
-        feature = parser.add_mutually_exclusive_group(required=False)
-        fname = f'do_{name}'
-        feature.add_argument(f'--{name}', dest=fname, action='store_true',
-                             help=f"Generate {info}")
-        feature.add_argument(f'--no-{name}', dest=fname, action='store_false',
-                             help=f"Don't generate {info}")
-        feature.set_defaults(**{fname: check_executable(executable)})
-
-        parser.add_argument(f'--{name}-encoder-args', type=str,
-                            help=f"Arguments to pass to the {info} encoder",
-                            default=args)
-
-    add_encoder('preview', 'lame', 'web preview', '-b 32 -V 5 -q 5 -m j')
-    add_encoder('mp3', 'lame', 'mp3 album', '-V 0 -q 0 -m j')
-    add_encoder('ogg', 'oggenc', 'ogg album', '')
-    add_encoder('flac', 'flac', 'flac album', '')
-
-    feature = parser.add_mutually_exclusive_group(required=False)
-    feature.add_argument('--cleanup', dest='clean_extra', action='store_true',
-                         help="Clean up extra files in the destination directory")
-    feature.add_argument('--no-cleanup', dest='clean_extra', action='store_false',
-                         help="Keep stale files")
-    feature.set_defaults(clean_extra=True)
-
-    parser.add_argument('--butler-target', '-b', type=str,
-                        help="Butler push target prefix",
-                        default='')
-
-    parser.add_argument('--channel-prefix', '-p', type=str,
-                        help="Prefix for the Butler channel name",
-                        default='')
-
-    return parser.parse_args(args)
-
-
 def wait_futures(futures):
     """ Waits for some futures to complete. If any exceptions happen, they propagate up. """
     for task in concurrent.futures.as_completed(futures):
@@ -155,7 +74,7 @@ def generate_id3_apic(album, track, size):
     return art_tags
 
 
-def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None):
+def encode_mp3(options, in_path, out_path, idx, album, track, encode_args, cover_art=None):
     """ Encode a track as mp3
 
     :param str in_path: Input file path
@@ -169,7 +88,7 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
     from mutagen import id3
 
     if util.is_newer(in_path, out_path):
-        run_encoder(out_path, ['lame', *encode_args.split(), '--nohist',
+        run_encoder(out_path, [options.lame_path, *encode_args.split(), '--nohist',
                                in_path, out_path])
 
     try:
@@ -236,25 +155,24 @@ def tag_vorbis(tags, idx, album, track):
 def get_flac_picture(artwork_path, size):
     """ Generate a FLAC picture frame """
     from mutagen import flac, id3
-    lock, img = images.generate_image(artwork_path, size)
+    img = images.generate_image(artwork_path, size)
 
-    with lock:
-        pic = flac.Picture()
-        pic.type = id3.PictureType.COVER_FRONT
-        pic.width = img.width
-        pic.height = img.height
-        pic.mime = "image/jpeg"
-        pic.data = images.generate_blob(artwork_path, size, ext='jpeg')
+    pic = flac.Picture()
+    pic.type = id3.PictureType.COVER_FRONT
+    pic.width = img.width
+    pic.height = img.height
+    pic.mime = "image/jpeg"
+    pic.data = images.generate_blob(artwork_path, size, ext='jpeg')
 
     return pic
 
 
-def encode_ogg(in_path, out_path, idx, album, track, encode_args, cover_art):
+def encode_ogg(options, in_path, out_path, idx, album, track, encode_args, cover_art):
     """ Encode a track as ogg vorbis """
     from mutagen import oggvorbis
 
     if util.is_newer(in_path, out_path):
-        run_encoder(out_path, ['oggenc', *encode_args.split(),
+        run_encoder(out_path, [options.occenc_path, *encode_args.split(),
                                in_path, '-o', out_path])
 
     tags = oggvorbis.OggVorbis(out_path)
@@ -270,12 +188,12 @@ def encode_ogg(in_path, out_path, idx, album, track, encode_args, cover_art):
     LOGGER.info("Finished writing %s", out_path)
 
 
-def encode_flac(in_path, out_path, idx, album, track, encode_args, cover_art):
+def encode_flac(options, in_path, out_path, idx, album, track, encode_args, cover_art):
     """ Encode a track as ogg vorbis """
     from mutagen import flac
 
     if util.is_newer(in_path, out_path):
-        run_encoder(out_path, ['flac', *encode_args.split(),
+        run_encoder(out_path, [options.flac_path, *encode_args.split(),
                                in_path, '-f', '-o', out_path])
 
     tags = flac.FLAC(out_path)
@@ -479,6 +397,7 @@ def encode_tracks(options, album, protections, pool, futures):
             track['preview_mp3'] = f'{base_filename}.mp3'
             futures['encode-preview'].append(pool.submit(
                 encode_mp3,
+                options,
                 input_filename,
                 out_path('preview', 'mp3'),
                 idx, album, track, options.preview_encoder_args,
@@ -487,6 +406,7 @@ def encode_tracks(options, album, protections, pool, futures):
         if options.do_mp3:
             futures['encode-mp3'].append(pool.submit(
                 encode_mp3,
+                options,
                 input_filename,
                 out_path('mp3'),
                 idx, album, track, options.mp3_encoder_args, cover_art=1500))
@@ -494,6 +414,7 @@ def encode_tracks(options, album, protections, pool, futures):
         if options.do_ogg:
             futures['encode-ogg'].append(pool.submit(
                 encode_ogg,
+                options,
                 input_filename,
                 out_path('ogg'),
                 idx, album, track, options.ogg_encoder_args, cover_art=1500))
@@ -501,6 +422,7 @@ def encode_tracks(options, album, protections, pool, futures):
         if options.do_flac:
             futures['encode-flac'].append(pool.submit(
                 encode_flac,
+                options,
                 input_filename,
                 out_path('flac'),
                 idx, album, track, options.flac_encoder_args, cover_art=1500))
@@ -526,11 +448,21 @@ def process(options, album, pool, futures):
     """
 
     formats = set()
-    for subdir in ('preview', 'mp3', 'ogg', 'flac'):
-        if getattr(options, f'do_{subdir}'):
-            formats.add(subdir)
-            os.makedirs(os.path.join(
-                options.output_dir, subdir), exist_ok=True)
+    for target, tool in (('preview', 'lame'),
+                         ('mp3', 'lame'),
+                         ('ogg', 'oggenc'),
+                         ('flac', 'flac')):
+        if getattr(options, f'do_{target}'):
+            if shutil.which(getattr(options, f'{tool}_path')):
+                formats.add(target)
+                os.makedirs(os.path.join(
+                    options.output_dir, target), exist_ok=True)
+            else:
+                LOGGER.warning(
+                    "Couldn't find tool '%s'; disabling %s build", tool, target)
+
+    if not formats:
+        raise RuntimeError("No targets specified and nothing to do")
 
     protections: typing.Dict[str, typing.Set[str]
                              ] = collections.defaultdict(set)
