@@ -21,11 +21,11 @@ test: setup
 
 .PHONY: pylint
 pylint:
-	poetry run pylint bandcrash
+	poetry run pylint bandcrash --extension-pkg-whitelist=wx
 
 .PHONY: mypy
 mypy:
-	poetry run mypy -p bandcrash --ignore-missing-imports
+	poetry run mypy -p bandcrash --ignore-missing-imports --check-untyped-defs
 
 .PHONY: preflight
 preflight:
@@ -63,3 +63,9 @@ clean:
 .PHONY: upload
 upload: clean test build
 	poetry publish
+
+.PHONY: app
+app: setup format pylint mypy
+	poetry run pyInstaller Bandcrash.spec -y
+
+
