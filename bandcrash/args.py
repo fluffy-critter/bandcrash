@@ -43,7 +43,8 @@ def get_parser():
 
     for tool in ('lame', 'oggenc', 'flac', 'butler'):
         parser.add_argument(f'--{tool}-path', type=str,
-                            help=f"Full path to the {tool} binary", default=shutil.which(tool) or tool)
+                            help=f"Full path to the {tool} binary",
+                            default=shutil.which(tool) or tool)
 
     def add_encoder(name, info, args):
         """ Add a feature group to the CLI """
@@ -63,6 +64,13 @@ def get_parser():
     add_encoder('mp3', 'mp3 album', '-V 0 -q 0 -m j')
     add_encoder('ogg', 'ogg album', '')
     add_encoder('flac', 'flac album', '')
+
+    feature = parser.add_mutually_exclusive_group(required=False)
+    feature.add_argument('--zip', dest='do_zip', action='store_true',
+                         help="Generate .zip archives")
+    feature.add_argument('--no-zip', dest='do_zip', action='store_false',
+                         help="Don't generate a .zip archive")
+    feature.set_defaults(do_zip=True)
 
     feature = parser.add_mutually_exclusive_group(required=False)
     feature.add_argument('--cleanup', dest='clean_extra', action='store_true',
