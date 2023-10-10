@@ -456,6 +456,7 @@ def process(options, album, pool, futures):
     3. butler: Pushes the build to itch.io via the butler tool; depends on clean
 
     """
+    # pylint:disable=too-many-branches
 
     formats = set()
     for target, tool in (('preview', 'lame'),
