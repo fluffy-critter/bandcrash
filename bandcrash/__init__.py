@@ -328,10 +328,6 @@ def populate_json_file(input_dir: str, json_path: str):
                     name_heuristic = True
             if name_heuristic:
                 album['artwork'] = art_file
-                art.remove(art_file)
-                break
-    if 'artwork' not in album and len(art) == 1:
-        (album['artwork'],) = art
 
     with open(json_path, 'w', encoding='utf8') as output:
         json.dump(album, output, indent=4)

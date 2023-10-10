@@ -6,6 +6,7 @@ import itertools
 import json
 import logging
 import os
+import typing
 
 from . import args, populate_json_file, process
 
@@ -39,7 +40,8 @@ def main():
     pool = concurrent.futures.ThreadPoolExecutor(
         max_workers=options.num_threads)
 
-    futures = collections.defaultdict(list)
+    futures: typing.Dict[str,
+                         typing.List[concurrent.futures.Future]] = collections.defaultdict(list)
 
     process(options, album, pool, futures)
 
