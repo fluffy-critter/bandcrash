@@ -3,24 +3,35 @@
 import argparse
 import os
 import shutil
+import typing
 
 from . import __version__
 
 
-def get_parser():
-    """ Parse the command line arguments
+def config_parser(parser: typing.Optional[argparse.ArgumentParser] = None):
+    """ Parse command line arguments for the encoding process """
 
-    :param list args: Replace os.args (for GUIs and tests)
-     """
-    parser = argparse.ArgumentParser(
-        description="Generate purchasable albums for independent storefronts")
+    if parser is None:
+        parser = argparse.ArgumentParser("Config settings")
 
-    parser.add_argument("-v", "--verbosity", action="count",
-                        help="increase output verbosity",
-                        default=0)
+    parser.add_argument('--num-threads', '-t', type=int,
+                        dest='num_threads',
+                        help="Maximum number of concurrent threads",
+                        default=os.cpu_count())
 
-    parser.add_argument('--version', action='version',
-                        version="%(prog)s " + __version__.__version__)
+    for tool in ('lame', 'oggenc', 'flac', 'butler'):
+        parser.add_argument(f'--{tool}-path', type=str,
+                            help=f"Full path to the {tool} binary",
+                            default=shutil.which(tool) or tool)
+
+    return parser
+
+
+def album_parser(parser: typing.Optional[argparse.ArgumentParser] = None):
+    """ Parse command line arguments for the album """
+
+    if parser is None:
+        parser = argparse.ArgumentParser("Album settings")
 
     parser.add_argument('--init', action='store_true',
                         help="Attempt to populate the JSON file automatically")
@@ -35,16 +46,6 @@ def get_parser():
     parser.add_argument('--json', '-j', type=str,
                         help="Name of the album JSON file, relative to input_dir",
                         default='album.json')
-
-    parser.add_argument('--num-threads', '-t', type=int,
-                        dest='num_threads',
-                        help="Maximum number of concurrent threads",
-                        default=os.cpu_count())
-
-    for tool in ('lame', 'oggenc', 'flac', 'butler'):
-        parser.add_argument(f'--{tool}-path', type=str,
-                            help=f"Full path to the {tool} binary",
-                            default=shutil.which(tool) or tool)
 
     def add_encoder(name, info, args):
         """ Add a feature group to the CLI """
@@ -66,18 +67,18 @@ def get_parser():
     add_encoder('flac', 'flac album', '')
 
     feature = parser.add_mutually_exclusive_group(required=False)
-    feature.add_argument('--zip', dest='do_zip', action='store_true',
-                         help="Generate .zip archives")
-    feature.add_argument('--no-zip', dest='do_zip', action='store_false',
-                         help="Don't generate a .zip archive")
-    feature.set_defaults(do_zip=True)
-
-    feature = parser.add_mutually_exclusive_group(required=False)
     feature.add_argument('--cleanup', dest='clean_extra', action='store_true',
                          help="Clean up extra files in the destination directory")
     feature.add_argument('--no-cleanup', dest='clean_extra', action='store_false',
                          help="Keep stale files")
     feature.set_defaults(clean_extra=True)
+
+    feature = parser.add_mutually_exclusive_group(required=False)
+    feature.add_argument('--zip', dest='do_zip', action='store_true',
+                         help="Generate .zip archives")
+    feature.add_argument('--no-zip', dest='do_zip', action='store_false',
+                         help="Don't generate a .zip archive")
+    feature.set_defaults(do_zip=True)
 
     parser.add_argument('--butler-target', '-b', type=str,
                         help="Butler push target prefix",
@@ -86,6 +87,22 @@ def get_parser():
     parser.add_argument('--channel-prefix', '-p', type=str,
                         help="Prefix for the Butler channel name",
                         default='')
+
+
+def get_parser():
+    """ Top-level process parser """
+    parser = argparse.ArgumentParser(
+        description="Generate purchasable albums for independent storefronts")
+
+    parser.add_argument("-v", "--verbosity", action="count",
+                        help="increase output verbosity",
+                        default=0)
+
+    parser.add_argument('--version', action='version',
+                        version="%(prog)s " + __version__.__version__)
+
+    config_parser(parser)
+    album_parser(parser)
 
     return parser
 
