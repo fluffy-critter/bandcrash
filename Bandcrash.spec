@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['bandcrash/gui.py'],
+    ['bandcrash-gui.py'],
     pathex=[],
     binaries=[],
     datas=[],
