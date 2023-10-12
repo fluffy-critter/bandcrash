@@ -13,25 +13,69 @@ class AboutBox(wx.adv.AboutDialogInfo):
         super().__init__()
 
 
-class PreferencesDialog(wx.Dialog):
+class Preferences(wx.Dialog):
     """ preferences panel """
 
     def __init__(self, parent):
         wx.Dialog.__init__(self, parent, -1, "Preferences")
 
+    @staticmethod
+    def LoadConfig(reset=False):
+        """ Load or reset the application configuration """
+        cfg = wx.ConfigBase.Get()
+
+        defaults = vars(args.config_parser().parse_args())
+        for key, val in defaults.items():
+            if reset or not cfg.Exists(key):
+                if isinstance(val, str):
+                    cfg.Write(key, val)
+                elif isinstance(val, int):
+                    cfg.WriteInt(key, val)
+                elif isinstance(val, bool):
+                    cfg.WriteBool(key, val)
+                else:
+                    raise RuntimeError(
+                        "Got unexpected type %s for key %s", type(defaults[item]), item)
+
+        cfg.Flush()
+
+    @staticmethod
+    def ApplyConfig(options : argparse.Namespace):
+        """ Apply the application configuration to an option set """
+        cfg = wx.ConfigBase.Get()
+
+        # oh my god why is wxPython's config API so stupid
+        more, key, idx = cfg.GetFirstEntry()
+        while more:
+            if hasattr(options, key):
+                cfg_type = cfg.GetEntryType(key)
+                if cfg_type == wx.ConfigBase.EntryType.Type_String:
+                    setattr(options, key, cfg.Read(key))
+                elif cfg_type == wx.ConfigBase.EntryType.Type_Integer:
+                    setattr(options, key, cfg.ReadInt(key))
+                elif cfg_type == wx.ConfigBase.EntryType.Type_Boolean:
+                    setattr(options, key, cfg.ReadBool(key))
+                else:
+                    raise RuntimeError(
+                        "Got unexpected type %d for key %s", cfg_type, key)
+
+        for key in vars(config).keys():
+            if cfg.Exists(key):
+
+
 
 class AlbumEditor(wx.Frame):
     """ Album editor frame """
 
-    def __init__(self, parent, open_file = None):
+    def __init__(self, parent, open_file=None):
         wx.Frame.__init__(self, parent, -1, "New Album")
 
-        self.album = None # Currently open album specification
-        self.unsaved = False # Are there unsaved changes?
+        self.album = None  # Currently open album specification
+        self.unsaved = False  # Are there unsaved changes?
 
         self.SetupMenu()
 
-        # self.Bind(wx.EVT_MENU, self.open_preferences, id=wx.ID_PREFERENCES)
+        self.Bind(wx.EVT_MENU, self.OpenPreferences, id=wx.ID_PREFERENCES)
         self.Bind(wx.EVT_MENU, self.ShowAbout, id=wx.ID_ABOUT)
         self.Bind(wx.EVT_MENU, self.OpenDialog, id=wx.ID_OPEN)
 
@@ -42,14 +86,16 @@ class AlbumEditor(wx.Frame):
         menu.Append(wx.ID_NEW, "&New\tCtrl-N", "Create a new album")
         menu.Append(wx.ID_OPEN, "&Open...\tCtrl-O", "Open an existing album")
         menu.Append(wx.ID_SAVE, "&Save\tCtrl-S", "Save the current album")
-        menu.Append(wx.ID_SAVEAS, "Save &As...\tCtrl-Shift-S", "Save to a new filename")
+        menu.Append(wx.ID_SAVEAS, "Save &As...\tCtrl-Shift-S",
+                    "Save to a new filename")
         menu.Append(wx.ID_REVERT_TO_SAVED, "&Revert", "Undo all changes")
         menu.AppendSeparator()
         menu.Append(wx.ID_EXIT, "&Quit\tCtrl-Q", "Quit the app")
         menu_bar.Append(menu, "&File")
 
         menu = wx.Menu()
-        menu.Append(wx.ID_PREFERENCES, "&Preferences", "Open application preferences")
+        menu.Append(wx.ID_PREFERENCES, "&Preferences",
+                    "Open application preferences")
         menu_bar.Append(menu, "&Edit")
 
         menu = wx.Menu()
@@ -59,6 +105,11 @@ class AlbumEditor(wx.Frame):
         wx.MenuBar.MacSetCommonMenuBar(menu_bar)
         self.SetMenuBar(menu_bar)
 
+    def OpenPreferences(self, event):
+        """ Open the preferences dialog """
+        with Preferences(self) as dlg:
+            dlg.ShowModal()
+
     def OpenDialog(self, event):
         """ Open a file through a dialog """
 
@@ -67,7 +118,7 @@ class AlbumEditor(wx.Frame):
         info = wx.adv.AboutDialogInfo()
         info.SetName("Bandcrash")
         info.SetWebSite("https://github.com/fluffy-critter/bandcrash",
-            "Github Repository")
+                        "Github Repository")
         info.SetVersion(__version__.__version__)
         info.SetCopyright("© 2022—2023 j. \"fluffy\" shagam")
 
@@ -103,29 +154,12 @@ class BandcrashApp(wx.App):
         self.SetAppName("Bandcrash")
         self.SetVendorName("biz.beesbuzz.bandcrash")
 
-        self.InitConfig()
+        Preferences.LoadConfig()
 
         frame = AlbumEditor(None)
         frame.Show(True)
         self.SetTopWindow(frame)
         return True
-
-    def InitConfig(self):
-        """ Initialize the application configuration """
-        cfg = wx.ConfigBase.Get()
-        defaults = vars(args.parse_args())
-        for item in ('num_threads', 'lame_path', 'oggenc_path', 'flac_path',
-            'butler_path',
-            'preview_encoder_args', 'mp3_encoder_args', 'ogg_encoder_args', 'flac_encoder_args'):
-            if not cfg.Exists(item) and item in defaults:
-                if isinstance(defaults[item], str):
-                    cfg.Write(item, defaults[item])
-                elif isinstance(defaults[item], int):
-                    cfg.WriteInt(item, defaults[item])
-                else:
-                    raise RuntimeError("Got unexpected type %s for key %s", type(defaults[item]), item)
-
-        cfg.Flush()
 
 
 def main():
