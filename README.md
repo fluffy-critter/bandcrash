@@ -15,7 +15,9 @@ Bandcrash is a standalone program that automatically encodes an album of songs i
 
 To use it, you'll need to install LAME, oggenc, and FLAC; on macOS you can install these via [homebrew](https://brew.sh/), on Linux you can use your system's package manager, and on Windows you're on your own.
 
-You'll also need to install [Python](https://python.org), after which you can install Bandcrash with:
+### Command-line
+
+For the command-line version, the suggested approach is to install [Python](https://python.org), after which you can install Bandcrash with:
 
 ```
 pip install bandcrash
@@ -28,6 +30,16 @@ bandcrash input_dir output_dir
 ```
 
 and the rest will Just Work™.
+
+### GUI
+
+If you want to build the GUI locally, install [Python](https://python.org/), [poetry](https://python-poetry.org/), and `make` (from your favorite F/OSS package repository). After that you can run:
+
+```
+make app
+```
+
+after which the application will be built in the `dist/` directory.
 
 ## Building an album
 
