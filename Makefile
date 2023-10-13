@@ -2,7 +2,7 @@ all: setup version format mypy pylint
 
 .PHONY: setup
 setup:
-	poetry install
+	poetry install -E gui
 
 .PHONY: format
 format:

@@ -14,7 +14,7 @@ Pillow = "^10.0.1"
 awesome-slugify = "^1.6.5"
 Jinja2 = "^3.0.3"
 chardet = "^4.0.0"
-wxpython = "^4.2.1"
+pyside6 = {version = "^6.5.3", optional = true}
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.0.4"
@@ -25,12 +25,8 @@ types-python-slugify = "^8.0.0.3"
 types-chardet = "^5.0.4.6"
 pyinstaller = "^6.0.0"
 
-
-[tool.poetry.group.dev-win]
-optional=true
-
-[tool.poetry.group.dev-win.dependencies]
-py2exe = "^0.13.0.1"
+[tool.poetry.extras]
+gui = [ "pyside6" ]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
