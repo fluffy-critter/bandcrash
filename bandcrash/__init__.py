@@ -172,7 +172,7 @@ def encode_ogg(options, in_path, out_path, idx, album, track, encode_args, cover
     from mutagen import oggvorbis
 
     if util.is_newer(in_path, out_path):
-        run_encoder(out_path, [options.occenc_path, *encode_args.split(),
+        run_encoder(out_path, [options.oggenc_path, *encode_args.split(),
                                in_path, '-o', out_path])
 
     tags = oggvorbis.OggVorbis(out_path)
