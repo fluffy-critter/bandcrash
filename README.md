@@ -179,6 +179,14 @@ Back when this project started, it was named pyBlamscamp as the intention was to
 
 Currently the only connection between Bandcrash and blamscamp is that Bandcrash uses a highly-modified version of blamscamp's web player. They serve different goals.
 
+### Why run it locally instead of as a web app?
+
+You already have your large .wav files on your local hard drive. Your local drive is also a good place to keep your previous encoding results. Your local computer also has a lot more space available than a typical cloud server, doesn't have to juggle cloud storage credentials, doesn't have to worry about the security of the server running the encoder app, the cost of running servers or paying for cloud storage, and so on.
+
+Basically, it's easier for everyone.
+
+Sometimes local apps are just Better™.
+
 ## Credits
 
 * Main code: [@fluffy-critter](https://github.com/fluffy-critter)
