@@ -21,7 +21,7 @@ test: setup
 
 .PHONY: pylint
 pylint:
-	poetry run pylint bandcrash --extension-pkg-whitelist=wx
+	poetry run pylint bandcrash --extension-pkg-allow-list=PySide6
 
 .PHONY: mypy
 mypy:
