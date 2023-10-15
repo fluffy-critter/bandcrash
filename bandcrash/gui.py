@@ -26,6 +26,9 @@ class FileSelector(QtWidgets.QWidget):
         super().__init__()
 
         layout = QtWidgets.QHBoxLayout()
+        # layout.setSpacing(0)
+        layout.setContentsMargins(0,0,0,0)
+
         self.setLayout(layout)
 
         self.file_path = QtWidgets.QLineEdit()
@@ -59,7 +62,7 @@ class FileSelector(QtWidgets.QWidget):
 class TrackEditor(QtWidgets.QWidget):
     """ A track editor pane """
 
-    def __init__(self, album_editor, data: dict):
+    def __init__(self, album_editor):
         """ edit an individual track
 
         :param dict data: The metadata blob
@@ -68,71 +71,78 @@ class TrackEditor(QtWidgets.QWidget):
         self.setMinimumSize(400, 0)
 
         self.album_editor = album_editor
-        self.data = data
+        self.data : typing.Optional[typing.Dict[str, typing.Any]] = None
 
         layout = QtWidgets.QFormLayout(
             fieldGrowthPolicy=QtWidgets.QFormLayout.AllNonFixedFieldsGrow)
         self.setLayout(layout)
 
         self.filename = FileSelector()
+        self.group = QtWidgets.QLineEdit(placeholderText="Track grouping")
         self.title = QtWidgets.QLineEdit(placeholderText="Song title")
         self.genre = QtWidgets.QLineEdit()
         self.artist = QtWidgets.QLineEdit(
             placeholderText="Track-specific artist (leave blank if none)")
+        self.composer = QtWidgets.QLineEdit()
         self.cover_of = QtWidgets.QLineEdit(
             placeholderText="Original performing artist (leave blank if none)")
         self.artwork = FileSelector()
         self.lyrics = QtWidgets.QPlainTextEdit()
+        self.about = QtWidgets.QLineEdit()
 
         self.preview = QtWidgets.QCheckBox("Generate preview")
         self.hidden = QtWidgets.QCheckBox("Hidden track")
 
         layout.addRow("Audio file", self.filename)
         layout.addRow("Title", self.title)
-        layout.addRow("Genre", self.genre)
         layout.addRow("Track artist", self.artist)
-        layout.addRow("Original performer", self.cover_of)
+        layout.addRow("Cover of", self.cover_of)
         layout.addRow("Artwork", self.artwork)
         layout.addRow("Lyrics", self.lyrics)
+        layout.addRow("Genre", self.genre)
+        layout.addRow("Grouping", self.group)
+        layout.addRow("Track comment", self.about)
 
         player_options = QtWidgets.QHBoxLayout()
         player_options.addWidget(self.preview)
         player_options.addWidget(self.hidden)
         layout.addRow(player_options)
 
-        buttons = QtWidgets.QHBoxLayout()
+        self.reset(self.data)
 
-        apply_button = QtWidgets.QPushButton("Apply")
-        apply_button.clicked.connect(self.apply)
-        buttons.addWidget(apply_button)
+    def reset(self, data):
+        """ Reset to the specified backing data """
+        self.data = data
+        if self.data is None:
+            return
 
-        reset_button = QtWidgets.QPushButton("Reset")
-        reset_button.clicked.connect(self.reset)
-        buttons.addWidget(reset_button)
-
-        layout.addRow(buttons)
-
-        self.reset()
-
-    def reset(self):
-        """ Reset to the backing data """
         for key, widget in (
             ('filename', self.filename.file_path),
             ('title', self.title),
             ('genre', self.genre),
             ('artist', self.artist),
+            ('composer', self.composer),
             ('cover_of', self.cover_of),
             ('artwork', self.artwork.file_path),
+            ('group', self.group),
+            ('about', self.about),
         ):
             widget.setText(self.data.get(key, ''))
 
-        self.lyrics.document().setPlainText('\n'.join(self.data.get('lyrics', '')))
+        lyrics = self.data.get('lyrics', '')
+        if isinstance(lyrics, str):
+            self.lyrics.document().setPlainText(lyrics)
+        else:
+            self.lyrics.document().setPlainText('\n'.join(lyrics))
 
-        self.preview.setCheckState(self.data.get('preview', to_checkstate(True)))
-        self.hidden.setCheckState(self.data.get('hidden', to_checkstate(False)))
+        self.preview.setCheckState(to_checkstate(self.data.get('preview', True)))
+        self.hidden.setCheckState(to_checkstate(self.data.get('hidden', False)))
 
     def apply(self):
         """ Apply our data to the backing data """
+
+        if not self.data:
+            return
 
         relpath = FileSelector.make_relative(self.album_editor.filename)
 
@@ -149,18 +159,24 @@ class TrackEditor(QtWidgets.QWidget):
             ('title', self.title),
             ('genre', self.genre),
             ('artist', self.artist),
+            ('composer', self.composer),
             ('cover_of', self.cover_of),
+            ('group', self.group),
+            ('about', self.about),
         ):
             if value := widget.text():
                 self.data[key] = value
             elif key in self.data:
                 del self.data[key]
 
-        if value := self.lyrics.document().toPlainText():
-            lines = value.split('\n')
-            self.data['lyrics'] = lines if len(lines) != 1 else lines[0]
-        else:
-            del self.data['lyrics']
+        for key, widget in (
+            ('lyrics', self.lyrics),
+            ):
+            if value := widget.document().toPlainText():
+                lines = value.split('\n')
+                self.data[key] = lines if len(lines) != 1 else lines[0]
+            elif key in self.data:
+                del self.data[key]
 
         for key, widget, dfl in (('preview', self.preview, True),
                                  ('hidden', self.hidden, False)):
@@ -169,6 +185,63 @@ class TrackEditor(QtWidgets.QWidget):
                 self.data[key] = value
             elif key in self.data:
                 del self.data[key]
+
+class TrackListing(QtWidgets.QSplitter):
+    """ The track listing panel and editor """
+    def __init__(self, album_editor):
+        super().__init__()
+
+        self.data = album_editor.data['tracks']
+
+        self.track_listing = QtWidgets.QListWidget(self)
+        self.addWidget(self.track_listing)
+
+        self.track_editor = TrackEditor(album_editor)
+        scroller = QtWidgets.QScrollArea()
+        scroller.setMinimumSize(450, 0)
+        scroller.setWidget(self.track_editor)
+        scroller.setWidgetResizable(True)
+        # scroller.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        scroller.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+        self.addWidget(scroller)
+
+        self.track_listing.currentRowChanged.connect(self.set_row)
+
+        for widget in (self, self.track_listing):
+            policy = widget.sizePolicy()
+            policy.setVerticalPolicy(QtWidgets.QSizePolicy.Expanding)
+            widget.setSizePolicy(policy)
+
+        self.setSizes([1, 10])
+
+        self.reset()
+
+    def reset(self):
+        """ Reset to the backing storage """
+        current_row = self.track_listing.currentRow()
+        self.track_listing.clear()
+
+        for track in self.data:
+            parts = []
+            if 'filename' in track:
+                parts.append(track['filename'])
+            if 'title' in track:
+                parts.append(track['title'])
+
+            self.track_listing.addItem(': '.join(parts) if parts else '(unknown)')
+
+        if current_row < self.count():
+            self.track_listing.setCurrentRow(current_row)
+
+    def apply(self):
+        """ Save any currently-edited track """
+        self.track_editor.apply()
+
+    def set_row(self, row):
+        """ Set the editor row """
+        self.track_editor.apply()
+        self.track_editor.reset(self.data[row])
+
 
 
 class AlbumEditor(QtWidgets.QWidget):
@@ -199,23 +272,23 @@ class AlbumEditor(QtWidgets.QWidget):
         self.genre = QtWidgets.QLineEdit(
             placeholderText="Avant-Industrial Loungecore")
         self.artwork = FileSelector()
+        self.composer = QtWidgets.QLineEdit()
         # self.fg_color = ColorSelector("Foreground")
         # self.bg_color = ColorSelector("Background")
         # self.highlight_color = ColorSelector("Highlight")
 
         layout.addRow("Artist", self.artist)
         layout.addRow("Title", self.title)
+        layout.addRow("Composer", self.composer)
         layout.addRow("Year", self.year)
         layout.addRow("Genre", self.genre)
         layout.addRow("Artwork", self.artwork)
 
         # button hbox for colors
 
-        # TODO this needs to be a track list box on the left
-        for track in self.data['tracks']:
-            layout.addRow(track.get('title', 'no title'),
-                          TrackEditor(self, track))
-            break
+        self.track_listing = TrackListing(self)
+        layout.addRow("Audio Tracks", None)
+        layout.addRow(self.track_listing)
 
         buttons = QtWidgets.QHBoxLayout()
 
@@ -241,11 +314,14 @@ class AlbumEditor(QtWidgets.QWidget):
             ('title', self.title),
             ('genre', self.genre),
             ('artwork', self.artwork.file_path),
+            ('composer', self.composer),
         ):
             widget.setText(self.data.get(key, ''))
 
         if 'year' in self.data:
             self.year.setText(str(self.data['year']))
+
+        self.track_listing.reset()
 
     def apply(self):
         """ Apply edits to the saved data """
@@ -255,6 +331,7 @@ class AlbumEditor(QtWidgets.QWidget):
             ('title', self.title),
             ('genre', self.genre),
             ('artist', self.artist),
+            ('compsoer', self.composer),
         ):
             if value := widget.text():
                 self.data[key] = value
@@ -274,15 +351,17 @@ class AlbumEditor(QtWidgets.QWidget):
         elif 'year' in self.data:
             del self.data['year']
 
-        # TODO apply all track editors as well
+        self.track_listing.apply()
 
-        # with open(self.filename, 'w', encoding='utf8') as file:
-        #     json.dump(self.data, file, indent='   ')
+    def save(self):
+        """ Save the file to disk """
+        with open(self.filename, 'w', encoding='utf8') as file:
+            json.dump(self.data, indent=3)
 
     def encode_album(self):
         """ Run the encoder process """
         self.apply()
-        print(json.dumps(self.data, indent='   '))
+        # TODO run the actual encode of course
 
 
 def main():

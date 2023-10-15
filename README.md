@@ -82,6 +82,7 @@ Basically, the top-level album contains the following properties (all optional):
 * `artist`: The artist for the album as a whole
 * `title`: The album's title
 * `year`: The release year
+* `composer`: The album's composer
 * `artwork`: an image file to use for the album's cover art (relative or absolute paths okay)
 * `bg_color`, `fg_color`, `highlight_color`: The color theme for the player
 * `genre`: The default genre for all tracks
@@ -93,6 +94,7 @@ And each track contains (all optional except `filename`):
 * `group`: The title of the track's grouping (i.e. a work with multiple movements)
 * `title`: The title of the track
 * `artist`: The performing artist of this track
+* `composer`: The composer of this track
 * `cover_of`: The original artist that this track is a cover of, if any
 * `genre`: The genre of this track
 * `artwork`: Track-specific cover art
