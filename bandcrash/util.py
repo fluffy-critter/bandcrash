@@ -49,18 +49,26 @@ def read_lines(fname: str) -> typing.List[str]:
         with open(fname, 'r', encoding=encoding) as file:
             return [line.rstrip() for line in file]
 
+
 def make_absolute_path(base_file):
-    """ Returns a function to provide an absolute path for the specified filename based on a base path """
+    """
+    Returns a function to provide an absolute path for the specified
+    filename based on a base path
+    """
     if os.path.isdir(base_file):
         dirname = base_file
     else:
         dirname = os.path.dirname(base_file)
 
     return lambda path: (path if os.path.isabs(path)
-     else os.path.normpath(os.path.join(dirname, path)))
+                         else os.path.normpath(os.path.join(dirname, path)))
+
 
 def make_relative_path(base_file):
-    """ Returns a function to provide a path relative to the specified filename or directory """
+    """
+    Returns a function to provide a path relative to the specified filename
+    or directory
+    """
 
     if os.path.isdir(base_file):
         dirname = base_file
@@ -68,7 +76,7 @@ def make_relative_path(base_file):
         dirname = os.path.dirname(base_file)
 
     def normalize(path):
-        abspath = path if os.path.isabs(path) else os.path.normpath(os.path.join(dirname, path))
+        abspath = path if os.path.isabs(
+            path) else os.path.normpath(os.path.join(dirname, path))
         return os.path.relpath(abspath, dirname)
     return normalize
-

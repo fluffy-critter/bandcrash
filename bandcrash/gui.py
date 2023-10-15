@@ -9,7 +9,7 @@ import typing
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from . import __version__, args, util
+from . import __version__, util
 
 LOG_LEVELS = [logging.WARNING, logging.INFO, logging.DEBUG]
 LOGGER = logging.getLogger(__name__)
@@ -47,12 +47,14 @@ class FileSelector(QtWidgets.QWidget):
         (filename, _) = dialog.getOpenFileName(self)
         if filename:
             if self.album_editor:
-                filename = util.make_relative_path(self.album_editor.filename)(filename)
+                filename = util.make_relative_path(
+                    self.album_editor.filename)(filename)
             self.file_path.setText(filename)
 
 
 class TrackEditor(QtWidgets.QWidget):
     """ A track editor pane """
+    # pylint:disable=too-many-instance-attributes
 
     def __init__(self, album_editor):
         """ edit an individual track
@@ -63,7 +65,7 @@ class TrackEditor(QtWidgets.QWidget):
         self.setMinimumSize(400, 0)
 
         self.album_editor = album_editor
-        self.data: typing.Optional[typing.Dict[str, typing.Any]] = None
+        self.data = None
 
         layout = QtWidgets.QFormLayout(
             fieldGrowthPolicy=QtWidgets.QFormLayout.AllNonFixedFieldsGrow)
@@ -100,13 +102,14 @@ class TrackEditor(QtWidgets.QWidget):
         player_options.addWidget(self.hidden)
         layout.addRow(player_options)
 
-        self.reset(self.data)
-
     def reset(self, data):
         """ Reset to the specified backing data """
         self.data = data
         if self.data is None:
+            self.setEnabled(False)
             return
+
+        self.setEnabled(True)
 
         for key, widget in (
             ('filename', self.filename.file_path),
@@ -134,6 +137,7 @@ class TrackEditor(QtWidgets.QWidget):
 
     def apply(self):
         """ Apply our data to the backing data """
+        # pylint:disable=too-many-branches
 
         if not self.data:
             return
@@ -187,7 +191,7 @@ class TrackListing(QtWidgets.QSplitter):
     def __init__(self, album_editor):
         super().__init__()
 
-        self.data = album_editor.data['tracks']
+        self.data = None
 
         left_panel = QtWidgets.QVBoxLayout(self)
         left_panel.setSpacing(0)
@@ -235,7 +239,7 @@ class TrackListing(QtWidgets.QSplitter):
 
         self.setSizes([1, 10])
 
-        self.reset()
+        self.reset(album_editor.data['tracks'])
 
     @staticmethod
     def display_name(track):
@@ -248,15 +252,17 @@ class TrackListing(QtWidgets.QSplitter):
 
         return ': '.join(parts) if parts else '(unknown)'
 
-    def reset(self):
+    def reset(self, data):
         """ Reset to the backing storage """
+        self.data = data
+
         current_row = self.track_listing.currentRow()
         self.track_listing.clear()
 
         for track in self.data:
             self.track_listing.addItem(self.display_name(track))
 
-        if current_row < self.count():
+        if current_row < self.track_listing.count():
             self.track_listing.setCurrentRow(current_row)
 
     def apply(self):
@@ -288,10 +294,29 @@ class TrackListing(QtWidgets.QSplitter):
         self.apply()
 
     def move_up(self):
-        pass
+        """ Move the currently-selected track up in the track listing """
+        row = self.track_listing.currentRow()
+        if row > 0:
+            idx = row - 1
+            self.move_item(row, idx)
+            self.track_listing.setCurrentRow(idx)
 
     def move_down(self):
-        pass
+        """ Move the currently-selected track down in the track listing """
+        row = self.track_listing.currentRow()
+        if row < self.track_listing.count() - 1:
+            idx = row + 1
+            self.move_item(row, idx)
+            self.track_listing.setCurrentRow(idx)
+
+    def move_item(self, from_idx, to_idx):
+        """
+        Move the specified track from the given index to the specified one
+        """
+        self.data.insert(to_idx, self.data.pop(from_idx))
+
+        item = self.track_listing.takeItem(from_idx)
+        self.track_listing.insertItem(to_idx, item)
 
 
 def add_menu_item(menu, name, method, shortcut):
@@ -302,8 +327,10 @@ def add_menu_item(menu, name, method, shortcut):
         action.setShortcut(QtGui.QKeySequence(shortcut))
     return action
 
+
 class AlbumEditor(QtWidgets.QMainWindow):
     """ An album editor window """
+    # pylint:disable=too-many-instance-attributes
 
     def __init__(self, path: str):
         """ edit an album file
@@ -321,12 +348,14 @@ class AlbumEditor(QtWidgets.QMainWindow):
         add_menu_item(file_menu, "&Open...", self.file_open, "Ctrl+O")
         add_menu_item(file_menu, "&Save", self.save, "Ctrl+S")
         add_menu_item(file_menu, "Save &As...", self.save_as, "Ctrl+Shift+S")
+        add_menu_item(file_menu, "&Revert", self.revert, "Ctrl+Shift+R")
 
         self.filename = path
         self.data: typing.Dict[str, typing.Any] = {'tracks': []}
         try:
             self.reload(path)
-            self.data['tracks']
+            if 'tracks' not in self.data:
+                raise KeyError('tracks')
         except (json.decoder.JSONDecodeError, KeyError, TypeError):
             err = QtWidgets.QErrorMessage(self)
             err.showMessage("Invalid album JSON file")
@@ -414,7 +443,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
         if 'year' in self.data:
             self.year.setText(str(self.data['year']))
 
-        self.track_listing.reset()
+        self.track_listing.reset(self.data['tracks'])
 
     def apply(self):
         """ Apply edits to the saved data """
@@ -472,7 +501,8 @@ class AlbumEditor(QtWidgets.QMainWindow):
     def revert(self):
         """ Revert all changes """
         # TODO confirmation box
-        self.reload()
+        self.reload(self.filename)
+        self.reset()
 
     def encode_album(self):
         """ Run the encoder process """
@@ -542,7 +572,7 @@ def main():
         path, _ = QtWidgets.QFileDialog.getSaveFileName(
             caption="Select your album file",
             filter="Album files (*.json *.bcalbum)",
-            options=QtWidgets.QFileDialog.DontConfirmOverwrite | QtWidgets.QFileDialog.DontUseNativeDialog)
+            options=QtWidgets.QFileDialog.DontConfirmOverwrite)
         editor = AlbumEditor(path)
         editor.show()
 
