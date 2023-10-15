@@ -23,7 +23,7 @@ def to_checkstate(val):
 class FileSelector(QtWidgets.QWidget):
     """ A file selector textbox with ... button """
 
-    def __init__(self):
+    def __init__(self, album_editor=None):
         super().__init__()
 
         layout = QtWidgets.QHBoxLayout()
@@ -32,6 +32,7 @@ class FileSelector(QtWidgets.QWidget):
 
         self.setLayout(layout)
 
+        self.album_editor = album_editor
         self.file_path = QtWidgets.QLineEdit()
         self.button = QtWidgets.QPushButton("...")
 
@@ -45,6 +46,8 @@ class FileSelector(QtWidgets.QWidget):
         dialog = QtWidgets.QFileDialog()
         (filename, _) = dialog.getOpenFileName(self)
         if filename:
+            if self.album_editor:
+                filename = util.make_relative_path(self.album_editor.filename)(filename)
             self.file_path.setText(filename)
 
 
@@ -66,7 +69,7 @@ class TrackEditor(QtWidgets.QWidget):
             fieldGrowthPolicy=QtWidgets.QFormLayout.AllNonFixedFieldsGrow)
         self.setLayout(layout)
 
-        self.filename = FileSelector()
+        self.filename = FileSelector(album_editor)
         self.group = QtWidgets.QLineEdit(placeholderText="Track grouping")
         self.title = QtWidgets.QLineEdit(placeholderText="Song title")
         self.genre = QtWidgets.QLineEdit()
@@ -75,7 +78,7 @@ class TrackEditor(QtWidgets.QWidget):
         self.composer = QtWidgets.QLineEdit()
         self.cover_of = QtWidgets.QLineEdit(
             placeholderText="Original performing artist (leave blank if none)")
-        self.artwork = FileSelector()
+        self.artwork = FileSelector(album_editor)
         self.lyrics = QtWidgets.QPlainTextEdit()
         self.about = QtWidgets.QLineEdit()
 
@@ -291,6 +294,14 @@ class TrackListing(QtWidgets.QSplitter):
         pass
 
 
+def add_menu_item(menu, name, method, shortcut):
+    """ Add a menu item """
+    action = menu.addAction(name)
+    action.triggered.connect(method)
+    if shortcut:
+        action.setShortcut(QtGui.QKeySequence(shortcut))
+    return action
+
 class AlbumEditor(QtWidgets.QMainWindow):
     """ An album editor window """
 
@@ -305,14 +316,11 @@ class AlbumEditor(QtWidgets.QMainWindow):
         menubar = self.menuBar()
 
         file_menu = menubar.addMenu("File")
-        file_menu.addAction(QtGui.QAction(
-            "&New...", shortcut=QtGui.QKeySequence("Ctrl+N"), triggered=self.file_new))
-        file_menu.addAction(QtGui.QAction(
-            "&Open...", shortcut=QtGui.QKeySequence("Ctrl+O"), triggered=self.file_open))
-        file_menu.addAction(QtGui.QAction(
-            "&Save", shortcut=QtGui.QKeySequence("Ctrl+S"), triggered=self.save))
-        file_menu.addAction(QtGui.QAction("Save &As...", shortcut=QtGui.QKeySequence(
-            "Ctrl+Shift+S"), triggered=self.save_as))
+
+        add_menu_item(file_menu, "&New", self.file_new, "Ctrl+N")
+        add_menu_item(file_menu, "&Open...", self.file_open, "Ctrl+O")
+        add_menu_item(file_menu, "&Save", self.save, "Ctrl+S")
+        add_menu_item(file_menu, "Save &As...", self.save_as, "Ctrl+Shift+S")
 
         self.filename = path
         self.data: typing.Dict[str, typing.Any] = {'tracks': []}
@@ -335,7 +343,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
             placeholderText="1978", inputMask='0000')
         self.genre = QtWidgets.QLineEdit(
             placeholderText="Avant-Industrial Loungecore")
-        self.artwork = FileSelector()
+        self.artwork = FileSelector(self)
         self.composer = QtWidgets.QLineEdit()
         # self.fg_color = ColorSelector("Foreground")
         # self.bg_color = ColorSelector("Background")
@@ -440,23 +448,26 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
     def save(self):
         """ Save the file to disk """
-        if not self.filename:
-            self.save_as()
+        self.apply()
 
         with open(self.filename, 'w', encoding='utf8') as file:
-            json.dump(self.data, indent=3)
+            json.dump(self.data, file, indent=3)
 
     def save_as(self):
         """ Save the file and change the name """
+        self.apply()
+
         path, _ = QtWidgets.QFileDialog.getSaveFileName(
             caption="Select your album file",
-            filter="Album files (*.json *.bcalbum)",
-            options=QtWidgets.QFileDialog.DontConfirmOverwrite | QtWidgets.QFileDialog.DontUseNativeDialog)
+            filter="Album files (*.bcalbum *.json)",
+            dir=os.path.dirname(self.filename))
         if path:
-            self.setWindowTitle(self.filename)
             self.renormalize_paths(self.filename, path)
             self.filename = path
+            self.setWindowTitle(self.filename)
             self.save()
+
+        self.reset()
 
     def revert(self):
         """ Revert all changes """
@@ -470,11 +481,20 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
     def renormalize_paths(self, old_name, new_name):
         """ Renormalize the file paths in the backing data """
-        abspath = util.make_relative_path(old_name)
+        abspath = util.make_absolute_path(old_name)
         relpath = util.make_relative_path(new_name)
 
+        LOGGER.debug("renormalize_paths %s %s", old_name, new_name)
+
         def renorm(path):
-            return relpath(abspath(path))
+            if os.path.isabs(path):
+                LOGGER.debug("Keeping %s absolute", path)
+                return path
+
+            old_abs = abspath(path)
+            out = relpath(old_abs)
+            LOGGER.debug("Renormalizing %s -> %s -> %s", path, old_abs, out)
+            return out
 
         for key in ('artwork',):
             if key in self.data:
@@ -484,8 +504,10 @@ class AlbumEditor(QtWidgets.QMainWindow):
             for key in ('filename', 'artwork'):
                 if key in track:
                     track[key] = renorm(track[key])
-            if 'lyrics' in track and isinstance(track['lyrics'], str) and os.path.isfile(abspath(track['lyrics'])):
-                track['lyrics'] = renorm(track['lyrics'])
+            if 'lyrics' in track and isinstance(track['lyrics'], str):
+                lyricfile = abspath(track['lyrics'])
+                if os.path.isfile(lyricfile):
+                    track['lyrics'] = relpath(lyricfile)
 
 
 def open_file(path):
@@ -515,7 +537,7 @@ def main():
 
     if options.open_files:
         for path in options.open_files:
-            open_file(path)
+            open_file(os.path.abspath(path))
     else:
         path, _ = QtWidgets.QFileDialog.getSaveFileName(
             caption="Select your album file",
