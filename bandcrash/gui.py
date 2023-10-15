@@ -89,6 +89,14 @@ class TrackEditor(QtWidgets.QWidget):
 
         layout.addRow("Audio file", self.filename)
         layout.addRow("Title", self.title)
+
+        player_options = QtWidgets.QHBoxLayout()
+        player_options.setSpacing(0)
+        player_options.setContentsMargins(0, 0, 0, 0)
+        player_options.addWidget(self.preview)
+        player_options.addWidget(self.hidden)
+        layout.addRow("Player options", player_options)
+
         layout.addRow("Track artist", self.artist)
         layout.addRow("Cover of", self.cover_of)
         layout.addRow("Artwork", self.artwork)
@@ -97,10 +105,7 @@ class TrackEditor(QtWidgets.QWidget):
         layout.addRow("Grouping", self.group)
         layout.addRow("Track comment", self.about)
 
-        player_options = QtWidgets.QHBoxLayout()
-        player_options.addWidget(self.preview)
-        player_options.addWidget(self.hidden)
-        layout.addRow(player_options)
+        self.reset(self.data)
 
     def reset(self, data):
         """ Reset to the specified backing data """
@@ -230,6 +235,7 @@ class TrackListing(QtWidgets.QSplitter):
             QtWidgets.QAbstractScrollArea.AdjustToContents)
         self.addWidget(scroller)
 
+        self.track_editor.title.editingFinished.connect(self.fix_displaynames)
         self.track_listing.currentRowChanged.connect(self.set_row)
 
         for widget in (self, self.track_listing):
@@ -244,26 +250,31 @@ class TrackListing(QtWidgets.QSplitter):
     @staticmethod
     def display_name(track):
         """ Get the list display name for a track object """
-        parts = []
-        if 'filename' in track:
-            parts.append(os.path.basename(track['filename']))
         if 'title' in track:
-            parts.append(track['title'])
+            return track['title']
+        if 'filename' in track:
+            return f'({os.path.basename(track["filename"])})'
+        return "(unknown)"
 
-        return ': '.join(parts) if parts else '(unknown)'
+    def fix_displaynames(self):
+        for idx, track in enumerate(self.data):
+            LOGGER.debug("Fixing track %d -> %s", idx, self.display_name(track))
+            self.track_listing.item(idx).setText(self.display_name(track))
 
     def reset(self, data):
         """ Reset to the backing storage """
         self.data = data
 
-        current_row = self.track_listing.currentRow()
-        self.track_listing.clear()
+        while self.track_listing.count() > len(self.data):
+            self.track_listing.takeItem(self.track_listing.count() - 1)
+        while self.track_listing.count() < len(self.data):
+            self.track_listing.addItem('')
 
-        for track in self.data:
-            self.track_listing.addItem(self.display_name(track))
+        self.fix_displaynames()
 
-        if current_row < self.track_listing.count():
-            self.track_listing.setCurrentRow(current_row)
+        cur_row = self.track_listing.currentRow()
+        if cur_row >= 0 and cur_row < len(self.data):
+            self.track_editor.reset(self.data[cur_row])
 
     def apply(self):
         """ Save any currently-edited track """
@@ -272,6 +283,7 @@ class TrackListing(QtWidgets.QSplitter):
     def set_row(self, row):
         """ Set the editor row """
         self.track_editor.apply()
+        self.fix_displaynames()
         self.track_editor.reset(self.data[row])
 
     def add_tracks(self):
