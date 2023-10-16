@@ -396,15 +396,8 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
         self.filename = path
         self.data: typing.Dict[str, typing.Any] = {'tracks': []}
-        try:
+        if path:
             self.reload(path)
-            if 'tracks' not in self.data:
-                raise KeyError('tracks')
-        except (json.decoder.JSONDecodeError, KeyError, TypeError):
-            err = QtWidgets.QErrorMessage(self)
-            err.showMessage("Invalid album JSON file")
-            self.filename = ''
-            self.data = {'tracks': []}
 
         layout = QtWidgets.QFormLayout(
             fieldGrowthPolicy=QtWidgets.QFormLayout.AllNonFixedFieldsGrow)
@@ -468,9 +461,17 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
     def reload(self, path):
         """ Load from the backing storage """
-        if os.path.isfile(path):
-            with open(path, 'r', encoding='utf8') as file:
+        with open(path, 'r', encoding='utf8') as file:
+            try:
                 self.data = json.load(file)
+                if 'tracks' not in self.data:
+                    raise KeyError('tracks')
+            except (json.decoder.JSONDecodeError, KeyError, TypeError):
+                err = QtWidgets.QErrorMessage(self)
+                err.showMessage("Invalid album JSON file")
+                self.filename = ''
+                self.data = {'tracks': []}
+
 
     def reset(self):
         """ Reset to the saved values """
@@ -599,8 +600,11 @@ def open_file(path):
 
 class BandcrashApplication(QtWidgets.QApplication):
     def event(self, evt):
+        LOGGER.debug("Event: %s", evt)
         if evt.type() == QtCore.QEvent.FileOpen:
-            open_file(os.path.abspath(evt.file()))
+            LOGGER.debug("Got file open event: %s", evt.file())
+            open_file(evt.file())
+            return True
 
         return super().event(evt)
 
@@ -632,8 +636,10 @@ def main():
             caption="Select your album file",
             filter="Album files (*.json *.bcalbum)",
             options=QtWidgets.QFileDialog.DontConfirmOverwrite)
-        editor = AlbumEditor(path)
-        editor.show()
+        if path:
+            editor = AlbumEditor(path)
+            editor.show()
+
 
     app.exec()
 
