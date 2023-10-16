@@ -282,14 +282,15 @@ class TrackListing(QtWidgets.QSplitter):
 
         if self.track_listing.count() != len(data):
             LOGGER.warning("Sync error: Track listing had %d, expected %d",
-                self.track_listing.count(), len(data))
+                           self.track_listing.count(), len(data))
 
         for idx, track in enumerate(data):
             item = self.track_listing.item(idx)
             if item:
                 item.reset(track)
             else:
-                self.track_listing.addItem(TrackListing.TrackItem(self.album_editor, track))
+                self.track_listing.addItem(
+                    TrackListing.TrackItem(self.album_editor, track))
 
         while self.track_listing.count() > len(data):
             self.track_listing.takeItem(self.track_listing.count() - 1)
@@ -298,7 +299,7 @@ class TrackListing(QtWidgets.QSplitter):
 
         if current_row != self.track_listing.currentRow():
             LOGGER.warning("Sync error: list position changed from %d to %d",
-                self.track_listing.currentRow(), current_row)
+                           self.track_listing.currentRow(), current_row)
             self.track_listing.setCurrentRow(current_row)
 
     def apply(self):
@@ -314,7 +315,7 @@ class TrackListing(QtWidgets.QSplitter):
     def set_item(self, row):
         LOGGER.debug("TrackListing.set_item")
         self.apply()
-        self.editpanel.takeWidget() # necessary to prevent Qt from GCing it on replacement
+        self.editpanel.takeWidget()  # necessary to prevent Qt from GCing it on replacement
         item = self.track_listing.item(row)
         if item:
             self.editpanel.setWidget(item.editor)
@@ -573,7 +574,8 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
             old_abs = abspath(path)
             if not os.path.isfile(old_abs):
-                LOGGER.warning("Not touching non-file path %s (%s)", path, old_abs)
+                LOGGER.warning(
+                    "Not touching non-file path %s (%s)", path, old_abs)
                 return path
 
             out = relpath(old_abs)
@@ -595,6 +597,13 @@ def open_file(path):
     editor = AlbumEditor(path)
     editor.show()
 
+class BandcrashApplication(QtWidgets.QApplication):
+    def event(self, evt):
+        if evt.type() == QtCore.QEvent.FileOpen:
+            open_file(os.path.abspath(evt.file()))
+
+        return super().event(evt)
+
 
 def main():
     """ instantiate an app """
@@ -613,7 +622,7 @@ def main():
     LOGGER.debug(
         "Opening bandcrash GUI with provided files: %s", options.open_files)
 
-    app = QtWidgets.QApplication([])
+    app = BandcrashApplication()
 
     if options.open_files:
         for path in options.open_files:
