@@ -44,8 +44,8 @@ def album_parser(parser: typing.Optional[argparse.ArgumentParser] = None):
                         help="Directory to store the output files into")
 
     parser.add_argument('--json', '-j', type=str,
-                        help="Name of the album JSON file, relative to input_dir",
-                        default='album.json')
+                        help="Name of the album configuration file, relative to input_dir",
+                        default='album.bcalbum')
 
     def add_encoder(name, info, args):
         """ Add a feature group to the CLI """
