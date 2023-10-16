@@ -1,11 +1,12 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+import bandcrash.__version__
 
 a = Analysis(
     ['bandcrash-gui.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('bandcrash/jinja_templates/*', 'bandcrash/jinja_templates')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -45,6 +46,8 @@ app = BUNDLE(
     coll,
     name='Bandcrash.app',
     icon=None,
+    version=bandcrash.__version__.__version__,
+    argv_emulation=True,
     bundle_identifier='biz.beesbuzz.bandcrash',
     info_plist={
         'CFBundleDocumentTypes': [{
