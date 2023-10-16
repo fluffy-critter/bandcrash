@@ -46,4 +46,11 @@ app = BUNDLE(
     name='Bandcrash.app',
     icon=None,
     bundle_identifier='biz.beesbuzz.bandcrash',
+    info_plist={
+        'CFBundleDocumentTypes': [{
+            'CFBundleTypeName': 'Bandcrash Album',
+            'CFBundleTypeExtensions': ['bcalbum', 'json', ],
+            'CFBundleTypeRole': "Viewer",
+        }],
+    }
 )
