@@ -9,7 +9,7 @@ import typing
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from . import __version__, util
+from .. import __version__, util
 
 LOG_LEVELS = [logging.WARNING, logging.INFO, logging.DEBUG]
 LOGGER = logging.getLogger(__name__)
@@ -636,9 +636,8 @@ def main():
             caption="Select your album file",
             filter="Album files (*.json *.bcalbum)",
             options=QtWidgets.QFileDialog.DontConfirmOverwrite)
-        if path:
-            editor = AlbumEditor(path)
-            editor.show()
+        editor = AlbumEditor(path)
+        editor.show()
 
 
     app.exec()
