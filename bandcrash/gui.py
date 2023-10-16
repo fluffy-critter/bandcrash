@@ -56,7 +56,7 @@ class TrackEditor(QtWidgets.QWidget):
     """ A track editor pane """
     # pylint:disable=too-many-instance-attributes
 
-    def __init__(self, album_editor):
+    def __init__(self, album_editor, data):
         """ edit an individual track
 
         :param dict data: The metadata blob
@@ -105,16 +105,11 @@ class TrackEditor(QtWidgets.QWidget):
         layout.addRow("Grouping", self.group)
         layout.addRow("Track comment", self.about)
 
-        self.reset(self.data)
+        self.reset(data)
 
     def reset(self, data):
         """ Reset to the specified backing data """
         self.data = data
-        if self.data is None:
-            self.setEnabled(False)
-            return
-
-        self.setEnabled(True)
 
         for key, widget in (
             ('filename', self.filename.file_path),
@@ -193,10 +188,44 @@ class TrackEditor(QtWidgets.QWidget):
 class TrackListing(QtWidgets.QSplitter):
     """ The track listing panel and editor """
 
+    class TrackItem(QtWidgets.QListWidgetItem):
+        """ an item in the track listing """
+
+        def __init__(self, album_editor, data):
+            LOGGER.debug("TrackItem.__init__")
+            super().__init__()
+            self.editor = TrackEditor(album_editor, data)
+            self.setText(self.display_name)
+
+            self.editor.title.textChanged.connect(self.apply)
+            self.editor.filename.file_path.textChanged.connect(self.apply)
+
+        def reset(self, data):
+            LOGGER.debug("TrackItem.__reset__")
+            self.editor.reset(data)
+            self.setText(self.display_name)
+
+        def apply(self):
+            LOGGER.debug("TrackItem.__apply__")
+            self.editor.apply()
+            self.setText(self.display_name)
+
+        @property
+        def display_name(self):
+            LOGGER.debug("TrackItem.display_name")
+            info = self.editor.data
+            if 'title' in info:
+                return info['title']
+            if 'filename' in info:
+                return f"({os.path.basename(info['filename'])})"
+            return "(unknown)"
+
     def __init__(self, album_editor):
         super().__init__()
+        LOGGER.debug("TrackListing.__init__")
 
         self.data = None
+        self.album_editor = album_editor
 
         left_panel = QtWidgets.QVBoxLayout(self)
         left_panel.setSpacing(0)
@@ -225,18 +254,18 @@ class TrackListing(QtWidgets.QSplitter):
         buttons.addWidget(self.button_move_down)
         left_panel.addWidget(QtWidgets.QWidget(layout=buttons))
 
-        self.track_editor = TrackEditor(album_editor)
-        scroller = QtWidgets.QScrollArea()
-        scroller.setMinimumSize(450, 0)
-        scroller.setWidget(self.track_editor)
-        scroller.setWidgetResizable(True)
-        # scroller.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        scroller.setSizeAdjustPolicy(
-            QtWidgets.QAbstractScrollArea.AdjustToContents)
-        self.addWidget(scroller)
+        self.slug = TrackEditor(album_editor, {})
+        self.slug.setEnabled(False)
 
-        self.track_editor.title.editingFinished.connect(self.fix_displaynames)
-        self.track_listing.currentRowChanged.connect(self.set_row)
+        self.editpanel = QtWidgets.QScrollArea()
+        self.editpanel.setMinimumSize(450, 0)
+        self.editpanel.setWidgetResizable(True)
+        self.editpanel.setSizeAdjustPolicy(
+            QtWidgets.QAbstractScrollArea.AdjustToContents)
+        self.editpanel.setWidget(self.slug)
+        self.addWidget(self.editpanel)
+
+        self.track_listing.currentRowChanged.connect(self.set_item)
 
         for widget in (self, self.track_listing):
             policy = widget.sizePolicy()
@@ -245,90 +274,92 @@ class TrackListing(QtWidgets.QSplitter):
 
         self.setSizes([1, 10])
 
-        self.reset(album_editor.data['tracks'])
-
-    @staticmethod
-    def display_name(track):
-        """ Get the list display name for a track object """
-        if 'title' in track:
-            return track['title']
-        if 'filename' in track:
-            return f'({os.path.basename(track["filename"])})'
-        return "(unknown)"
-
-    def fix_displaynames(self):
-        for idx, track in enumerate(self.data):
-            LOGGER.debug("Fixing track %d -> %s", idx, self.display_name(track))
-            self.track_listing.item(idx).setText(self.display_name(track))
-
     def reset(self, data):
         """ Reset to the backing storage """
+        LOGGER.debug("TrackListing.reset")
+
+        current_row = self.track_listing.currentRow()
+
+        if self.track_listing.count() != len(data):
+            LOGGER.warning("Sync error: Track listing had %d, expected %d",
+                self.track_listing.count(), len(data))
+
+        for idx, track in enumerate(data):
+            item = self.track_listing.item(idx)
+            if item:
+                item.reset(track)
+            else:
+                self.track_listing.addItem(TrackListing.TrackItem(self.album_editor, track))
+
+        while self.track_listing.count() > len(data):
+            self.track_listing.takeItem(self.track_listing.count() - 1)
+
         self.data = data
 
-        while self.track_listing.count() > len(self.data):
-            self.track_listing.takeItem(self.track_listing.count() - 1)
-        while self.track_listing.count() < len(self.data):
-            self.track_listing.addItem('')
-
-        self.fix_displaynames()
-
-        cur_row = self.track_listing.currentRow()
-        if cur_row >= 0 and cur_row < len(self.data):
-            self.track_editor.reset(self.data[cur_row])
+        if current_row != self.track_listing.currentRow():
+            LOGGER.warning("Sync error: list position changed from %d to %d",
+                self.track_listing.currentRow(), current_row)
+            self.track_listing.setCurrentRow(current_row)
 
     def apply(self):
         """ Save any currently-edited track """
-        self.track_editor.apply()
+        LOGGER.debug("TrackListing.apply")
+        self.data.clear()
+        for row in range(self.track_listing.count()):
+            item = self.track_listing.item(row)
+            item.editor.apply()
+            self.data.append(item.editor.data)
+        print(self.data)
 
-    def set_row(self, row):
-        """ Set the editor row """
-        self.track_editor.apply()
-        self.fix_displaynames()
-        self.track_editor.reset(self.data[row])
+    def set_item(self, row):
+        LOGGER.debug("TrackListing.set_item")
+        self.apply()
+        self.editpanel.takeWidget() # necessary to prevent Qt from GCing it on replacement
+        item = self.track_listing.item(row)
+        if item:
+            self.editpanel.setWidget(item.editor)
+        else:
+            self.editpanel.setWidget(self.slug)
 
     def add_tracks(self):
         """ Add some tracks """
-        filenames, _ = QtWidgets.QFileDialog.getOpenFileNames(self,
-                                                              "Select audio files",
-                                                              filter="WAV audio (*.wav)")
+        LOGGER.debug("TrackListing.add_tracks")
+        filenames, _ = QtWidgets.QFileDialog.getOpenFileNames(
+            self,
+            "Select audio files",
+            filter="WAV audio (*.wav)")
 
         for filename in filenames:
             _, title = util.guess_track_title(filename)
             track = {'filename': filename, 'title': title}
             self.data.append(track)
-            self.track_listing.addItem(self.display_name(track))
+            self.track_listing.addItem(
+                TrackListing.TrackItem(self.album_editor, track))
 
     def delete_track(self):
         """ Remove a track """
-        current_row = self.track_listing.currentRow()
-        del self.data[current_row]
-        self.track_listing.takeItem(current_row)
-        self.apply()
+        LOGGER.debug("TrackListing.delete_track")
+        self.track_listing.takeItem(self.track_listing.currentRow())
 
     def move_up(self):
         """ Move the currently-selected track up in the track listing """
+        LOGGER.debug("TrackListing.move_up")
         row = self.track_listing.currentRow()
         if row > 0:
-            idx = row - 1
-            self.move_item(row, idx)
-            self.track_listing.setCurrentRow(idx)
+            dest = row - 1
+            item = self.track_listing.takeItem(row)
+            self.track_listing.insertItem(dest, item)
+            self.track_listing.setCurrentRow(dest)
 
     def move_down(self):
-        """ Move the currently-selected track down in the track listing """
+        """ Move the currently-selected track up in the track listing """
+        LOGGER.debug("TrackListing.move_down")
         row = self.track_listing.currentRow()
         if row < self.track_listing.count() - 1:
-            idx = row + 1
-            self.move_item(row, idx)
-            self.track_listing.setCurrentRow(idx)
-
-    def move_item(self, from_idx, to_idx):
-        """
-        Move the specified track from the given index to the specified one
-        """
-        self.data.insert(to_idx, self.data.pop(from_idx))
-
-        item = self.track_listing.takeItem(from_idx)
-        self.track_listing.insertItem(to_idx, item)
+            dest = row + 1
+            item = self.track_listing.takeItem(row)
+            self.track_listing.insertItem(dest, item)
+            self.track_listing.setCurrentRow(dest)
 
 
 def add_menu_item(menu, name, method, shortcut):
@@ -442,6 +473,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
     def reset(self):
         """ Reset to the saved values """
+        LOGGER.debug("AlbumEditor.reset")
 
         for key, widget in (
             ('artist', self.artist),
@@ -459,6 +491,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
     def apply(self):
         """ Apply edits to the saved data """
+        LOGGER.debug("AlbumEditor.apply")
         relpath = util.make_relative_path(self.filename)
 
         for key, widget in (
@@ -489,6 +522,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
     def save(self):
         """ Save the file to disk """
+        LOGGER.debug("AlbumEditor.save")
         self.apply()
 
         with open(self.filename, 'w', encoding='utf8') as file:
@@ -496,6 +530,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
     def save_as(self):
         """ Save the file and change the name """
+        LOGGER.debug("AlbumEditor.save_as")
         self.apply()
 
         path, _ = QtWidgets.QFileDialog.getSaveFileName(
@@ -506,18 +541,21 @@ class AlbumEditor(QtWidgets.QMainWindow):
             self.renormalize_paths(self.filename, path)
             self.filename = path
             self.setWindowTitle(self.filename)
+            self.reset()
             self.save()
 
         self.reset()
 
     def revert(self):
         """ Revert all changes """
+        LOGGER.debug("AlbumEditor.revert")
         # TODO confirmation box
         self.reload(self.filename)
         self.reset()
 
     def encode_album(self):
         """ Run the encoder process """
+        LOGGER.debug("AlbumEditor.encode_album")
         self.apply()
         # TODO run the actual encode of course
 
@@ -534,6 +572,10 @@ class AlbumEditor(QtWidgets.QMainWindow):
                 return path
 
             old_abs = abspath(path)
+            if not os.path.isfile(old_abs):
+                LOGGER.warning("Not touching non-file path %s (%s)", path, old_abs)
+                return path
+
             out = relpath(old_abs)
             LOGGER.debug("Renormalizing %s -> %s -> %s", path, old_abs, out)
             return out
@@ -543,13 +585,9 @@ class AlbumEditor(QtWidgets.QMainWindow):
                 self.data[key] = renorm(self.data[key])
 
         for track in self.data['tracks']:
-            for key in ('filename', 'artwork'):
-                if key in track:
+            for key in ('filename', 'artwork', 'lyrics'):
+                if key in track and isinstance(track[key], str):
                     track[key] = renorm(track[key])
-            if 'lyrics' in track and isinstance(track['lyrics'], str):
-                lyricfile = abspath(track['lyrics'])
-                if os.path.isfile(lyricfile):
-                    track['lyrics'] = relpath(lyricfile)
 
 
 def open_file(path):
