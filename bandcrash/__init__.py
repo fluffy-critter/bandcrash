@@ -455,12 +455,35 @@ def process(options, album, pool, futures):
     """
     # pylint:disable=too-many-branches
 
+    # Coerce album configuration to app configuration if it hasn't been specified
+    for attrname, default in (
+        ('do_preview', True),
+        ('do_mp3', True),
+        ('do_ogg', True),
+        ('do_flac', True),
+        ('do_zip', True),
+        ('do_butler', album.get('butler_target')),
+        ('butler_target', ''),
+        ('butler_prefix', '')
+    ):
+        LOGGER.debug("options.%s = %s", attrname, getattr(options, attrname))
+        if getattr(options, attrname) is None:
+            setattr(options, attrname, album.get(attrname, default))
+            LOGGER.debug("options.%s unset, using album value %s",
+                         attrname, getattr(options, attrname))
+
     formats = set()
     for target, tool in (('preview', 'lame'),
                          ('mp3', 'lame'),
                          ('ogg', 'oggenc'),
                          ('flac', 'flac')):
-        if getattr(options, f'do_{target}'):
+        attrname = f'do_{target}'
+        if getattr(options, attrname) is None:
+            LOGGER.debug(
+                "options.%s is None, falling back to album spec", attrname)
+            setattr(options, attrname, album.get(attrname, True))
+        if getattr(options, attrname):
+            LOGGER.info("Building %s", target)
             if shutil.which(getattr(options, f'{tool}_path')):
                 formats.add(target)
                 os.makedirs(os.path.join(
@@ -506,9 +529,9 @@ def process(options, album, pool, futures):
                 clean_subdir, os.path.join(options.output_dir, target),
                 protections[target], futures[f'build-{target}']))
 
-    if options.butler_target:
+    if options.do_butler and options.butler_target:
         for target in formats:
-            channel = f'{options.channel_prefix}{target}'
+            channel = f'{options.butler_prefix}{target}'
             futures['butler'].append(pool.submit(
                 submit_butler,
                 os.path.join(options.output_dir, target),

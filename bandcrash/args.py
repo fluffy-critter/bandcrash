@@ -55,7 +55,7 @@ def album_parser(parser: typing.Optional[argparse.ArgumentParser] = None):
                              help=f"Generate {info}")
         feature.add_argument(f'--no-{name}', dest=fname, action='store_false',
                              help=f"Don't generate {info}")
-        feature.set_defaults(**{fname: True})
+        feature.set_defaults(**{fname: None})
 
         parser.add_argument(f'--{name}-encoder-args', type=str,
                             help=f"Arguments to pass to the {info} encoder",
@@ -73,20 +73,26 @@ def album_parser(parser: typing.Optional[argparse.ArgumentParser] = None):
                          help="Keep stale files")
     feature.set_defaults(clean_extra=True)
 
-    feature = parser.add_mutually_exclusive_group(required=False)
-    feature.add_argument('--zip', dest='do_zip', action='store_true',
-                         help="Generate .zip archives")
-    feature.add_argument('--no-zip', dest='do_zip', action='store_false',
-                         help="Don't generate a .zip archive")
-    feature.set_defaults(do_zip=True)
+    for param, desc in (
+        ('zip', 'Generate .zip archive'),
+        ('butler', 'Upload to itch.io using Butler'),
+    ):
+        fname = f'do_{param}'
+        feature.add_argument(f'--{param}', dest=fname, action='store_true',
+                             help=desc)
+        feature.add_argument(f'--no-{param}', dest=fname, action='store_false',
+                             help=f"Don't {desc}")
+        feature.set_defaults(**{fname: True})
 
     parser.add_argument('--butler-target', '-b', type=str,
+                        dest='butler_target',
                         help="Butler push target prefix",
-                        default='')
+                        default=None)
 
-    parser.add_argument('--channel-prefix', '-p', type=str,
+    parser.add_argument('--butler-channel-prefix', '-p', type=str,
+                        dest='butler_prefix',
                         help="Prefix for the Butler channel name",
-                        default='')
+                        default=None)
 
 
 def get_parser():
