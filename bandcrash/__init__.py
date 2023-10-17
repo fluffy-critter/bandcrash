@@ -352,13 +352,16 @@ def clean_subdir(path: str, allowed: typing.Set[str], futures):
                 os.remove(file)
 
 
-def submit_butler(output_dir, channel, futures):
+def submit_butler(options, target, futures):
     """ Submit the directory to itch.io via butler """
+    channel = f'{options.butler_target}:{options.butler_prefix}{target}'
+    output_dir = os.path.join(options.output_dir, target)
+
     LOGGER.info("Butler: Waiting for %s (%d tasks)", output_dir, len(futures))
     wait_futures(futures)
 
     LOGGER.info("Butler: pushing '%s' to channel '%s'", output_dir, channel)
-    subprocess.run(['butler', 'push', output_dir, channel], check=True)
+    subprocess.run([options.butler_path, 'push', output_dir, channel], check=True)
 
 
 def encode_tracks(options, album, protections, pool, futures):
@@ -431,7 +434,7 @@ def make_zipfile(input_dir, output_file, futures):
                 input_dir, len(futures))
     wait_futures(futures)
 
-    LOGGER.info("Building %s from directory %s", output_file, input_dir)
+    LOGGER.info("Building %s.zip from directory %s", output_file, input_dir)
     shutil.make_archive(output_file, 'zip', input_dir)
 
 
@@ -531,11 +534,10 @@ def process(options, album, pool, futures):
 
     if options.do_butler and options.butler_target:
         for target in formats:
-            channel = f'{options.butler_prefix}{target}'
             futures['butler'].append(pool.submit(
                 submit_butler,
-                os.path.join(options.output_dir, target),
-                f'{options.butler_target}:{channel}',
+                options,
+                target,
                 futures[f'clean-{target}']))
 
     if options.do_zip:
