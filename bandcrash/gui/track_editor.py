@@ -124,9 +124,11 @@ class TrackEditor(QtWidgets.QWidget):
             lines = text.split('\n')
             return lines if len(lines) != 1 else text
 
-        datatypes.apply_text_fields(self.data,
-                                    (('lyrics', self.lyrics),),
-                                    split_lyrics)
+        lyrics = split_lyrics(self.lyrics.document().toPlainText())
+        if lyrics:
+            self.data['lyrics'] = lyrics
+        elif 'lyrics' in self.data:
+            del self.data['lyrics']
 
         datatypes.apply_checkbox_fields(self.data, (
             ('preview', self.preview, True),
