@@ -87,6 +87,14 @@ Basically, the top-level album contains the following properties (all optional):
 * `bg_color`, `fg_color`, `highlight_color`: The color theme for the player
 * `genre`: The default genre for all tracks
 * `tracks`: an array of track descriptions, in album order
+* `do_mp3`: Whether to build the album in MP3 format
+* `do_ogg`: Whether to build the album in Ogg Vorbis format
+* `do_flac`: Whether to build the album in FLAC format
+* `do_preview`: Whether to build the web preview
+* `do_zip`: Whether to build a zip file of each output format
+* `do_butler`: Whether to upload the builds to itch.io
+* `butler_target`: The itch.io Butler target (e.g. `"fluffy/songs-of-substance"`)
+* `butler_prefix`: Any prefix to add to the Butler channel name (e.g. `"bonus-"` will upload it as `"fluffy/songs-of-substance:bonus-mp3"`)
 
 And each track contains (all optional except `filename`):
 
