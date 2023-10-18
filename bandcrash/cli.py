@@ -90,12 +90,9 @@ def get_config(args) -> options.Options:
 
     config = options.Options()
 
-    print(config)
-
     for field in dataclasses.fields(config):
         value = getattr(args, field.name, None)
         if value is not None:
-            print(field.name, field.type, value)
             if field.type == list[str]:
                 LOGGER.debug("Setting config list %s to %s", field.name, value)
                 setattr(config, field.name, value.split())
