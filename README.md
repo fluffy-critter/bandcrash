@@ -41,6 +41,22 @@ make app
 
 after which the application will be built in the `dist/` directory.
 
+### Use as a library
+
+Bandcrash can also be used as a Python library in order to embed it into a web service or the like. Currently this isn't documented or particularly elegant, but the basic idea is:
+
+1. Load your album metadata into a Python `dict` structure (e.g. by doing `json.loads` on a JSON file or the like)
+2. Create a `concurrent.futures.ThreadPoolExecutor` and a `collections.defaultdict(list)` to store its futures
+3. Use `bandcrash.args.parse_args([])` to generate an options set, and then populate it accordingly
+4. Call `bandcrash.process(options, album_data, threadpool, futures_dict`
+5. Wait for all of the futures in the `futures_dict` to complete
+
+The `futures_dict` is a mapping from process step &rarr; list of futures, and is fully populated after `process()` returns. You can use something like `list(itertools.chain(*futures_dict.values()))` to collapse it into a single list of futures if you don't care about tracking individual stages in the pipeline.
+
+It is also fine (and, in fact, preferable) to share a `ThreadPoolExecutor` across multiple concurrent batches.
+
+Consult `bandcrash/cli.py` and `bandcrash/gui.py` for more thorough usage examples.
+
 ## Building an album
 
 Make a directory with all of your source audio files and artwork and so on. Create a JSON file named `album.json` (which can be overridden) that looks something like this:
@@ -144,24 +160,6 @@ If you have a website of your own, upload the `preview` directory to your site s
 ```html
 <iframe src="/path/to/album/" width=640 height=360></iframe>
 ```
-
-If you do this, it's also highly recommended that you add OpenGraph tags to the enclosing page, for example tags like these in the `<head>`:
-
-```html
-<meta property="og:title" content="My Awesome Album">
-<meta property="og:type" content="album">
-<meta property="og:site_name" content="My Band Name">
-<!-- This should be an absolute link to the page that the <iframe> points to, i.e. the preview index.html -->
-<meta property="og:video" content="https://example.com/path/to/album/">
-<meta property="og:video:height" content="480">
-<meta property="og:video:width" content="640">
-<!-- Twitter prefers their own meta tags although these might not be necessary -->
-<meta property="twitter:player" content="https://example.com/path/to/album/">
-<meta property="twitter:player:height" content="480">
-<meta property="twitter:player:width" content="640">
-```
-
-This will allow you to link to the page from many social networks (including Facebook, Twitter, and Mastodon) and have it embed correctly.
 
 ## Contributing
 
