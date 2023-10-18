@@ -1,49 +1,162 @@
 """ main CLI entry point """
 
+import argparse
 import collections
 import concurrent.futures
+import dataclasses
 import itertools
 import json
 import logging
 import os
+import sys
 import typing
 
-from . import args, populate_json_file, process
+from . import __version__, options, process, util
 
 LOG_LEVELS = [logging.WARNING, logging.INFO, logging.DEBUG]
 LOGGER = logging.getLogger(__name__)
 
 
+def parse_args():
+    """ Parse commandline arguments """
+    defaults = options.Options()
+    parser = argparse.ArgumentParser("Bandcrash CLI")
+
+    parser.add_argument('input', type=str,
+                        help="Album input directory or JSON file")
+    parser.add_argument('output', type=str, nargs='?', default=None,
+                        help="Album output directory")
+
+    parser.add_argument("-v", "--verbosity", action="count",
+                        help="Increase output logging level", default=0)
+    parser.add_argument("--version", action="version",
+                        version=f"%(prog)s {__version__.__version__}")
+
+    parser.add_argument('--num-threads', '-t', type=int,
+                        dest='num_threads',
+                        help="Maximum number of concurrent threads",
+                        default=os.cpu_count())
+
+    parser.add_argument('--json', '-j', type=str, dest='json_file',
+                        default='album.json',
+                        help="If input is a directory, specifies the JSON file "
+                        "(relative to that directory)")
+
+    parser.add_argument('--init', dest='init_json', action='store_true',
+                        help="Populate the JSON file automatically")
+
+    for target, description, add_args in (
+        ('preview', 'Build web player', True),
+        ('mp3', 'Encode mp3 album', True),
+        ('ogg', 'Encode ogg album', True),
+        ('flac', 'Encode flac album', True),
+        ('cleanup', 'Clean extraneous files in the output directories', False),
+        ('zip', 'Build a .zip archive', False),
+        ('butler', 'Upload to itch.io using Butler', False),
+    ):
+        feature = parser.add_mutually_exclusive_group(required=False)
+        fname = f'do_{target}'
+        feature.add_argument(f'--{target}', dest=fname, action='store_true',
+                             help=description)
+        feature.add_argument(f'--no-{target}', dest=fname, action='store_false',
+                             help=f"Don't {description}")
+        feature.set_defaults(**{fname:None})
+
+        if add_args:
+            parser.add_argument(f'--{target}-encoder-args', type=str,
+                                help=f"Arguments to pass to the {target} encoder",
+                                default=' '.join(getattr(defaults, f'{target}_encoder_args')))
+
+    for tool in ('lame', 'oggenc', 'flac', 'butler'):
+        parser.add_argument(f'--{tool}-path', type=str,
+                            help=f"Full path to the {tool} binary",
+                            default=getattr(defaults, f'{tool}_path'))
+
+    parser.add_argument('--butler-target', '-b', type=str,
+                        dest='butler_target',
+                        help="Butler push target prefix",
+                        default=None)
+
+    parser.add_argument('--butler-channel-prefix', '-p', type=str,
+                        dest='butler_prefix',
+                        help="Prefix for the Butler channel name",
+                        default=None)
+
+    return parser.parse_args()
+
+
+def get_config(args) -> options.Options:
+    """ Convert the parsed command arguments to an options structure """
+
+    config = options.Options()
+
+    print(config)
+
+    for field in dataclasses.fields(config):
+        value = getattr(args, field.name, None)
+        if value is not None:
+            print(field.name, field.type, value)
+            if field.type == list[str]:
+                LOGGER.debug("Setting config list %s to %s", field.name, value)
+                setattr(config, field.name, value.split())
+            else:
+                LOGGER.debug("Setting config field %s to %s", field.name, value)
+                setattr(config, field.name, value)
+
+    return config
+
+
 def main():
     """ Main entry point """
     # pylint:disable=too-many-branches,too-many-statements,too-many-locals
-    options = args.parse_args()
+    args = parse_args()
+    config = get_config(args)
 
     logging.basicConfig(level=LOG_LEVELS[min(
-        options.verbosity, len(LOG_LEVELS) - 1)],
+        args.verbosity, len(LOG_LEVELS) - 1)],
         format='%(message)s')
 
-    json_path = os.path.join(options.input_dir, options.json)
+    if os.path.isdir(args.input):
+        config.input_dir = args.input
+        json_file = os.path.join(args.input, args.json_file)
+    else:
+        config.input_dir = os.path.dirname(args.input)
+        json_file = args.input
 
-    if options.init:
-        LOGGER.info("Creating a default configuration in %s", json_path)
-        album = populate_json_file(options.input_dir, json_path)
-        if not options.output_dir:
-            return
+    config.output_dir = args.output
 
-    if not options.output_dir:
-        raise ValueError("Missing output directory")
+    if not os.path.isfile(json_file) and not args.init_json:
+        LOGGER.error("%s not found and --init not specified", json_file)
+        sys.exit(1)
 
-    with open(json_path, 'r', encoding='utf8') as json_file:
-        album = json.load(json_file)
+    if not config.output_dir and not args.init_json:
+        LOGGER.error("Output directory not specified")
+        sys.exit(1)
+
+    if os.path.isfile(json_file):
+        with open(json_file, 'r', encoding='utf8') as file:
+            album = json.load(file)
+    else:
+        album = None
+
+    if args.init_json:
+        LOGGER.info("Populating %s with files from %s",
+                    json_file, config.input_dir)
+        album = util.populate_album(config.input_dir, album)
+        LOGGER.info("Album now has %d tracks", len(album['tracks']))
+        with open(json_file, 'w', encoding='utf8') as file:
+            json.dump(album, file)
+
+    if not config.output_dir:
+        return
 
     pool = concurrent.futures.ThreadPoolExecutor(
-        max_workers=options.num_threads)
+        max_workers=args.num_threads)
 
     futures: typing.Dict[str,
                          typing.List[concurrent.futures.Future]] = collections.defaultdict(list)
 
-    process(options, album, pool, futures)
+    process(config, album, pool, futures)
 
     all_tasks = list(itertools.chain(*futures.values()))
     remaining_tasks = [f for f in all_tasks if not f.done()]

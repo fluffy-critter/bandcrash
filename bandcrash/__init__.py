@@ -74,7 +74,7 @@ def generate_id3_apic(album, track, size):
     return art_tags
 
 
-def encode_mp3(options, in_path, out_path, idx, album, track, encode_args, cover_art=None):
+def encode_mp3(config, in_path, out_path, idx, album, track, encode_args, cover_art=None):
     """ Encode a track as mp3
 
     :param str in_path: Input file path
@@ -88,7 +88,7 @@ def encode_mp3(options, in_path, out_path, idx, album, track, encode_args, cover
     from mutagen import id3
 
     if util.is_newer(in_path, out_path):
-        run_encoder(out_path, [options.lame_path, *encode_args.split(), '--nohist',
+        run_encoder(out_path, [config.lame_path, *encode_args, '--nohist',
                                in_path, out_path])
 
     try:
@@ -168,12 +168,12 @@ def get_flac_picture(artwork_path, size):
     return pic
 
 
-def encode_ogg(options, in_path, out_path, idx, album, track, encode_args, cover_art):
+def encode_ogg(config, in_path, out_path, idx, album, track, encode_args, cover_art):
     """ Encode a track as ogg vorbis """
     from mutagen import oggvorbis
 
     if util.is_newer(in_path, out_path):
-        run_encoder(out_path, [options.oggenc_path, *encode_args.split(),
+        run_encoder(out_path, [config.oggenc_path, *encode_args,
                                in_path, '-o', out_path])
 
     tags = oggvorbis.OggVorbis(out_path)
@@ -189,12 +189,12 @@ def encode_ogg(options, in_path, out_path, idx, album, track, encode_args, cover
     LOGGER.info("Finished writing %s", out_path)
 
 
-def encode_flac(options, in_path, out_path, idx, album, track, encode_args, cover_art):
+def encode_flac(config, in_path, out_path, idx, album, track, encode_args, cover_art):
     """ Encode a track as ogg vorbis """
     from mutagen import flac
 
     if util.is_newer(in_path, out_path):
-        run_encoder(out_path, [options.flac_path, *encode_args.split(),
+        run_encoder(out_path, [config.flac_path, *encode_args,
                                in_path, '-f', '-o', out_path])
 
     tags = flac.FLAC(out_path)
@@ -257,85 +257,6 @@ def make_web_preview(input_dir, output_dir, album, protections, futures):
                 output_dir, protections)
 
 
-def populate_json_file(input_dir: str, json_path: str):
-    """ Attempt to populate the JSON file, creating a new one if it doesn't exist """
-    # pylint:disable=too-many-locals,too-many-branches
-    try:
-        with open(json_path, 'r', encoding='utf8') as stream:
-            album = json.load(stream)
-            LOGGER.info("Loaded existing %s with %d tracks",
-                        json_path, len(album['tracks']))
-    except FileNotFoundError:
-        LOGGER.info("%s not found, initializing empty file", json_path)
-        album = {
-            'title': 'ALBUM TITLE',
-            'artist': 'ALBUM ARTIST',
-            'tracks': []
-        }
-
-    tracks: typing.List[typing.Dict[str, typing.Any]] = album['tracks']
-
-    # already-known tracks
-    known_audio = {track['filename']
-                   for track in tracks if 'filename' in track}
-
-    # newly-discovered tracks
-    discovered = []
-    art = set()
-    for file in os.scandir(input_dir):
-        _, ext = os.path.splitext(file.name)
-        if file.name not in known_audio and ext.lower() in ('.wav', '.aif', '.aiff', '.flac'):
-            discovered.append(file.name)
-        if ext.lower() in ('.jpg', '.jpeg', '.png'):
-            art.add(file.name)
-
-    # sort the tracks by any discovered numerical prefix
-    discovered.sort(key=util.guess_track_title)
-
-    for newtrack in discovered:
-        tracks.append({'filename': newtrack})
-
-    # Attempt to derive information that's missing
-    for track in tracks:
-        if 'filename' in track:
-            # Get the title from the track
-            if 'title' not in track:
-                track['title'] = util.guess_track_title(
-                    track['filename'])[1].title()
-
-            # Check for any matching lyric .txt files
-            if 'lyrics' not in track:
-                basename, _ = os.path.splitext(track['filename'])
-                lyrics_txt = f'{basename}.txt'
-                if os.path.isfile(lyrics_txt):
-                    track['lyrics'] = lyrics_txt
-
-            # Check for any matching track artwork
-            if 'artwork' not in track:
-                for art_file in art.copy():
-                    art_basename, _ = os.path.splitext(art_file)
-                    if basename.lower() == art_basename.lower():
-                        track['artwork'] = art_file
-                        art.remove(art_file)
-                        break
-
-    # Try to guess some album art
-    if 'artwork' not in album:
-        for art_file in art.copy():
-            basename, _ = os.path.splitext(art_file)
-            name_heuristic = False
-            for check in ('cover', 'album', 'artwork'):
-                if check in basename.lower():
-                    name_heuristic = True
-            if name_heuristic:
-                album['artwork'] = art_file
-
-    with open(json_path, 'w', encoding='utf8') as output:
-        json.dump(album, output, indent=4)
-
-    return album
-
-
 def clean_subdir(path: str, allowed: typing.Set[str], futures):
     """ Clean up a subdirectory of extraneous files """
     LOGGER.info("Cleanup: Waiting for %s (%d tasks)", path, len(futures))
@@ -352,19 +273,20 @@ def clean_subdir(path: str, allowed: typing.Set[str], futures):
                 os.remove(file)
 
 
-def submit_butler(options, target, futures):
+def submit_butler(config, target, futures):
     """ Submit the directory to itch.io via butler """
-    channel = f'{options.butler_target}:{options.butler_prefix}{target}'
-    output_dir = os.path.join(options.output_dir, target)
+    channel = f'{config.butler_target}:{config.butler_prefix}{target}'
+    output_dir = os.path.join(config.output_dir, target)
 
     LOGGER.info("Butler: Waiting for %s (%d tasks)", output_dir, len(futures))
     wait_futures(futures)
 
     LOGGER.info("Butler: pushing '%s' to channel '%s'", output_dir, channel)
-    subprocess.run([options.butler_path, 'push', output_dir, channel], check=True)
+    subprocess.run([config.butler_path, 'push',
+                   output_dir, channel], check=True)
 
 
-def encode_tracks(options, album, protections, pool, futures):
+def encode_tracks(config, album, protections, pool, futures):
     """ run the track encode process """
 
     for idx, track in enumerate(album['tracks'], start=1):
@@ -380,52 +302,52 @@ def encode_tracks(options, album, protections, pool, futures):
         def out_path(fmt, ext=None):
             # pylint:disable=cell-var-from-loop
             protections[fmt].add(f'{base_filename}.{ext or fmt}')
-            return os.path.join(options.output_dir, fmt, f'{base_filename}.{ext or fmt}')
+            return os.path.join(config.output_dir, fmt, f'{base_filename}.{ext or fmt}')
 
-        input_filename = os.path.join(options.input_dir, track['filename'])
+        input_filename = os.path.join(config.input_dir, track['filename'])
 
         if 'artwork' in track:
             track['artwork_path'] = os.path.join(
-                options.input_dir, track['artwork'])
+                config.input_dir, track['artwork'])
 
         if 'lyrics' in track and isinstance(track['lyrics'], str):
             track['lyrics'] = util.read_lines(
-                os.path.join(options.input_dir, track['lyrics']))
+                os.path.join(config.input_dir, track['lyrics']))
 
         # generate preview track, if desired
-        if options.do_preview and not track.get('hidden') and track.get('preview', True):
+        if config.do_preview and not track.get('hidden') and track.get('preview', True):
             track['preview_mp3'] = f'{base_filename}.mp3'
             futures['encode-preview'].append(pool.submit(
                 encode_mp3,
-                options,
+                config,
                 input_filename,
                 out_path('preview', 'mp3'),
-                idx, album, track, options.preview_encoder_args,
+                idx, album, track, config.preview_encoder_args,
                 cover_art=300))
 
-        if options.do_mp3:
+        if config.do_mp3:
             futures['encode-mp3'].append(pool.submit(
                 encode_mp3,
-                options,
+                config,
                 input_filename,
                 out_path('mp3'),
-                idx, album, track, options.mp3_encoder_args, cover_art=1500))
+                idx, album, track, config.mp3_encoder_args, cover_art=1500))
 
-        if options.do_ogg:
+        if config.do_ogg:
             futures['encode-ogg'].append(pool.submit(
                 encode_ogg,
-                options,
+                config,
                 input_filename,
                 out_path('ogg'),
-                idx, album, track, options.ogg_encoder_args, cover_art=1500))
+                idx, album, track, config.ogg_encoder_args, cover_art=1500))
 
-        if options.do_flac:
+        if config.do_flac:
             futures['encode-flac'].append(pool.submit(
                 encode_flac,
-                options,
+                config,
                 input_filename,
                 out_path('flac'),
-                idx, album, track, options.flac_encoder_args, cover_art=1500))
+                idx, album, track, config.flac_encoder_args, cover_art=1500))
 
 
 def make_zipfile(input_dir, output_file, futures):
@@ -438,11 +360,11 @@ def make_zipfile(input_dir, output_file, futures):
     shutil.make_archive(output_file, 'zip', input_dir)
 
 
-def process(options, album, pool, futures):
+def process(config, album, pool, futures):
     """
-    Process the album given the parsed options and the loaded album data
+    Process the album given the parsed config and the loaded album data
 
-    :param options: Runtime options from :func:`parse_args`
+    :param config: Runtime config from :func:`parse_args`
     :param dict album: Album metadata
     :param concurrent.Futures.Executor pool: The threadpool to submit tasks to
     :param dict futures: Pending tasks for a particular build phase; should be
@@ -465,15 +387,15 @@ def process(options, album, pool, futures):
         ('do_ogg', True),
         ('do_flac', True),
         ('do_zip', True),
-        ('do_butler', album.get('butler_target')),
+        ('do_butler', bool(album.get('butler_target'))),
         ('butler_target', ''),
         ('butler_prefix', '')
     ):
-        LOGGER.debug("options.%s = %s", attrname, getattr(options, attrname))
-        if getattr(options, attrname) is None:
-            setattr(options, attrname, album.get(attrname, default))
-            LOGGER.debug("options.%s unset, using album value %s",
-                         attrname, getattr(options, attrname))
+        LOGGER.debug("config.%s = %s", attrname, getattr(config, attrname))
+        if getattr(config, attrname) is None:
+            setattr(config, attrname, album.get(attrname, default))
+            LOGGER.debug("config.%s unset, using album value %s",
+                         attrname, getattr(config, attrname))
 
     formats = set()
     for target, tool in (('preview', 'lame'),
@@ -481,16 +403,16 @@ def process(options, album, pool, futures):
                          ('ogg', 'oggenc'),
                          ('flac', 'flac')):
         attrname = f'do_{target}'
-        if getattr(options, attrname) is None:
+        if getattr(config, attrname) is None:
             LOGGER.debug(
-                "options.%s is None, falling back to album spec", attrname)
-            setattr(options, attrname, album.get(attrname, True))
-        if getattr(options, attrname):
+                "config.%s is None, falling back to album spec", attrname)
+            setattr(config, attrname, album.get(attrname, True))
+        if getattr(config, attrname):
             LOGGER.info("Building %s", target)
-            if shutil.which(getattr(options, f'{tool}_path')):
+            if shutil.which(getattr(config, f'{tool}_path')):
                 formats.add(target)
                 os.makedirs(os.path.join(
-                    options.output_dir, target), exist_ok=True)
+                    config.output_dir, target), exist_ok=True)
             else:
                 LOGGER.warning(
                     "Couldn't find tool '%s'; disabling %s build", tool, target)
@@ -503,20 +425,20 @@ def process(options, album, pool, futures):
 
     if 'artwork' in album:
         album['artwork_path'] = os.path.join(
-            options.input_dir, album['artwork'])
+            config.input_dir, album['artwork'])
 
     # this populates encode-XXX futures
-    encode_tracks(options, album, protections, pool, futures)
+    encode_tracks(config, album, protections, pool, futures)
 
     # make build block on encode for all targets
     for target in formats:
         futures[f'build-{format}'].append(pool.submit(wait_futures,
                                                       futures[f'encode-{format}']))
 
-    if options.do_preview:
+    if config.do_preview:
         futures['build-preview'].append(pool.submit(make_web_preview,
-                                                    options.input_dir,
-                                                    os.path.join(options.output_dir,
+                                                    config.input_dir,
+                                                    os.path.join(config.output_dir,
                                                                  'preview'),
                                                     album, protections['preview'],
                                                     futures['encode-preview']))
@@ -526,31 +448,31 @@ def process(options, album, pool, futures):
         futures[f'clean-{target}'].append(pool.submit(
             wait_futures, futures[f'build-{target}']))
 
-    if options.clean_extra:
+    if config.do_cleanup:
         for target in formats:
             futures[f'clean-{target}'].append(pool.submit(
-                clean_subdir, os.path.join(options.output_dir, target),
+                clean_subdir, os.path.join(config.output_dir, target),
                 protections[target], futures[f'build-{target}']))
 
-    if options.do_butler and options.butler_target:
+    if config.do_butler and config.butler_target:
         for target in formats:
             futures['butler'].append(pool.submit(
                 submit_butler,
-                options,
+                config,
                 target,
                 futures[f'clean-{target}']))
 
-    if options.do_zip:
+    if config.do_zip:
         filename_parts = [album.get(field)
                           for field in ('artist', 'title')
                           if album.get(field)]
         for target in formats:
-            fname = os.path.join(options.output_dir,
+            fname = os.path.join(config.output_dir,
                                  util.slugify_filename(
                                      ' - '.join([*filename_parts, target])))
             futures['zip'].append(pool.submit(
                 make_zipfile,
-                os.path.join(options.output_dir, target),
+                os.path.join(config.output_dir, target),
                 fname,
                 futures[f'clean-{target}'])
             )
