@@ -15,6 +15,24 @@ Bandcrash is a standalone program that automatically encodes an album of songs i
 
 To use it, you'll need to install LAME, oggenc, and FLAC; on macOS you can install these via [homebrew](https://brew.sh/), on Linux you can use your system's package manager, and on Windows you're on your own.
 
+### GUI
+
+If you want to build the GUI locally, install [Python](https://python.org/), [poetry](https://python-poetry.org/), and `make` (from your favorite F/OSS package repository). After that you can run:
+
+```
+poetry run bandcrash-gui
+```
+
+to run the app without building it, or
+
+```
+make app
+```
+
+to build it into an executable, which will be stored in the `dist/` directory.
+
+The GUI is implemented in the `bandcrash.gui` module.
+
 ### Command-line
 
 For the command-line version, the suggested approach is to install [Python](https://python.org), after which you can install Bandcrash with:
@@ -23,31 +41,63 @@ For the command-line version, the suggested approach is to install [Python](http
 pip install bandcrash
 ```
 
-`bandcrash --help` will provide a lot more detailed information. For the most part you should be able to just do:
+`bandcrash --help` will provide a lot more detailed information. For the most basic usage you can run:
 
 ```
-bandcrash input_dir output_dir
+bandcrash --init input_dir output_dir
 ```
 
-and the rest will Just Work™.
+which will try to guess the track order, titles, and artwork from the files in that directory, and store the resulting album configuration as `input_dir/album.json`. It will then process the album and put its results into `output_dir`.
 
-### GUI
-
-If you want to build the GUI locally, install [Python](https://python.org/), [poetry](https://python-poetry.org/), and `make` (from your favorite F/OSS package repository). After that you can run:
+You can also specify the input as a path to the JSON file, e.g.:
 
 ```
-make app
+bandcrash input_dir/my_album.json output_dir
 ```
 
-after which the application will be built in the `dist/` directory.
+or if you want to keep the JSON file in a different directory or use a name other than `album.json`, you can use a relative path like:
 
-### Use as a library
+```
+bandcrash input_dir -j ../data/my_album.json
+```
 
-Bandcrash can also be used as a Python library in order to embed it into a web service or the like. Currently this isn't documented or particularly elegant, but the basic idea is:
+Note that the `-j` path is relative to `input_dir`, *not* the current working directory.
+
+The entry point for the CLI is in `bandcrash/cli.py`.
+
+## Use as a library
+
+Bandcrash can also be used as a Python library in order to embed it into a web service or application. Here is a minimal example of how to use it:
+
+```python
+import bandcrash
+import bandcrash.options
+import collections.defaultdict
+import concurrent.futures
+
+config = bandcrash.options.Options()
+album = {
+    'artist': 'My Band',
+    'title': 'My album',
+    'tracks': [
+        {'filename': 'track 1.wav', 'title': 'The First Track'},
+    ],
+}
+
+pool = concurrent.futures.ThreadPoolExecutor()
+futures = collections.defaultdict(list)
+
+bandcrash.process(config, album, pool, futures)
+for task in concurrent.futures.as_completed(list(itertools.chain(*futures.values()))):
+    try:
+        task.result()
+    except Exception:
+        # handle the exception in some helpful way
+```
 
 1. Load your album metadata into a Python `dict` structure (e.g. by doing `json.loads` on a JSON file or the like)
 2. Create a `concurrent.futures.ThreadPoolExecutor` and a `collections.defaultdict(list)` to store its futures
-3. Use `bandcrash.args.parse_args([])` to generate an options set, and then populate it accordingly
+3. Create a `bandcrash.options.Options` and set its options accordingly
 4. Call `bandcrash.process(options, album_data, threadpool, futures_dict`
 5. Wait for all of the futures in the `futures_dict` to complete
 
@@ -55,11 +105,9 @@ The `futures_dict` is a mapping from process step &rarr; list of futures, and is
 
 It is also fine (and, in fact, preferable) to share a `ThreadPoolExecutor` across multiple concurrent batches.
 
-Consult `bandcrash/cli.py` and `bandcrash/gui.py` for more thorough usage examples.
+## Album format
 
-## Building an album
-
-Make a directory with all of your source audio files and artwork and so on. Create a JSON file named `album.json` (which can be overridden) that looks something like this:
+For the CLI and GUI, album information is stored in a JSON file (normally named `album.json`) that looks something like this:
 
 ```json
 {
@@ -85,10 +133,18 @@ Make a directory with all of your source audio files and artwork and so on. Crea
 }
 ```
 
-You can also automatically generate a stub `album.json` file with:
+You can also automatically generate a stub `album.json` file with the `--init` option. Here are a few examples of its use:
 
 ```
+# stored as input_dir/album.json
 bandcrash --init input_dir output_dir
+
+# stored as input_dir/filename.json
+bandcrash --init input_dir/filename.json output_dir
+
+# stored as input_dir/data/filename.json
+bandcrash --init input_dir -j data/filename.json output_dir
+
 ```
 
 which will try to guess the track order and titles from the audio files in `input_dir`.
