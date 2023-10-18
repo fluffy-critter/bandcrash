@@ -397,6 +397,8 @@ def process(config, album, pool, futures):
             LOGGER.debug("config.%s unset, using album value %s",
                          attrname, getattr(config, attrname))
 
+    LOGGER.info("Starting encode with configuration: %s", config)
+
     formats = set()
     for target, tool in (('preview', 'lame'),
                          ('mp3', 'lame'),
