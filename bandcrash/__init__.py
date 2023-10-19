@@ -409,15 +409,21 @@ def process(config, album, pool, futures):
             LOGGER.debug(
                 "config.%s is None, falling back to album spec", attrname)
             setattr(config, attrname, album.get(attrname, True))
+
         if getattr(config, attrname):
-            LOGGER.info("Building %s", target)
             if shutil.which(getattr(config, f'{tool}_path')):
+                LOGGER.info("Building %s", target)
                 formats.add(target)
                 os.makedirs(os.path.join(
                     config.output_dir, target), exist_ok=True)
             else:
                 LOGGER.warning(
-                    "Couldn't find tool '%s'; disabling %s build", tool, target)
+                    "Couldn't find tool '%s'; ignoring %s build", tool, target)
+                setattr(config, attrname, False)
+
+    if config.do_butler and not shutil.which(config.butler_path):
+        LOGGER.warning("Couldn't find tool 'butler'; disabling upload")
+        config.do_butler = False
 
     if not formats:
         raise RuntimeError("No targets specified and nothing to do")
