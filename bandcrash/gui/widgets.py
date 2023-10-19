@@ -8,7 +8,7 @@ from .. import util
 class FileSelector(QtWidgets.QWidget):
     """ A file selector textbox with ... button """
 
-    def __init__(self, album_editor=None):
+    def __init__(self, album_editor=None, text=''):
         super().__init__()
 
         layout = QtWidgets.QHBoxLayout()
@@ -18,7 +18,7 @@ class FileSelector(QtWidgets.QWidget):
         self.setLayout(layout)
 
         self.album_editor = album_editor
-        self.file_path = QtWidgets.QLineEdit()
+        self.file_path = QtWidgets.QLineEdit(text=text)
         self.button = QtWidgets.QPushButton("...")
 
         layout.addWidget(self.file_path)
@@ -35,3 +35,7 @@ class FileSelector(QtWidgets.QWidget):
                 filename = util.make_relative_path(
                     self.album_editor.filename)(filename)
             self.file_path.setText(filename)
+
+    def text(self):
+        """ Get the value out """
+        return self.file_path.text()

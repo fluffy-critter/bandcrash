@@ -238,7 +238,7 @@ class TrackListing(QtWidgets.QSplitter):
 
         current_row = self.track_listing.currentRow()
 
-        if self.track_listing.count() != len(data):
+        if self.track_listing.count() and self.track_listing.count() != len(data):
             LOGGER.warning("Sync error: Track listing had %d, expected %d",
                            self.track_listing.count(), len(data))
 
