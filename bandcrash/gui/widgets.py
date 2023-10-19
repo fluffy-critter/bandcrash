@@ -40,6 +40,11 @@ class FileSelector(QtWidgets.QWidget):
         """ Get the value out """
         return self.file_path.text()
 
+    def setText(self, text):
+        """ Set the value """
+        # pylint:disable=invalid-name
+        return self.file_path.setText(text)
+
 
 class FuturesProgress(QtWidgets.QWidget):
     """ A stack of progress indicators """

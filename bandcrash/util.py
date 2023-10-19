@@ -1,4 +1,5 @@
 """ Common functions """
+import functools
 import logging
 import os
 import os.path
@@ -154,3 +155,12 @@ def populate_album(input_dir: str, album: typing.Optional[dict] = None):
                 album['artwork'] = art_file
 
     return album
+
+
+@functools.lru_cache()
+def ffmpeg_path():
+    """ Get the path to the bundled FFMPEG binary """
+    import pyffmpeg
+    ffmpeg = pyffmpeg.FFmpeg().get_ffmpeg_bin()
+    LOGGER.debug("Got ffmpeg binary: %s", ffmpeg)
+    return ffmpeg

@@ -48,23 +48,15 @@ class Options:
     input_dir: typing.Optional[str] = None  # Base directory for all inputs
     output_dir: typing.Optional[str] = None  # Base directory for all outputs
 
-    lame_path: typing.Optional[str] = shutil.which(
-        'lame')  # Path to the LAME encoder binary
-    oggenc_path: typing.Optional[str] = shutil.which(
-        'oggenc')  # Path to the Ogg Vorbis encoder binary
-    flac_path: typing.Optional[str] = shutil.which(
-        'flac')  # Path to the FLAC encoder binary
-    butler_path: typing.Optional[str] = shutil.which(
-        'butler')  # Path to the itch.io Butler tool
-
     preview_encoder_args: list[str] = dataclasses.field(
-        default_factory="-b 32 -V 5 -q 5 -m j".split().copy)
+        default_factory="-q:a 5".split().copy)
     mp3_encoder_args: list[str] = dataclasses.field(
-        default_factory="-V 0 -q 0 -m j".split().copy)
+        default_factory="-q:a 0".split().copy)
     ogg_encoder_args: list[str] = dataclasses.field(
-        default_factory="-q 10".split().copy)
+        default_factory="-q:a 10".split().copy)
     flac_encoder_args: list[str] = dataclasses.field(default_factory=list)
 
+    butler_path: typing.Optional[str] = shutil.which('butler')
     # The following options can override the values set in the album specification
     # (thus the None values)
 
@@ -88,3 +80,8 @@ class Options:
     butler_target: typing.Optional[str] = None  # Butler project target
     # Channel prefix for the Butler uploads
     butler_prefix: typing.Optional[str] = None
+
+
+def fields():
+    """ Get the dataclass fields """
+    return dataclasses.fields(Options)
