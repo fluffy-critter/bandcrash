@@ -3,6 +3,7 @@ import logging
 import os
 import os.path
 import re
+import string
 import typing
 
 import chardet
@@ -31,7 +32,7 @@ def guess_track_title(fname: str) -> typing.Tuple[int, str]:
     """ Get the track number and title from a filename """
     basename, _ = os.path.splitext(os.path.basename(fname))
     if match := re.match(r'([0-9]+)([^0-9]*)$', basename):
-        return int(match.group(1)), match.group(2).strip().title()
+        return int(match.group(1)), string.capwords(match.group(2).strip())
     return 0, basename.title()
 
 
