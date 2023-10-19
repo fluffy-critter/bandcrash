@@ -70,11 +70,13 @@ app: setup format pylint mypy
 	poetry run pyInstaller Bandcrash.spec -y
 
 .PHONY: upload-mac
-upload-mac: app
+upload-mac: preflight app
 	mkdir -p dist/macos
 	rm -rf dist/macos/Bandcrash.app
 	cp -rP dist/Bandcrash.app README.md dist/macos
-	butler push dist/macos fluffy/bandcrash:macos
+	butler push dist/macos fluffy/bandcrash:macos \
+		--userversion=$(shell poetry version | cut -f2 -d\ )-$(shell git rev-parse --short HEAD) \
+		--fix-permissions
 
 
 
