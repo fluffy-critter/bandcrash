@@ -125,6 +125,9 @@ class PreferencesWindow(QtWidgets.QDialog):
 
         layout.addRow(QtWidgets.QFrame(frameShape=QtWidgets.QFrame.HLine))
 
+        self.butler_path = widgets.FileSelector(text=defaults.butler_path)
+        layout.addRow("Butler binary", self.butler_path)
+
         apply_button = QtWidgets.QPushButton("Apply")
         layout.addRow("", apply_button)
         apply_button.clicked.connect(self.accept)
