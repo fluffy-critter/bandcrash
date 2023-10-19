@@ -4,8 +4,10 @@
 import argparse
 import json
 import logging
+import os
 import os.path
 import typing
+import concurrent.futures
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
@@ -23,13 +25,105 @@ def to_checkstate(val):
     return QtCore.Qt.Checked if val else QtCore.Qt.Unchecked
 
 
-def add_menu_item(menu, name, method, shortcut):
+def add_menu_item(menu, name, method, shortcut, role=None):
     """ Add a menu item """
     action = menu.addAction(name)
     action.triggered.connect(method)
     if shortcut:
         action.setShortcut(QtGui.QKeySequence(shortcut))
+    if role:
+        action.setMenuRole(role)
     return action
+
+def get_encode_options():
+    """ Get the encoder options """
+    from .. import options
+    import dataclasses
+
+    settings = QtCore.QSettings()
+    config = options.Options()
+
+    for field in dataclasses.fields(config):
+        if settings.contains(field.name):
+            if field.type == list[str]:
+                setattr(config, field.name, settings.value(field.name).split())
+            else:
+                setattr(config, field.name, settings.value(field.name))
+
+    return config
+
+
+class PreferencesWindow(QtWidgets.QDialog):
+    """ Sets application-level preferences """
+
+    def __init__(self):
+        super().__init__()
+        self.setMinimumSize(500,0)
+
+        self.settings = QtCore.QSettings()
+
+
+        layout = QtWidgets.QFormLayout(fieldGrowthPolicy=QtWidgets.QFormLayout.AllNonFixedFieldsGrow)
+        self.setLayout(layout)
+
+        # App-specific settings
+
+        self.num_threads =QtWidgets.QSpinBox(minimum=1, maximum=128, value=int(self.settings.value("num_threads", os.cpu_count())))
+        layout.addRow("Number of Threads", self.num_threads)
+
+        layout.addRow(QtWidgets.QFrame(frameShape=QtWidgets.QFrame.HLine))
+
+        # Encode settings
+
+        defaults = get_encode_options()
+
+        self.lame_path = FileSelector(text=defaults.lame_path)
+        layout.addRow("LAME binary", self.lame_path)
+        self.preview_encoder_args = QtWidgets.QLineEdit(text=' '.join(defaults.preview_encoder_args))
+        layout.addRow("Preview encoder options", self.preview_encoder_args)
+        self.mp3_encoder_args = QtWidgets.QLineEdit(text=' '.join(defaults.mp3_encoder_args))
+        layout.addRow("MP3 encoder options", self.mp3_encoder_args)
+
+        layout.addRow(QtWidgets.QFrame(frameShape=QtWidgets.QFrame.HLine))
+
+        self.oggenc_path = FileSelector(text=defaults.oggenc_path)
+        layout.addRow("OggEnc binary", self.oggenc_path)
+        self.ogg_encoder_args = QtWidgets.QLineEdit(text=' '.join(defaults.ogg_encoder_args))
+        layout.addRow("Ogg encoder options", self.ogg_encoder_args)
+
+        layout.addRow(QtWidgets.QFrame(frameShape=QtWidgets.QFrame.HLine))
+
+        self.flac_path = FileSelector(text=defaults.flac_path)
+        layout.addRow("FLAC binary", self.flac_path)
+        self.flac_encoder_args = QtWidgets.QLineEdit(text=' '.join(defaults.flac_encoder_args))
+        layout.addRow("FLAC encoder options", self.flac_encoder_args)
+
+        layout.addRow(QtWidgets.QFrame(frameShape=QtWidgets.QFrame.HLine))
+
+        apply_button = QtWidgets.QPushButton("Apply")
+        layout.addRow("", apply_button)
+        apply_button.clicked.connect(self.accept)
+        self.accepted.connect(self.apply)
+
+
+    def apply(self):
+        """ Save the settings out """
+        for key, value in (
+            ('num_threads', self.num_threads.value()),
+
+            ('lame_path', self.lame_path.text()),
+            ('preview_encoder_args', self.preview_encoder_args.text()),
+            ('mp3_encoder_args', self.mp3_encoder_args.text()),
+
+            ('oggenc_path', self.oggenc_path.text()),
+            ('ogg_encoder_args', self.ogg_encoder_args.text()),
+
+            ('flac_path', self.flac_path.text()),
+            ('flac_encoder_args', self.flac_encoder_args.text()),
+            ):
+            self.settings.setValue(key, value)
+
+        self.settings.sync()
 
 
 class AlbumEditor(QtWidgets.QMainWindow):
@@ -53,6 +147,13 @@ class AlbumEditor(QtWidgets.QMainWindow):
         add_menu_item(file_menu, "&Save", self.save, "Ctrl+S")
         add_menu_item(file_menu, "Save &As...", self.save_as, "Ctrl+Shift+S")
         add_menu_item(file_menu, "&Revert", self.revert, "Ctrl+Shift+R")
+
+        edit_menu = menubar.addMenu("Edit")
+        add_menu_item(edit_menu, "&Preferences", self.show_preferences, "Ctrl+,",
+            QtGui.QAction.PreferencesRole)
+
+        window_menu = menubar.addMenu("Window")
+        add_menu_item(window_menu, "&Close", self.close, "Ctrl+W")
 
         self.filename = path
         self.data: typing.Dict[str, typing.Any] = {'tracks': []}
@@ -210,7 +311,10 @@ class AlbumEditor(QtWidgets.QMainWindow):
         """ Run the encoder process """
         LOGGER.debug("AlbumEditor.encode_album")
         self.apply()
-        # TODO run the actual encode of course
+
+        config = get_encode_options()
+        LOGGER.info("Album data: %s", self.data)
+        LOGGER.info("Config options: %s", config)
 
     def renormalize_paths(self, old_name, new_name):
         """ Renormalize the file paths in the backing data """
@@ -243,6 +347,12 @@ class AlbumEditor(QtWidgets.QMainWindow):
                 if key in track and isinstance(track[key], str):
                     track[key] = renorm(track[key])
 
+    prefs_window = None
+    def show_preferences(self):
+        if not self.prefs_window:
+            self.prefs_window = PreferencesWindow()
+        self.prefs_window.show()
+
 
 def open_file(path):
     """ Open a file for editing """
@@ -266,6 +376,10 @@ class BandcrashApplication(QtWidgets.QApplication):
 
 def main():
     """ instantiate an app """
+    QtCore.QCoreApplication.setOrganizationName("busybee")
+    QtCore.QCoreApplication.setOrganizationDomain("beesbuzz.biz")
+    QtCore.QCoreApplication.setApplicationName("Bandcrash")
+
     parser = argparse.ArgumentParser(description="GUI for Bandcrash")
     parser.add_argument('-v', '--verbosity', action="count",
                         help="increase output verbosity", default=0)
