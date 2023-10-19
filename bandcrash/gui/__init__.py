@@ -170,12 +170,19 @@ class AlbumEditor(QtWidgets.QMainWindow):
     """ An album editor window """
     # pylint:disable=too-many-instance-attributes
 
+    already_instantiated = False
+
     def __init__(self, path: str):
         """ edit an album file
 
         :param str path: The path to the JSON file
         """
         super().__init__()
+
+        LOGGER.debug("path=%d type=%d", path, type(path))
+
+        AlbumEditor.already_instantiated = True
+
         self.setMinimumSize(600, 0)
 
         self.output_dir = None
@@ -200,6 +207,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
         self.filename = path
         self.data: typing.Dict[str, typing.Any] = {'tracks': []}
         if path:
+            AlbumEditor.default_open_dir(os.path.dirname(path))
             self.reload(path)
 
         layout = QtWidgets.QFormLayout(
@@ -241,24 +249,20 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
         layout.addRow(buttons)
 
-        self.setWindowTitle(self.filename)
+        self.setWindowTitle(self.filename or 'New Album')
 
         self.reset()
 
     def file_new(self):
-        """ Dialog box to create a new album file """
-        path, _ = QtWidgets.QFileDialog.getSaveFileName(
-            caption="New album file",
-            filter="Album files (*.json *.bcalbum)")
-        if path:
-            editor = AlbumEditor(path)
-            editor.show()
+        """ Create a new album file """
+        AlbumEditor('').show()
 
     def file_open(self):
         """ Dialog box to open an existing file """
         path, _ = QtWidgets.QFileDialog.getOpenFileName(
             caption="New album file",
-            filter="Album files (*.json *.bcalbum)")
+            filter="Album files (*.json *.bcalbum)",
+            dir=AlbumEditor.default_open_dir())
         if path:
             editor = AlbumEditor(path)
             editor.show()
@@ -320,10 +324,13 @@ class AlbumEditor(QtWidgets.QMainWindow):
     def save(self):
         """ Save the file to disk """
         LOGGER.debug("AlbumEditor.save")
-        self.apply()
+        if self.filename:
+            self.apply()
 
-        with open(self.filename, 'w', encoding='utf8') as file:
-            json.dump(self.data, file, indent=3)
+            with open(self.filename, 'w', encoding='utf8') as file:
+                json.dump(self.data, file, indent=3)
+        else:
+            self.save_as()
 
     def save_as(self):
         """ Save the file and change the name """
@@ -333,13 +340,14 @@ class AlbumEditor(QtWidgets.QMainWindow):
         path, _ = QtWidgets.QFileDialog.getSaveFileName(
             caption="Select your album file",
             filter="Album files (*.bcalbum *.json)",
-            dir=os.path.dirname(self.filename))
+            dir=os.path.dirname(self.filename) or AlbumEditor.default_open_dir())
         if path:
             self.renormalize_paths(self.filename, path)
             self.filename = path
             self.setWindowTitle(self.filename)
             self.reset()
             self.save()
+            AlbumEditor.default_open_dir(os.path.dirname(self.filename))
 
         self.reset()
 
@@ -467,6 +475,20 @@ class AlbumEditor(QtWidgets.QMainWindow):
                 if key in track and isinstance(track[key], str):
                     track[key] = renorm(track[key])
 
+    @staticmethod
+    def default_open_dir(set_value=None):
+        """ Set or get the default directory for album files """
+        settings = QtCore.QSettings()
+        if set_value:
+            settings.setValue("last_album_dir", set_value)
+            settings.sync()
+
+        dfl = default_music_dir(os.getcwd())
+        ret = settings.value("last_album_dir", dfl)
+        if not os.path.isdir(ret):
+            ret = dfl
+        return ret
+
 
 def open_file(path):
     """ Open a file for editing """
@@ -477,12 +499,39 @@ def open_file(path):
 class BandcrashApplication(QtWidgets.QApplication):
     """ Application event handler """
 
+    def __init__(self, open_files):
+        super().__init__()
+
+        self.opened = False
+
+        for path in open_files:
+            open_file(os.path.abspath(path))
+            self.opened = True
+
+        QtCore.QTimer.singleShot(50, self.open_on_startup)
+
+    def open_on_startup(self):
+        """ Hacky way to open the file dialog on startup. there must be a better way... """
+        if not self.opened:
+            dialog = QtWidgets.QFileDialog(caption="Open album",
+                                           fileMode=QtWidgets.QFileDialog.ExistingFile,
+                                           filter="Album files (*.json *.bcalbum)")
+            dialog.setDirectory(AlbumEditor.default_open_dir())
+            dialog.setLabelText(QtWidgets.QFileDialog.Reject, "New document")
+            dialog.exec()
+            files = dialog.selectedFiles()
+            for path in files:
+                AlbumEditor(path).show()
+            if not files:
+                AlbumEditor('').show()
+
     def event(self, evt):
         """ Handle an application-level event """
         LOGGER.debug("Event: %s", evt)
         if evt.type() == QtCore.QEvent.FileOpen:
             LOGGER.debug("Got file open event: %s", evt.file())
             open_file(evt.file())
+            self.opened = True
             return True
 
         return super().event(evt)
@@ -509,18 +558,7 @@ def main():
     LOGGER.debug(
         "Opening bandcrash GUI with provided files: %s", options.open_files)
 
-    app = BandcrashApplication()
-
-    if options.open_files:
-        for path in options.open_files:
-            open_file(os.path.abspath(path))
-    else:
-        path, _ = QtWidgets.QFileDialog.getSaveFileName(
-            caption="Select your album file",
-            filter="Album files (*.json *.bcalbum)",
-            options=QtWidgets.QFileDialog.DontConfirmOverwrite)
-        editor = AlbumEditor(path)
-        editor.show()
+    app = BandcrashApplication(options.open_files)
 
     app.exec()
 
