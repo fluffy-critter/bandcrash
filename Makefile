@@ -69,4 +69,12 @@ upload: clean test build
 app: setup format pylint mypy
 	poetry run pyInstaller Bandcrash.spec -y
 
+.PHONY: upload-mac
+upload-mac: app
+	mkdir -p dist/macos
+	rm -rf dist/macos/Bandcrash.app
+	cp -rP dist/Bandcrash.app README.md dist/macos
+	butler push dist/macos fluffy/bandcrash:macos
+
+
 

@@ -2,14 +2,15 @@
 
 import functools
 import io
-import os.path
 import logging
+import os.path
 
 import PIL.Image
 
 from .util import slugify_filename
 
-LOGGER=logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
+
 
 def load_image(in_path: str) -> PIL.Image:
     """ Load an image into memory, pooling it """
@@ -45,7 +46,8 @@ def generate_rendition(in_path: str, out_dir: str, size: int) -> str:
 
     image = generate_image(in_path, size)
     basename, _ = os.path.splitext(os.path.basename(in_path))
-    out_file = os.path.join(out_dir, slugify_filename(f'{basename}.{size}.jpg'))
+    out_file = os.path.join(
+        out_dir, slugify_filename(f'{basename}.{size}.jpg'))
     image.convert('RGB').save(out_file)
     LOGGER.info("Wrote image %s", out_file)
 
