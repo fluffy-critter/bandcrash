@@ -103,8 +103,9 @@ class PreferencesWindow(QtWidgets.QDialog):
         apply_button = QtWidgets.QPushButton("Apply")
         layout.addRow("", apply_button)
         apply_button.clicked.connect(self.accept)
-        self.accepted.connect(self.apply)
+        apply_button.setDefault(True)
 
+        self.accepted.connect(self.apply)
 
     def apply(self):
         """ Save the settings out """
@@ -124,6 +125,17 @@ class PreferencesWindow(QtWidgets.QDialog):
             self.settings.setValue(key, value)
 
         self.settings.sync()
+
+    prefs_window = None
+    @staticmethod
+    def show_preferences(self):
+        """ Show a preferences window """
+        if not PreferencesWindow.prefs_window:
+            PreferencesWindow.prefs_window = PreferencesWindow()
+        PreferencesWindow.prefs_window.show()
+        PreferencesWindow.prefs_window.raise_()
+        PreferencesWindow.prefs_window.activateWindow()
+
 
 
 class AlbumEditor(QtWidgets.QMainWindow):
@@ -149,7 +161,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
         add_menu_item(file_menu, "&Revert", self.revert, "Ctrl+Shift+R")
 
         edit_menu = menubar.addMenu("Edit")
-        add_menu_item(edit_menu, "&Preferences", self.show_preferences, "Ctrl+,",
+        add_menu_item(edit_menu, "&Preferences", PreferencesWindow.show_preferences, "Ctrl+,",
             QtGui.QAction.PreferencesRole)
 
         window_menu = menubar.addMenu("Window")
@@ -347,11 +359,6 @@ class AlbumEditor(QtWidgets.QMainWindow):
                 if key in track and isinstance(track[key], str):
                     track[key] = renorm(track[key])
 
-    prefs_window = None
-    def show_preferences(self):
-        if not self.prefs_window:
-            self.prefs_window = PreferencesWindow()
-        self.prefs_window.show()
 
 
 def open_file(path):
