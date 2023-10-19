@@ -60,7 +60,7 @@ def parse_args():
                              help=description)
         feature.add_argument(f'--no-{target}', dest=fname, action='store_false',
                              help=f"Don't {description}")
-        feature.set_defaults(**{fname:None})
+        feature.set_defaults(**{fname: None})
 
         if add_args:
             parser.add_argument(f'--{target}-encoder-args', type=str,
@@ -97,7 +97,8 @@ def get_config(args) -> options.Options:
                 LOGGER.debug("Setting config list %s to %s", field.name, value)
                 setattr(config, field.name, value.split())
             else:
-                LOGGER.debug("Setting config field %s to %s", field.name, value)
+                LOGGER.debug("Setting config field %s to %s",
+                             field.name, value)
                 setattr(config, field.name, value)
 
     return config
@@ -119,6 +120,7 @@ def main():
     else:
         config.input_dir = os.path.dirname(args.input)
         json_file = args.input
+    assert config.input_dir is not None
 
     config.output_dir = args.output
 
