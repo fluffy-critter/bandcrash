@@ -343,7 +343,6 @@ class AlbumEditor(QtWidgets.QMainWindow):
     def revert(self):
         """ Revert all changes """
         LOGGER.debug("AlbumEditor.revert")
-        # TODO confirmation box
         self.reload(self.filename)
         self.reset()
 
@@ -389,7 +388,10 @@ class AlbumEditor(QtWidgets.QMainWindow):
             max_workers=int(settings.value("num_threads", os.cpu_count())))
         futures = collections.defaultdict(list)
 
-        process(config, self.data, threadpool, futures)
+        try:
+            process(config, self.data, threadpool, futures)
+        except RuntimeError as e:
+            QtWidgets.QMessageBox.critical(self, "An error occurred", str(e))
 
         # Eventually I want to use FuturesProgress to show structured info but
         # for now this'll do
@@ -420,7 +422,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
                     errors) == 1 else "Some errors occurred",
                 detailedText='\n\n'.join(f'{type(e)}: {e}' for e in errors))
             msgbox.exec()
-        elif not progress.wasCanceled():
+        elif not progress.wasCanceled() and all_tasks:
             result = QtWidgets.QMessageBox.information(self,
                                                        "Encode complete",
                                                        "Encoding completed successfully",
