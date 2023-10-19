@@ -263,7 +263,7 @@ def clean_subdir(path: str, allowed: typing.Set[str], futures):
     wait_futures(futures)
     LOGGER.info("Cleaning up directory %s", path)
 
-    LOGGER.debug("Allowed in %s: %s", path, allowed)
+    LOGGER.info("Allowed in %s: %s", path, allowed)
     for file in os.scandir(path):
         if file.name not in allowed:
             LOGGER.info("Removing extraneous file %s", file.path)
@@ -379,6 +379,10 @@ def process(config, album, pool, futures):
 
     """
     # pylint:disable=too-many-branches
+
+    # Make a copy of the dict, since some pipeline steps mutate it and we want
+    # to be nice to the caller
+    album = album.copy()
 
     # Coerce album configuration to app configuration if it hasn't been specified
     for attrname, default in (
