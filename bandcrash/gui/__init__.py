@@ -2,19 +2,19 @@
 # pylint:disable=invalid-name,too-few-public-methods,too-many-ancestors
 # type: ignore
 import argparse
-import concurrent.futures
 import collections
+import concurrent.futures
 import itertools
 import json
 import logging
 import os
 import os.path
-import typing
 import threading
+import typing
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from .. import __version__, util, process
+from .. import __version__, process, util
 from . import datatypes, widgets
 from .track_editor import TrackListing
 
@@ -389,7 +389,6 @@ class AlbumEditor(QtWidgets.QMainWindow):
             max_workers=int(settings.value("num_threads", os.cpu_count())))
         futures = collections.defaultdict(list)
 
-
         process(config, self.data, threadpool, futures)
 
         # Eventually I want to use FuturesProgress to show structured info but
@@ -397,12 +396,13 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
         errors = []
         all_tasks = list(itertools.chain(*futures.values()))
-        progress = QtWidgets.QProgressDialog("Encoding album...", "Abort", 0, len(all_tasks), self)
+        progress = QtWidgets.QProgressDialog(
+            "Encoding album...", "Abort", 0, len(all_tasks), self)
         progress.setWindowModality(QtCore.Qt.WindowModal)
 
         for task in concurrent.futures.as_completed(all_tasks):
             pending = [t for t in all_tasks if not t.done()]
-            LOGGER.debug("pending tasks: %s", pending)
+            LOGGER.debug("%d pending tasks", len(pending))
 
             progress.setValue(len(all_tasks) - len(pending))
             if progress.wasCanceled():
@@ -416,20 +416,20 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
         if errors:
             msgbox = QtWidgets.QMessageBox(
-                "An error occurred" if len(errors) == 1 else "Some errors occurred",
+                "An error occurred" if len(
+                    errors) == 1 else "Some errors occurred",
                 detailedText='\n\n'.join(f'{type(e)}: {e}' for e in errors))
             msgbox.exec()
         elif not progress.wasCanceled():
             result = QtWidgets.QMessageBox.information(self,
-                "Encode complete",
-                "Encoding completed successfully",
-                QtWidgets.QMessageBox.StandardButton.Open |
-                QtWidgets.QMessageBox.StandardButton.Ok,
-                QtWidgets.QMessageBox.StandardButton.Open)
+                                                       "Encode complete",
+                                                       "Encoding completed successfully",
+                                                       QtWidgets.QMessageBox.StandardButton.Open |
+                                                       QtWidgets.QMessageBox.StandardButton.Ok,
+                                                       QtWidgets.QMessageBox.StandardButton.Open)
             if result == QtWidgets.QMessageBox.StandardButton.Open:
-                QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(config.output_dir))
-
-
+                QtGui.QDesktopServices.openUrl(
+                    QtCore.QUrl.fromLocalFile(config.output_dir))
 
     def renormalize_paths(self, old_name, new_name):
         """ Renormalize the file paths in the backing data """

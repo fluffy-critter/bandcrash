@@ -67,6 +67,6 @@ upload: clean test build
 
 .PHONY: app
 app: setup format pylint mypy
-	poetry run pyInstaller Bandcrash.spec -y --argv-emulation
+	poetry run pyInstaller Bandcrash.spec -y
 
 
