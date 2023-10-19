@@ -49,7 +49,6 @@ app = BUNDLE(
     name='Bandcrash.app',
     icon='bclogo.png',
     version=bandcrash.__version__.__version__,
-    argv_emulation=True,
     bundle_identifier='biz.beesbuzz.bandcrash',
     info_plist={
         'CFBundleDocumentTypes': [{
