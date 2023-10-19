@@ -4,3 +4,4 @@ dist/
 test_output
 tests/derived/derived.json
 build/
+*~lock~

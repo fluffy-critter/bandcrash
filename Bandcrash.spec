@@ -32,6 +32,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon='bclogo.png',
 )
 coll = COLLECT(
     exe,
@@ -41,11 +42,12 @@ coll = COLLECT(
     upx=True,
     upx_exclude=[],
     name='Bandcrash',
+    icon='bclogo.png',
 )
 app = BUNDLE(
     coll,
     name='Bandcrash.app',
-    icon=None,
+    icon='bclogo.png',
     version=bandcrash.__version__.__version__,
     argv_emulation=True,
     bundle_identifier='biz.beesbuzz.bandcrash',
