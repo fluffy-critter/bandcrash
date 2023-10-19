@@ -46,9 +46,8 @@ def generate_rendition(in_path: str, out_dir: str, size: int) -> str:
 
     image = generate_image(in_path, size)
     basename, _ = os.path.splitext(os.path.basename(in_path))
-    out_file = os.path.join(
-        out_dir, slugify_filename(f'{basename}.{size}.jpg'))
-    image.convert('RGB').save(out_file)
+    out_file = slugify_filename(f'{basename}.{size}.jpg')
+    image.convert('RGB').save(os.path.join(out_dir, out_file))
     LOGGER.info("Wrote image %s", out_file)
 
     return out_file
