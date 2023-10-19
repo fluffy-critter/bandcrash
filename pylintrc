@@ -1,0 +1,5 @@
+[MESSAGES CONTROL]
+disable=import-outside-toplevel, too-many-lines
+
+[SIMILARITIES]
+ignore-imports=yes

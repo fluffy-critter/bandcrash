@@ -8,20 +8,25 @@ readme = "README.md"
 repository = "https://github.com/fluffy-critter/bandcrash"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = ">=3.8,<3.12"
 mutagen = "^1.45.1"
 Pillow = "^10.0.1"
 awesome-slugify = "^1.6.5"
 Jinja2 = "^3.0.3"
 chardet = "^4.0.0"
+pyside6 = {version = "^6.5.3", optional = true}
 
-[tool.poetry.dev-dependencies]
-autopep8 = "^1.6.0"
-isort = "^5.10.1"
-pylint = "^2.12.2"
-mypy = "^0.931"
-types-python-slugify = "^5.0.3"
-types-chardet = "^4.0.3"
+[tool.poetry.group.dev.dependencies]
+autopep8 = "^2.0.4"
+isort = "^5.12.0"
+pylint = "^3.0.1"
+mypy = "^1.5.1"
+types-python-slugify = "^8.0.0.3"
+types-chardet = "^5.0.4.6"
+pyinstaller = "^6.0.0"
+
+[tool.poetry.extras]
+gui = [ "pyside6" ]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -29,3 +34,5 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 bandcrash = 'bandcrash.cli:main'
+bandcrash-gui = 'bandcrash.gui:main'
+

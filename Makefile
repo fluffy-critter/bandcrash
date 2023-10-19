@@ -2,7 +2,7 @@ all: setup version format mypy pylint
 
 .PHONY: setup
 setup:
-	poetry install
+	poetry install -E gui
 
 .PHONY: format
 format:
@@ -17,15 +17,16 @@ test: setup
 	touch test_output/album/mp3/extraneous-file.txt
 	touch test_output/album/mp3/dir_should_be_removed/extraneous-file.txt
 	poetry run bandcrash -vvv tests/album test_output/album
+	poetry run bandcrash tests/album/test-options.json test_output/test-options --no-butler
 	poetry run bandcrash -vvv --init tests/derived test_output/derived --json derived.json
 
 .PHONY: pylint
 pylint:
-	poetry run pylint bandcrash
+	poetry run pylint bandcrash --extension-pkg-allow-list=PySide6
 
 .PHONY: mypy
 mypy:
-	poetry run mypy -p bandcrash --ignore-missing-imports
+	poetry run mypy -p bandcrash --ignore-missing-imports --check-untyped-defs
 
 .PHONY: preflight
 preflight:
@@ -63,3 +64,9 @@ clean:
 .PHONY: upload
 upload: clean test build
 	poetry publish
+
+.PHONY: app
+app: setup format pylint mypy
+	poetry run pyInstaller Bandcrash.spec -y
+
+
