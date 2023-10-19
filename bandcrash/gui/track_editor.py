@@ -144,7 +144,6 @@ class TrackListing(QtWidgets.QSplitter):
         """ an item in the track listing """
 
         def __init__(self, album_editor, data):
-            LOGGER.debug("TrackItem.__init__")
             super().__init__()
             self.editor = TrackEditor(album_editor, data)
             self.setText(self.display_name)
@@ -157,20 +156,19 @@ class TrackListing(QtWidgets.QSplitter):
 
             :param list data: album['data']
             """
-            LOGGER.debug("TrackItem.__reset__")
+            LOGGER.debug("TrackItem.__reset__ %d", self.display_name)
             self.editor.reset(data)
             self.setText(self.display_name)
 
         def apply(self):
             """ Apply the GUI values to the backing store """
-            LOGGER.debug("TrackItem.__apply__")
+            LOGGER.debug("TrackItem.__apply__ %d", self.display_name)
             self.editor.apply()
             self.setText(self.display_name)
 
         @property
         def display_name(self):
             """ Get the display name of this track """
-            LOGGER.debug("TrackItem.display_name")
             info = self.editor.data
             if 'title' in info:
                 return info['title']

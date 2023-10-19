@@ -39,3 +39,33 @@ class FileSelector(QtWidgets.QWidget):
     def text(self):
         """ Get the value out """
         return self.file_path.text()
+
+
+class FuturesProgress(QtWidgets.QWidget):
+    """ A stack of progress indicators """
+
+    def __init__(self, futures):
+        super().__init__()
+
+        self.futures = futures
+        self.mapping = {}
+
+        self.layout = QtWidgets.QFormLayout()
+        for key, tasks in futures.items():
+            progress_bar = QtWidgets.QProgressBar(
+                minimum=0, maximum=len(tasks))
+            self.mapping[key] = progress_bar
+            self.layout.addRow(key, progress_bar)
+
+        self.setLayout(self.layout)
+
+    def update(self):
+        """ Update the progress indicators; returns True if everything's done """
+        for key, tasks in self.futures.items():
+            if key in self.mapping:
+                if len([task for task in tasks if task.done()]) == len(tasks):
+                    # This task set is finished, so we can remove the progress bar
+                    self.layout.removeRow(self.mapping[key])
+                    del self.mapping[key]
+
+        return bool(self.mapping)
