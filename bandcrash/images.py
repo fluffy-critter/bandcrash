@@ -3,11 +3,13 @@
 import functools
 import io
 import os.path
+import logging
 
 import PIL.Image
 
 from .util import slugify_filename
 
+LOGGER=logging.getLogger(__name__)
 
 def load_image(in_path: str) -> PIL.Image:
     """ Load an image into memory, pooling it """
@@ -31,7 +33,6 @@ def generate_image(in_path: str, size: int) -> PIL.Image:
     return image.resize(size=(out_w, out_h), resample=PIL.Image.Resampling.LANCZOS)
 
 
-@functools.lru_cache()
 def generate_rendition(in_path: str, out_dir: str, size: int) -> str:
     """ Given an image path and a size, save a rendition to disk
 
@@ -44,8 +45,9 @@ def generate_rendition(in_path: str, out_dir: str, size: int) -> str:
 
     image = generate_image(in_path, size)
     basename, _ = os.path.splitext(os.path.basename(in_path))
-    out_file = slugify_filename(f'{basename}.{size}.jpg')
-    image.convert('RGB').save(os.path.join(out_dir, out_file))
+    out_file = os.path.join(out_dir, slugify_filename(f'{basename}.{size}.jpg'))
+    image.convert('RGB').save(out_file)
+    LOGGER.info("Wrote image %s", out_file)
 
     return out_file
 
