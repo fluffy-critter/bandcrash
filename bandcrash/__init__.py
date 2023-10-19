@@ -28,24 +28,6 @@ def wait_futures(futures):
         task.result()
 
 
-def run_encoder(outfile, args):
-    """ Run an encoder; if the encode process fails, delete the file
-
-    :param str outfile: The output file path
-    :param list args: The entire arglist (including output file path)
-    """
-    try:
-        subprocess.run(args, check=True, stdout=subprocess.DEVNULL)
-    except Exception as err:
-        LOGGER.error("Got error encoding %s: %s", outfile, err)
-        os.remove(outfile)
-        raise
-    except KeyboardInterrupt:
-        LOGGER.error("User aborted while encoding %s", outfile)
-        os.remove(outfile)
-        raise
-
-
 def generate_id3_apic(album, track, size):
     """ Generate the APIC tags for an mp3 track
     :param dict album: The album's data
@@ -74,7 +56,31 @@ def generate_id3_apic(album, track, size):
     return art_tags
 
 
-def encode_mp3(config, in_path, out_path, idx, album, track, encode_args, cover_art=None):
+def run_encoder(infile, outfile, args):
+    """ Run an encoder; if the encode process fails, delete the file
+
+    :param str outfile: The output file path
+    :param list args: The entire arglist (including output file path)
+    """
+
+    if util.is_newer(infile, outfile):
+        try:
+            subprocess.run([util.ffmpeg_path(),
+                            '-hide_banner', '-loglevel', 'error',
+                            '-i', infile,
+                            *args,
+                            '-y', outfile], check=True, stdout=subprocess.DEVNULL)
+        except Exception as err:
+            LOGGER.error("Got error encoding %s: %s", outfile, err)
+            os.remove(outfile)
+            raise
+        except KeyboardInterrupt:
+            LOGGER.error("User aborted while encoding %s", outfile)
+            os.remove(outfile)
+            raise
+
+
+def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None):
     """ Encode a track as mp3
 
     :param str in_path: Input file path
@@ -87,9 +93,7 @@ def encode_mp3(config, in_path, out_path, idx, album, track, encode_args, cover_
     """
     from mutagen import id3
 
-    if util.is_newer(in_path, out_path):
-        run_encoder(out_path, [config.lame_path, *encode_args, '--nohist',
-                               in_path, out_path])
+    run_encoder(in_path, out_path, encode_args)
 
     try:
         tags = id3.ID3(out_path)
@@ -168,13 +172,11 @@ def get_flac_picture(artwork_path, size):
     return pic
 
 
-def encode_ogg(config, in_path, out_path, idx, album, track, encode_args, cover_art):
+def encode_ogg(in_path, out_path, idx, album, track, encode_args, cover_art):
     """ Encode a track as ogg vorbis """
     from mutagen import oggvorbis
 
-    if util.is_newer(in_path, out_path):
-        run_encoder(out_path, [config.oggenc_path, *encode_args,
-                               in_path, '-o', out_path])
+    run_encoder(in_path, out_path, encode_args)
 
     tags = oggvorbis.OggVorbis(out_path)
     tag_vorbis(tags, idx, album, track)
@@ -189,13 +191,11 @@ def encode_ogg(config, in_path, out_path, idx, album, track, encode_args, cover_
     LOGGER.info("Finished writing %s", out_path)
 
 
-def encode_flac(config, in_path, out_path, idx, album, track, encode_args, cover_art):
+def encode_flac(in_path, out_path, idx, album, track, encode_args, cover_art):
     """ Encode a track as ogg vorbis """
     from mutagen import flac
 
-    if util.is_newer(in_path, out_path):
-        run_encoder(out_path, [config.flac_path, *encode_args,
-                               in_path, '-f', '-o', out_path])
+    run_encoder(in_path, out_path, encode_args)
 
     tags = flac.FLAC(out_path)
     tag_vorbis(tags.tags, idx, album, track)
@@ -319,7 +319,6 @@ def encode_tracks(config, album, protections, pool, futures):
             track['preview_mp3'] = f'{base_filename}.mp3'
             futures['encode-preview'].append(pool.submit(
                 encode_mp3,
-                config,
                 input_filename,
                 out_path('preview', 'mp3'),
                 idx, album, track, config.preview_encoder_args,
@@ -328,7 +327,6 @@ def encode_tracks(config, album, protections, pool, futures):
         if config.do_mp3:
             futures['encode-mp3'].append(pool.submit(
                 encode_mp3,
-                config,
                 input_filename,
                 out_path('mp3'),
                 idx, album, track, config.mp3_encoder_args, cover_art=1500))
@@ -336,7 +334,6 @@ def encode_tracks(config, album, protections, pool, futures):
         if config.do_ogg:
             futures['encode-ogg'].append(pool.submit(
                 encode_ogg,
-                config,
                 input_filename,
                 out_path('ogg'),
                 idx, album, track, config.ogg_encoder_args, cover_art=1500))
@@ -344,7 +341,6 @@ def encode_tracks(config, album, protections, pool, futures):
         if config.do_flac:
             futures['encode-flac'].append(pool.submit(
                 encode_flac,
-                config,
                 input_filename,
                 out_path('flac'),
                 idx, album, track, config.flac_encoder_args, cover_art=1500))
@@ -404,10 +400,7 @@ def process(config, album, pool, futures):
     LOGGER.info("Starting encode with configuration: %s", config)
 
     formats = set()
-    for target, tool in (('preview', 'lame'),
-                         ('mp3', 'lame'),
-                         ('ogg', 'oggenc'),
-                         ('flac', 'flac')):
+    for target in ('preview', 'mp3', 'ogg', 'flac'):
         attrname = f'do_{target}'
         if getattr(config, attrname) is None:
             LOGGER.debug(
@@ -415,15 +408,10 @@ def process(config, album, pool, futures):
             setattr(config, attrname, album.get(attrname, True))
 
         if getattr(config, attrname):
-            if shutil.which(getattr(config, f'{tool}_path')):
-                LOGGER.info("Building %s", target)
-                formats.add(target)
-                os.makedirs(os.path.join(
-                    config.output_dir, target), exist_ok=True)
-            else:
-                LOGGER.warning(
-                    "Couldn't find tool '%s'; ignoring %s build", tool, target)
-                setattr(config, attrname, False)
+            LOGGER.info("Building %s", target)
+            formats.add(target)
+            os.makedirs(os.path.join(
+                config.output_dir, target), exist_ok=True)
 
     if config.do_butler and not shutil.which(config.butler_path):
         LOGGER.warning("Couldn't find tool 'butler'; disabling upload")
