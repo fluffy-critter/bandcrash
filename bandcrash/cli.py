@@ -67,11 +67,6 @@ def parse_args():
                                 help=f"Arguments to pass to the {target} encoder",
                                 default=' '.join(getattr(defaults, f'{target}_encoder_args')))
 
-    for tool in ('lame', 'oggenc', 'flac', 'butler'):
-        parser.add_argument(f'--{tool}-path', type=str,
-                            help=f"Full path to the {tool} binary",
-                            default=getattr(defaults, f'{tool}_path'))
-
     parser.add_argument('--butler-target', '-b', type=str,
                         dest='butler_target',
                         help="Butler push target prefix",

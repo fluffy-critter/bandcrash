@@ -40,15 +40,19 @@ def add_menu_item(menu, name, method, shortcut, role=None):
 
 def get_encode_options():
     """ Get the encoder options """
-    import dataclasses
 
     from .. import options
 
+    LOGGER.debug("get encode options")
     settings = QtCore.QSettings()
+    LOGGER.debug("get config defaults")
     config = options.Options()
 
-    for field in dataclasses.fields(config):
+    for field in options.fields():
+        LOGGER.debug("get field %s", field.name)
         if settings.contains(field.name):
+            LOGGER.debug("type=%s value=%s", field.type,
+                         settings.value(field.name))
             if field.type == list[str]:
                 setattr(config, field.name, settings.value(field.name).split())
             else:
@@ -78,6 +82,7 @@ class PreferencesWindow(QtWidgets.QDialog):
 
     def __init__(self):
         super().__init__()
+        LOGGER.debug("Creating prefs window")
         self.setMinimumSize(500, 0)
 
         self.settings = QtCore.QSettings()
@@ -98,8 +103,6 @@ class PreferencesWindow(QtWidgets.QDialog):
 
         defaults = get_encode_options()
 
-        self.lame_path = widgets.FileSelector(text=defaults.lame_path)
-        layout.addRow("LAME binary", self.lame_path)
         self.preview_encoder_args = QtWidgets.QLineEdit(
             text=' '.join(defaults.preview_encoder_args))
         layout.addRow("Preview encoder options", self.preview_encoder_args)
@@ -107,31 +110,35 @@ class PreferencesWindow(QtWidgets.QDialog):
             text=' '.join(defaults.mp3_encoder_args))
         layout.addRow("MP3 encoder options", self.mp3_encoder_args)
 
-        layout.addRow(QtWidgets.QFrame(frameShape=QtWidgets.QFrame.HLine))
-
-        self.oggenc_path = widgets.FileSelector(text=defaults.oggenc_path)
-        layout.addRow("OggEnc binary", self.oggenc_path)
+        LOGGER.debug("varara1")
         self.ogg_encoder_args = QtWidgets.QLineEdit(
             text=' '.join(defaults.ogg_encoder_args))
         layout.addRow("Ogg encoder options", self.ogg_encoder_args)
 
-        layout.addRow(QtWidgets.QFrame(frameShape=QtWidgets.QFrame.HLine))
-
-        self.flac_path = widgets.FileSelector(text=defaults.flac_path)
-        layout.addRow("FLAC binary", self.flac_path)
         self.flac_encoder_args = QtWidgets.QLineEdit(
             text=' '.join(defaults.flac_encoder_args))
         layout.addRow("FLAC encoder options", self.flac_encoder_args)
 
         layout.addRow(QtWidgets.QFrame(frameShape=QtWidgets.QFrame.HLine))
 
+        LOGGER.debug("varara1")
         self.butler_path = widgets.FileSelector(text=defaults.butler_path)
         layout.addRow("Butler binary", self.butler_path)
 
+        LOGGER.debug("varara1")
+        buttons = QtWidgets.QHBoxLayout()
+
+        reset_button = QtWidgets.QPushButton("Load Defaults")
+        reset_button.clicked.connect(self.reset_defaults)
+        buttons.addWidget(reset_button)
+
         apply_button = QtWidgets.QPushButton("Apply")
-        layout.addRow("", apply_button)
         apply_button.clicked.connect(self.accept)
         apply_button.setDefault(True)
+        buttons.addWidget(apply_button)
+
+        LOGGER.debug("varara1")
+        layout.addRow(buttons)
 
         self.accepted.connect(self.apply)
 
@@ -140,37 +147,50 @@ class PreferencesWindow(QtWidgets.QDialog):
         for key, value in (
             ('num_threads', self.num_threads.value()),
 
-            ('lame_path', self.lame_path.text()),
             ('preview_encoder_args', self.preview_encoder_args.text()),
             ('mp3_encoder_args', self.mp3_encoder_args.text()),
-
-            ('oggenc_path', self.oggenc_path.text()),
             ('ogg_encoder_args', self.ogg_encoder_args.text()),
-
-            ('flac_path', self.flac_path.text()),
             ('flac_encoder_args', self.flac_encoder_args.text()),
+
+            ('butler_path', self.butler_path.text()),
         ):
             self.settings.setValue(key, value)
 
         self.settings.sync()
 
-    prefs_window = None
+    def reset_defaults(self):
+        """ Reset to defaults """
+        from .. import options
+        defaults = options.Options()
+
+        LOGGER.debug("foo 1")
+
+        self.num_threads.setValue(os.cpu_count())
+        self.preview_encoder_args.setText(
+            ' '.join(defaults.preview_encoder_args))
+        self.mp3_encoder_args.setText(' '.join(defaults.mp3_encoder_args))
+        self.ogg_encoder_args.setText(' '.join(defaults.ogg_encoder_args))
+        self.flac_encoder_args.setText(' '.join(defaults.flac_encoder_args))
+
+        LOGGER.debug("foo 2")
+
+        self.butler_path.setText(defaults.butler_path)
+
+        LOGGER.debug("foo 3")
+
+        self.apply()
 
     @staticmethod
     def show_preferences():
         """ Show a preferences window """
-        if not PreferencesWindow.prefs_window:
-            PreferencesWindow.prefs_window = PreferencesWindow()
-        PreferencesWindow.prefs_window.show()
-        PreferencesWindow.prefs_window.raise_()
-        PreferencesWindow.prefs_window.activateWindow()
+        prefs_window = PreferencesWindow()
+        prefs_window.setModal(True)
+        prefs_window.exec()
 
 
 class AlbumEditor(QtWidgets.QMainWindow):
     """ An album editor window """
     # pylint:disable=too-many-instance-attributes
-
-    already_instantiated = False
 
     def __init__(self, path: str):
         """ edit an album file
@@ -178,10 +198,6 @@ class AlbumEditor(QtWidgets.QMainWindow):
         :param str path: The path to the JSON file
         """
         super().__init__()
-
-        LOGGER.debug("path=%d type=%d", path, type(path))
-
-        AlbumEditor.already_instantiated = True
 
         self.setMinimumSize(600, 0)
 
@@ -359,6 +375,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
     def encode_album(self):
         """ Run the encoder process """
+        # pylint:disable=too-many-branches,too-many-statements
         LOGGER.debug("AlbumEditor.encode_album")
         self.apply()
 
@@ -428,10 +445,13 @@ class AlbumEditor(QtWidgets.QMainWindow):
                 errors.append(e)
 
         if errors:
-            msgbox = QtWidgets.QMessageBox(
-                "An error occurred" if len(
-                    errors) == 1 else "Some errors occurred",
-                detailedText='\n\n'.join(f'{type(e)}: {e}' for e in errors))
+            msgbox = QtWidgets.QMessageBox(self)
+            if len(errors) == 1:
+                msgbox.setText("An error occurred")
+            else:
+                msgbox.setText("Some errors occurred")
+            msgbox.setDetailedText('\n\n'.join(
+                f'{type(e)}: {e}' for e in errors))
             msgbox.exec()
         elif not progress.wasCanceled() and all_tasks:
             result = QtWidgets.QMessageBox.information(self,
@@ -513,17 +533,10 @@ class BandcrashApplication(QtWidgets.QApplication):
     def open_on_startup(self):
         """ Hacky way to open the file dialog on startup. there must be a better way... """
         if not self.opened:
-            dialog = QtWidgets.QFileDialog(caption="Open album",
-                                           fileMode=QtWidgets.QFileDialog.ExistingFile,
-                                           filter="Album files (*.json *.bcalbum)")
-            dialog.setDirectory(AlbumEditor.default_open_dir())
-            dialog.setLabelText(QtWidgets.QFileDialog.Reject, "New document")
-            dialog.exec()
-            files = dialog.selectedFiles()
-            for path in files:
-                AlbumEditor(path).show()
-            if not files:
-                AlbumEditor('').show()
+            path, _ = QtWidgets.QFileDialog.getOpenFileName(caption="Open album",
+                                                            filter="Album files (*.json *.bcalbum)",
+                                                            dir=AlbumEditor.default_open_dir())
+            AlbumEditor(path).show()
 
     def event(self, evt):
         """ Handle an application-level event """
