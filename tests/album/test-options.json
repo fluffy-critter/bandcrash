@@ -46,5 +46,8 @@
          "lyrics": "lyrics-iso8859.txt",
          "group": "Meows I Have Known"
       }
-   ]
+   ],
+   "do_ogg": false,
+   "butler_target": "qwer/poiu",
+   "butler_prefix": "pony-"
 }
