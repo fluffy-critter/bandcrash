@@ -411,6 +411,22 @@ files = [
 ]
 
 [[package]]
+name = "pyffmpeg"
+version = "2.4.2.18.1"
+description = "FFmpeg wrapper for python"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pyffmpeg-2.4.2.18.1-py3-none-macosx_10_9_universal2.whl", hash = "sha256:c6b5148ee7aca95fb6756919b54d59fe4d417a6b0d5acfa92bc7f5a97cd15973"},
+    {file = "pyffmpeg-2.4.2.18.1-py3-none-macosx_10_9_x86_64.whl", hash = "sha256:9347a1ae00225b4561dcb7543b91bc9ee3d36cbdfcefa7897e3672af0d299362"},
+    {file = "pyffmpeg-2.4.2.18.1-py3-none-macosx_11_0_arm64.whl", hash = "sha256:72c720ef7ae24866de810160f45ddbcef2e43e5c2eae64cff1515c65f07d4312"},
+    {file = "pyffmpeg-2.4.2.18.1-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4a2b98be15f442150cd33decea53e94e2b279fe69de30c3d94715b76bfbdc696"},
+    {file = "pyffmpeg-2.4.2.18.1-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d613a38ed716e33c67c851382061ef1ae5cbaa8b010db73adac7745f885b0b99"},
+    {file = "pyffmpeg-2.4.2.18.1-py3-none-win32.whl", hash = "sha256:ce40aedc88ebdc2095afe44fa95ebb0221d57696a943373962bfb20532a48ea6"},
+    {file = "pyffmpeg-2.4.2.18.1-py3-none-win_amd64.whl", hash = "sha256:0f04fa1c3f730442eaccf9fe09341fb463419a5ec6b8f8c854c10eeadd082dd5"},
+]
+
+[[package]]
 name = "pyinstaller"
 version = "6.0.0"
 description = "PyInstaller bundles a Python application and all its dependencies into a single package."
@@ -759,4 +775,4 @@ gui = ["pyside6"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.12"
-content-hash = "7a669af7cc6c9348214716d2b589fec3c2435cd929c4b133473d61baaaaf7903"
+content-hash = "7e35b5936042fffd3a601144dddbcf45dcaf23b73004db7e8c7ba2e302c654ec"
