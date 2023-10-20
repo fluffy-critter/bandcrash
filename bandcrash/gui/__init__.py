@@ -493,6 +493,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
             process(config, self.data, threadpool, futures)
         except RuntimeError as e:
             QtWidgets.QMessageBox.critical(self, "An error occurred", str(e))
+            return
 
         # Eventually I want to use FuturesProgress to show structured info but
         # for now this'll do
