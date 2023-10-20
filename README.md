@@ -17,6 +17,8 @@ Bandcrash comes with everything it needs to operate out of the box.
 
 ### GUI
 
+The easiest way to install the GUI is to download it from [my itch.io page](https://fluffy.itch.io/bandcrash). Better yet, use the [itch app](https://itch.io/app) to keep it updated!
+
 If you want to build the GUI locally, install [Python](https://python.org/), [poetry](https://python-poetry.org/), and `make` (from your favorite F/OSS package repository). After that you can run:
 
 ```
@@ -29,7 +31,7 @@ to run the app without building it, or
 make app
 ```
 
-to build it into an executable, which will be stored in the `dist/` directory.
+to build it into an executable, which will be stored in the `dist/` directory. However, there are some extra steps you have to do for this on macOS (due to how pyInstaller works with universal binaries). I hope to automate this process eventually.
 
 The GUI is implemented in the `bandcrash.gui` module.
 
