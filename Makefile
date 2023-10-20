@@ -82,7 +82,7 @@ upload-mac: preflight app
 upload-win: preflight app
 	rm -rf dist/win
 	mkdir -p dist/win
-	cp dist/Bandcrash/Bandcrash.exe README.md dist/win
+	cp dist/Bandcrash.exe README.md dist/win
 	butler push dist/win fluffy/bandcrash:win \
 		--userversion=$(shell poetry version -s)-$(shell git rev-parse --short HEAD) \
 		--fix-permissions
