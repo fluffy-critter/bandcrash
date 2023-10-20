@@ -71,12 +71,18 @@ app: setup format pylint mypy
 
 .PHONY: upload-mac
 upload-mac: preflight app
+	rm -rf dist/macos
 	mkdir -p dist/macos
-	rm -rf dist/macos/Bandcrash.app
 	cp -rP dist/Bandcrash.app README.md dist/macos
 	butler push dist/macos fluffy/bandcrash:macos \
-		--userversion=$(shell poetry version | cut -f2 -d\ )-$(shell git rev-parse --short HEAD) \
+		--userversion=$(shell poetry version -s)-$(shell git rev-parse --short HEAD) \
 		--fix-permissions
 
-
-
+.PHONY: upload-win
+upload-win: preflight app
+	rm -rf dist/win
+	mkdir -p dist/win
+	cp dist/Bandcrash.exe dist/win
+	butler push dist/win fluffy/bandcrash:win \
+		--userversion=$(shell poetry version -s)-$(shell git rev-parse --short HEAD) \
+		--fix-permissions
