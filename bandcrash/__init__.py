@@ -291,7 +291,8 @@ def submit_butler(config, target, futures):
                        output_dir, channel],
                        stdin=subprocess.DEVNULL,
                        capture_output=True,
-                       check=True)
+                       check=True,
+                       shell=True)
     except subprocess.CalledProcessError as err:
         if 'Please set BUTLER_API_KEY' in err.output.decode():
             raise RuntimeError("Butler login needed") from err
