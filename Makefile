@@ -4,7 +4,7 @@ all: setup version format mypy pylint
 setup:
 	poetry install -E gui
 	# Mac build hack: force any locally-built Pillow universal package into the environment
-	[ -n "$(find build -maxdepth 1 -name '*_universal2.whl' -print -quit)" ] && \
+	[ -n "$(shell find build -maxdepth 1 -name '*_universal2.whl' -print -quit)" ] && \
 		poetry run pip install build/*_universal2.whl --force-reinstall || true
 
 .PHONY: format
