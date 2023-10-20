@@ -19,21 +19,13 @@ Bandcrash comes with everything it needs to operate out of the box.
 
 The easiest way to install the GUI is to download it from [my itch.io page](https://fluffy.itch.io/bandcrash). Better yet, use the [itch app](https://itch.io/app) to keep it updated!
 
-If you want to build the GUI locally, install [Python](https://python.org/), [poetry](https://python-poetry.org/), and `make` (from your favorite F/OSS package repository). After that you can run:
+Alternately, you can install [Python](https://python.org/) and run
 
 ```
-poetry run bandcrash-gui
+pip install -e gui
 ```
 
-to run the app without building it, or
-
-```
-make app
-```
-
-to build it into an executable, which will be stored in the `dist/` directory. However, there are some extra steps you have to do for this on macOS (due to how pyInstaller works with universal binaries). I hope to automate this process eventually.
-
-The GUI is implemented in the `bandcrash.gui` module.
+and then launch it with `bandcrash-gui`.
 
 ### Command-line
 
@@ -230,6 +222,8 @@ The generated web player must not receive any added dependencies. The generator 
 If you are developing under Windows, you will probably need to use a POSIX environment under Windows (such as [msys](https://www.msys2.org) or [Git Bash](https://git-scm.com)) rather than WSL.
 
 If you are developing under macOS, there are special consniderations in terms of the Python environment you run, especially if you're building the GUI bundle. First, you need a `universal2` build of Python (such as the ones installable from [python.org](https://python.org) and you need to ensure ethat you've created your environment against that (e.g. `poetry env use /usr/local/bin/python3.11`. You also need to take some extra steps to build the Pillow dependency in your environment. See `mzke-universal2.py` for those steps.
+
+The build is (mostly) handled via [poetry](https://python-poetry.org) and GNU Make. Running `make` on its own will do your local environment setup and get it into a runnable state. `make app` will build the GUI. `make test` runs some simple smoke tests. There's a bunch of other targets you probably won't need to touch.
 
 ### Roadmap
 
