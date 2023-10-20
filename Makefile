@@ -66,7 +66,7 @@ upload: clean test build
 	poetry publish
 
 .PHONY: app
-app: setup format pylint mypy
+app: format pylint mypy
 	poetry run pyInstaller Bandcrash.spec -y
 
 .PHONY: upload-mac
