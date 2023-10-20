@@ -266,7 +266,6 @@ class TrackListing(QtWidgets.QSplitter):
             item = self.track_listing.item(row)
             item.editor.apply()
             self.data.append(item.editor.data)
-        print(self.data)
 
     def set_item(self, row):
         """ Signal handler for row change """
