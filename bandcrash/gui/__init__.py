@@ -183,7 +183,10 @@ class PreferencesWindow(QtWidgets.QDialog):
     def connect_butler(self):
         """ Connect to butler """
         connection = subprocess.run([self.butler_path.text(), 'login'],
-                                    capture_output=True, check=False, shell=True)
+                                    capture_output=True,
+                                    check=False,
+                                    creationflags=subprocess.CREATE_NO_WINDOW,
+                                    )
         if connection.returncode:
             QtWidgets.QMessageBox.warning(
                 self, "Connection failed", connection.stdout.decode())

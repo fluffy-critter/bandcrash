@@ -10,7 +10,6 @@ repository = "https://github.com/fluffy-critter/bandcrash"
 [tool.poetry.dependencies]
 python = ">=3.8,<3.12"
 mutagen = "^1.45.1"
-Pillow = "^10.0.1"
 awesome-slugify = "^1.6.5"
 Jinja2 = "^3.0.3"
 chardet = "^4.0.0"
@@ -25,6 +24,7 @@ mypy = "^1.5.1"
 types-python-slugify = "^8.0.0.3"
 types-chardet = "^5.0.4.6"
 pyinstaller = "^6.0.0"
+delocate = "^0.10.4"
 
 [tool.poetry.extras]
 gui = [ "pyside6" ]
