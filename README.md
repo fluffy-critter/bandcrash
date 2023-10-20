@@ -221,9 +221,11 @@ The generated web player must not receive any added dependencies. The generator 
 
 If you are developing under Windows, you will probably need to use a POSIX environment under Windows (such as [msys](https://www.msys2.org) or [Git Bash](https://git-scm.com)) rather than WSL.
 
-If you are developing under macOS, there are special consniderations in terms of the Python environment you run, especially if you're building the GUI bundle. First, you need a `universal2` build of Python (such as the ones installable from [python.org](https://python.org) and you need to ensure ethat you've created your environment against that (e.g. `poetry env use /usr/local/bin/python3.11`. You also need to take some extra steps to build the Pillow dependency in your environment. See `mzke-universal2.py` for those steps.
+If you are developing under macOS, there are special considerations in terms of the Python environment you run, especially if you're building the GUI bundle. First, you need a `universal2` build of Python (such as the ones installable from [python.org](https://python.org)) and you need to ensure that you've created your environment against that (e.g. `poetry env use /usr/local/bin/python3.11`). You also need to build a local `universal2` wheel of some packages; to do that, you can run:
 
-The build is (mostly) handled via [poetry](https://python-poetry.org) and GNU Make. Running `make` on its own will do your local environment setup and get it into a runnable state. `make app` will build the GUI. `make test` runs some simple smoke tests. There's a bunch of other targets you probably won't need to touch.
+```
+./make-universal2.sh
+```
 
 ### Roadmap
 
