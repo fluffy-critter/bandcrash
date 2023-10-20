@@ -71,7 +71,9 @@ def run_encoder(infile, outfile, args):
                             *args,
                             '-y', outfile], check=True,
                            capture_output=True,
-                           stdin=subprocess.DEVNULL)
+                           stdin=subprocess.DEVNULL,
+                           shell=True
+                           )
         except Exception as err:
             LOGGER.error("Got error encoding %s: %s", outfile, err)
             os.remove(outfile)
