@@ -1,8 +1,8 @@
 """ Common custom widgets """
 
 from PySide6 import QtWidgets
-from PySide6.QtCore import Qt, QMargins, QPoint, QRect, QSize
-from PySide6.QtWidgets import QApplication, QLayout, QPushButton, QSizePolicy, QWidget
+from PySide6.QtCore import QMargins, QPoint, QRect, QSize, Qt
+from PySide6.QtWidgets import QSizePolicy
 
 from .. import util
 
@@ -77,10 +77,12 @@ class FuturesProgress(QtWidgets.QWidget):
 
         return bool(self.mapping)
 
+
 class FlowLayout(QtWidgets.QLayout):
     """ Layout with reflow
     adapted from https://doc.qt.io/qtforpython-6/examples/example_widgets_layouts_flowlayout.html
     """
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -123,7 +125,7 @@ class FlowLayout(QtWidgets.QLayout):
         return height
 
     def setGeometry(self, rect):
-        super(FlowLayout, self).setGeometry(rect)
+        super().setGeometry(rect)
         self._do_layout(rect, False)
 
     def sizeHint(self):
@@ -135,7 +137,8 @@ class FlowLayout(QtWidgets.QLayout):
         for item in self._item_list:
             size = size.expandedTo(item.minimumSize())
 
-        size += QSize(2 * self.contentsMargins().top(), 2 * self.contentsMargins().top())
+        size += QSize(2 * self.contentsMargins().top(),
+                      2 * self.contentsMargins().top())
         return size
 
     def _do_layout(self, rect, test_only):

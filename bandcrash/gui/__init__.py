@@ -9,9 +9,9 @@ import json
 import logging
 import os
 import os.path
+import subprocess
 import threading
 import typing
-import subprocess
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
@@ -183,12 +183,13 @@ class PreferencesWindow(QtWidgets.QDialog):
     def connect_butler(self):
         """ Connect to butler """
         connection = subprocess.run([self.butler_path.text(), 'login'],
-            capture_output=True, check=False)
+                                    capture_output=True, check=False)
         if connection.returncode:
-            QtWidgets.QMessageBox.warning(self, "Connection failed", connection.stdout.decode())
+            QtWidgets.QMessageBox.warning(
+                self, "Connection failed", connection.stdout.decode())
         else:
-            QtWidgets.QMessageBox.information(self, "Butler connected", connection.stdout.decode())
-
+            QtWidgets.QMessageBox.information(
+                self, "Butler connected", connection.stdout.decode())
 
     @staticmethod
     def show_preferences():
@@ -207,6 +208,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
         :param str path: The path to the JSON file
         """
+        # pylint:disable=too-many-statements
         super().__init__()
 
         self.setMinimumSize(600, 0)
@@ -287,8 +289,10 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
         butler_opts = QtWidgets.QHBoxLayout()
         self.do_butler = QtWidgets.QCheckBox()
-        self.butler_target = QtWidgets.QLineEdit(placeholderText="username/my-album-name")
-        self.butler_prefix = QtWidgets.QLineEdit(placeholderText="prefix", maxLength=10)
+        self.butler_target = QtWidgets.QLineEdit(
+            placeholderText="username/my-album-name")
+        self.butler_prefix = QtWidgets.QLineEdit(
+            placeholderText="prefix", maxLength=10)
         butler_opts.addWidget(self.do_butler)
         butler_opts.addWidget(self.butler_target, 50)
         butler_opts.addWidget(self.butler_prefix, 10)
@@ -354,14 +358,20 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
         self.track_listing.reset(self.data['tracks'])
 
-        self.do_preview.setCheckState(datatypes.to_checkstate(self.data.get('do_preview', True)))
-        self.do_mp3.setCheckState(datatypes.to_checkstate(self.data.get('do_mp3', True)))
-        self.do_ogg.setCheckState(datatypes.to_checkstate(self.data.get('do_ogg', True)))
-        self.do_flac.setCheckState(datatypes.to_checkstate(self.data.get('do_flac', True)))
-        self.do_zip.setCheckState(datatypes.to_checkstate(self.data.get('do_zip', True)))
-        self.do_cleanup.setCheckState(datatypes.to_checkstate(self.data.get('do_cleanup', True)))
-        self.do_butler.setCheckState(datatypes.to_checkstate(self.data.get('do_butler', True)))
-
+        self.do_preview.setCheckState(
+            datatypes.to_checkstate(self.data.get('do_preview', True)))
+        self.do_mp3.setCheckState(
+            datatypes.to_checkstate(self.data.get('do_mp3', True)))
+        self.do_ogg.setCheckState(
+            datatypes.to_checkstate(self.data.get('do_ogg', True)))
+        self.do_flac.setCheckState(
+            datatypes.to_checkstate(self.data.get('do_flac', True)))
+        self.do_zip.setCheckState(
+            datatypes.to_checkstate(self.data.get('do_zip', True)))
+        self.do_cleanup.setCheckState(
+            datatypes.to_checkstate(self.data.get('do_cleanup', True)))
+        self.do_butler.setCheckState(
+            datatypes.to_checkstate(self.data.get('do_butler', True)))
 
     def apply(self):
         """ Apply edits to the saved data """
@@ -394,7 +404,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
             ('do_zip', self.do_zip, True),
             ('do_cleanup', self.do_cleanup, True),
             ('do_butler', self.do_butler, True),
-            ))
+        ))
         self.track_listing.apply()
 
     def save(self):
