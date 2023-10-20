@@ -402,8 +402,8 @@ class AlbumEditor(QtWidgets.QMainWindow):
         datatypes.apply_checkbox_fields(self.data, (
             ('do_preview', self.do_mp3, True),
             ('do_mp3', self.do_mp3, True),
-            ('do_ogg', self.do_mp3, True),
-            ('do_flac', self.do_mp3, True),
+            ('do_ogg', self.do_ogg, True),
+            ('do_flac', self.do_flac, True),
             ('do_zip', self.do_zip, True),
             ('do_cleanup', self.do_cleanup, True),
             ('do_butler', self.do_butler, True),
