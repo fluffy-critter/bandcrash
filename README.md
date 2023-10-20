@@ -13,7 +13,7 @@ Bandcrash is a standalone program that automatically encodes an album of songs i
 
 ## Usage
 
-To use it, you'll need to install LAME, oggenc, and FLAC; on macOS you can install these via [homebrew](https://brew.sh/), on Linux you can use your system's package manager, and on Windows you're on your own.
+Bandcrash comes with everything it needs to operate out of the box.
 
 ### GUI
 

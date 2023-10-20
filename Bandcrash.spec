@@ -47,7 +47,7 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name='Bandcrash.app',
-    icon='bclogo.png',
+    icon='art/bclogo.png',
     version=bandcrash.__version__.__version__,
     bundle_identifier='biz.beesbuzz.bandcrash',
     info_plist={
