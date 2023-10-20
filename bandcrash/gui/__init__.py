@@ -11,6 +11,7 @@ import os
 import os.path
 import threading
 import typing
+import subprocess
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
@@ -110,7 +111,6 @@ class PreferencesWindow(QtWidgets.QDialog):
             text=' '.join(defaults.mp3_encoder_args))
         layout.addRow("MP3 encoder options", self.mp3_encoder_args)
 
-        LOGGER.debug("varara1")
         self.ogg_encoder_args = QtWidgets.QLineEdit(
             text=' '.join(defaults.ogg_encoder_args))
         layout.addRow("Ogg encoder options", self.ogg_encoder_args)
@@ -121,11 +121,12 @@ class PreferencesWindow(QtWidgets.QDialog):
 
         layout.addRow(QtWidgets.QFrame(frameShape=QtWidgets.QFrame.HLine))
 
-        LOGGER.debug("varara1")
         self.butler_path = widgets.FileSelector(text=defaults.butler_path)
         layout.addRow("Butler binary", self.butler_path)
+        connect_button = QtWidgets.QPushButton("Connect")
+        self.butler_path.layout().addWidget(connect_button)
+        connect_button.clicked.connect(self.connect_butler)
 
-        LOGGER.debug("varara1")
         buttons = QtWidgets.QHBoxLayout()
 
         reset_button = QtWidgets.QPushButton("Load Defaults")
@@ -137,7 +138,6 @@ class PreferencesWindow(QtWidgets.QDialog):
         apply_button.setDefault(True)
         buttons.addWidget(apply_button)
 
-        LOGGER.debug("varara1")
         layout.addRow(buttons)
 
         self.accepted.connect(self.apply)
@@ -180,6 +180,16 @@ class PreferencesWindow(QtWidgets.QDialog):
 
         self.apply()
 
+    def connect_butler(self):
+        """ Connect to butler """
+        connection = subprocess.run([self.butler_path.text(), 'login'],
+            capture_output=True, check=False)
+        if connection.returncode:
+            QtWidgets.QMessageBox.warning(self, "Connection failed", connection.stdout.decode())
+        else:
+            QtWidgets.QMessageBox.information(self, "Butler connected", connection.stdout.decode())
+
+
     @staticmethod
     def show_preferences():
         """ Show a preferences window """
@@ -205,20 +215,22 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
         menubar = self.menuBar()
 
-        file_menu = menubar.addMenu("File")
+        file_menu = menubar.addMenu("&File")
 
         add_menu_item(file_menu, "&New", self.file_new, "Ctrl+N")
         add_menu_item(file_menu, "&Open...", self.file_open, "Ctrl+O")
         add_menu_item(file_menu, "&Save", self.save, "Ctrl+S")
         add_menu_item(file_menu, "Save &As...", self.save_as, "Ctrl+Shift+S")
         add_menu_item(file_menu, "&Revert", self.revert, "Ctrl+Shift+R")
+        add_menu_item(file_menu, "&Close", self.close, "Ctrl+W")
 
-        edit_menu = menubar.addMenu("Edit")
+        album_menu = menubar.addMenu("&Album")
+
+        add_menu_item(album_menu, "&Encode", self.encode_album, "Ctrl+Enter")
+
+        edit_menu = menubar.addMenu("&Edit")
         add_menu_item(edit_menu, "&Preferences", PreferencesWindow.show_preferences, "Ctrl+,",
                       QtGui.QAction.PreferencesRole)
-
-        window_menu = menubar.addMenu("Window")
-        add_menu_item(window_menu, "&Close", self.close, "Ctrl+W")
 
         self.filename = path
         self.data: typing.Dict[str, typing.Any] = {'tracks': []}
@@ -234,7 +246,9 @@ class AlbumEditor(QtWidgets.QMainWindow):
         self.artist = QtWidgets.QLineEdit(placeholderText="Artist name")
         self.title = QtWidgets.QLineEdit(placeholderText="Album title")
         self.year = QtWidgets.QLineEdit(
-            placeholderText="1978", inputMask='0000')
+            placeholderText="1978",
+            validator=QtGui.QIntValidator(0, 99999),
+            maxLength=5)
         self.genre = QtWidgets.QLineEdit(
             placeholderText="Avant-Industrial Loungecore")
         self.artwork = widgets.FileSelector(self)
@@ -255,6 +269,30 @@ class AlbumEditor(QtWidgets.QMainWindow):
         self.track_listing = TrackListing(self)
         layout.addRow("Audio Tracks", None)
         layout.addRow(self.track_listing)
+
+        checkboxes = widgets.FlowLayout()
+        self.do_preview = QtWidgets.QCheckBox("Web preview")
+        self.do_mp3 = QtWidgets.QCheckBox("MP3")
+        self.do_ogg = QtWidgets.QCheckBox("Ogg Vorbis")
+        self.do_flac = QtWidgets.QCheckBox("FLAC")
+        self.do_zip = QtWidgets.QCheckBox("Build .zip files")
+        self.do_cleanup = QtWidgets.QCheckBox("Clean extra files")
+        checkboxes.addWidget(self.do_preview)
+        checkboxes.addWidget(self.do_mp3)
+        checkboxes.addWidget(self.do_ogg)
+        checkboxes.addWidget(self.do_flac)
+        checkboxes.addWidget(self.do_zip)
+        checkboxes.addWidget(self.do_cleanup)
+        layout.addRow("Build options", checkboxes)
+
+        butler_opts = QtWidgets.QHBoxLayout()
+        self.do_butler = QtWidgets.QCheckBox()
+        self.butler_target = QtWidgets.QLineEdit(placeholderText="username/my-album-name")
+        self.butler_prefix = QtWidgets.QLineEdit(placeholderText="prefix", maxLength=10)
+        butler_opts.addWidget(self.do_butler)
+        butler_opts.addWidget(self.butler_target, 50)
+        butler_opts.addWidget(self.butler_prefix, 10)
+        layout.addRow("itch.io", butler_opts)
 
         buttons = QtWidgets.QHBoxLayout()
 
@@ -306,6 +344,8 @@ class AlbumEditor(QtWidgets.QMainWindow):
             ('genre', self.genre),
             ('artwork', self.artwork.file_path),
             ('composer', self.composer),
+            ('butler_target', self.butler_target),
+            ('butler_prefix', self.butler_prefix),
         ):
             widget.setText(self.data.get(key, ''))
 
@@ -313,6 +353,15 @@ class AlbumEditor(QtWidgets.QMainWindow):
             self.year.setText(str(self.data['year']))
 
         self.track_listing.reset(self.data['tracks'])
+
+        self.do_preview.setCheckState(datatypes.to_checkstate(self.data.get('do_preview', True)))
+        self.do_mp3.setCheckState(datatypes.to_checkstate(self.data.get('do_mp3', True)))
+        self.do_ogg.setCheckState(datatypes.to_checkstate(self.data.get('do_ogg', True)))
+        self.do_flac.setCheckState(datatypes.to_checkstate(self.data.get('do_flac', True)))
+        self.do_zip.setCheckState(datatypes.to_checkstate(self.data.get('do_zip', True)))
+        self.do_cleanup.setCheckState(datatypes.to_checkstate(self.data.get('do_cleanup', True)))
+        self.do_butler.setCheckState(datatypes.to_checkstate(self.data.get('do_butler', True)))
+
 
     def apply(self):
         """ Apply edits to the saved data """
@@ -324,7 +373,9 @@ class AlbumEditor(QtWidgets.QMainWindow):
                                         ('title', self.title),
                                         ('genre', self.genre),
                                         ('artist', self.artist),
-                                        ('compsoer', self.composer),
+                                        ('composer', self.composer),
+                                        ('butler_target', self.butler_target),
+                                        ('butler_prefix', self.butler_prefix),
                                     ))
 
         datatypes.apply_text_fields(self.data,
@@ -335,6 +386,15 @@ class AlbumEditor(QtWidgets.QMainWindow):
                                     (('year', self.year),),
                                     int)
 
+        datatypes.apply_checkbox_fields(self.data, (
+            ('do_preview', self.do_mp3, True),
+            ('do_mp3', self.do_mp3, True),
+            ('do_ogg', self.do_mp3, True),
+            ('do_flac', self.do_mp3, True),
+            ('do_zip', self.do_zip, True),
+            ('do_cleanup', self.do_cleanup, True),
+            ('do_butler', self.do_butler, True),
+            ))
         self.track_listing.apply()
 
     def save(self):
