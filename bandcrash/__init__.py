@@ -423,7 +423,7 @@ def process(config, album, pool, futures):
             os.makedirs(os.path.join(
                 config.output_dir, target), exist_ok=True)
 
-    if config.do_butler and not shutil.which(config.butler_path):
+    if config.do_butler and not (config.butler_path and shutil.which(config.butler_path)):
         LOGGER.warning("Couldn't find tool 'butler'; disabling upload")
         config.do_butler = False
 
