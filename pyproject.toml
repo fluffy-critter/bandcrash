@@ -15,6 +15,7 @@ Jinja2 = "^3.0.3"
 chardet = "^4.0.0"
 pyside6 = {version = "^6.5.3", optional = true}
 pyffmpeg = "^2.4.2.18.1"
+pillow = "^10.1.0"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.0.4"
