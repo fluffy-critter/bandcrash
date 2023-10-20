@@ -22,7 +22,7 @@ The easiest way to install the GUI is to download it from [my itch.io page](http
 Alternately, you can install [Python](https://python.org/) and run
 
 ```
-pip install -e gui
+pip install bandcrash -e gui
 ```
 
 and then launch it with `bandcrash-gui`.
