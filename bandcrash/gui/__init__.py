@@ -400,7 +400,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
                                     int)
 
         datatypes.apply_checkbox_fields(self.data, (
-            ('do_preview', self.do_mp3, True),
+            ('do_preview', self.do_preview, True),
             ('do_mp3', self.do_mp3, True),
             ('do_ogg', self.do_ogg, True),
             ('do_flac', self.do_flac, True),
