@@ -284,7 +284,7 @@ class TrackListing(QtWidgets.QSplitter):
         filenames, _ = QtWidgets.QFileDialog.getOpenFileNames(
             self,
             "Select audio files",
-            filter="WAV audio (*.wav)")
+            filter="Audio files (*.wav *.ogg *.flac *.mp3 *.aif *.aiff)")
 
         for filename in filenames:
             _, title = util.guess_track_title(filename)
