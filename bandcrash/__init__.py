@@ -70,8 +70,8 @@ def run_encoder(infile, outfile, args):
                             '-i', infile,
                             *args,
                             '-y', outfile], check=True,
-                            capture_output=True,
-                            stdin=subprocess.DEVNULL)
+                           capture_output=True,
+                           stdin=subprocess.DEVNULL)
         except Exception as err:
             LOGGER.error("Got error encoding %s: %s", outfile, err)
             os.remove(outfile)
@@ -292,9 +292,8 @@ def submit_butler(config, target, futures):
                        check=True)
     except subprocess.CalledProcessError as err:
         if 'Please set BUTLER_API_KEY' in err.output.decode():
-            raise RuntimeError("Butler login needed")
-        raise RuntimeError(err.output)
-
+            raise RuntimeError("Butler login needed") from err
+        raise RuntimeError(err.output) from err
 
 
 def encode_tracks(config, album, protections, pool, futures):
