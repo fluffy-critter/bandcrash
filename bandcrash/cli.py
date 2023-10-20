@@ -67,6 +67,9 @@ def parse_args():
                                 help=f"Arguments to pass to the {target} encoder",
                                 default=' '.join(getattr(defaults, f'{target}_encoder_args')))
 
+    parser.add_argument('--butler-path', type=str, default=defaults.butler_path,
+                        help="Path to the butler executable")
+
     parser.add_argument('--butler-target', '-b', type=str,
                         dest='butler_target',
                         help="Butler push target prefix",
