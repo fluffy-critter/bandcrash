@@ -50,7 +50,7 @@ bandcrash/__version__.py: pyproject.toml
 	# Kind of a hacky way to get the version updated, until the poetry folks
 	# settle on a better approach
 	printf '""" version """\n__version__ = "%s"\n' \
-		`poetry version | cut -f2 -d\ ` > bandcrash/__version__.py
+		$(shell poetry version -s) > bandcrash/__version__.py
 
 .PHONY: build
 build: version preflight pylint
