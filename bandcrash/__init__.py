@@ -71,9 +71,12 @@ def run_encoder(infile, outfile, args):
                             *args,
                             '-y', outfile], check=True,
                            capture_output=True,
+                           creationflags=getattr(
+                               subprocess, 'CREATE_NO_WINDOW', 0),
                            )
         except subprocess.CalledProcessError as err:
-            raise RuntimeError(f'Exit status {err.returncode}: {err.output}') from err
+            raise RuntimeError(
+                f'Exit status {err.returncode}: {err.output}') from err
         except Exception as err:
             LOGGER.error("Got error encoding %s: %s", outfile, err)
             os.remove(outfile)
@@ -291,7 +294,10 @@ def submit_butler(config, target, futures):
                        output_dir, channel],
                        stdin=subprocess.DEVNULL,
                        capture_output=True,
-                       check=True)
+                       check=True,
+                       creationflags=getattr(
+                           subprocess, 'CREATE_NO_WINDOW', 0),
+                       )
     except subprocess.CalledProcessError as err:
         if 'Please set BUTLER_API_KEY' in err.output.decode():
             raise RuntimeError("Butler login needed") from err
