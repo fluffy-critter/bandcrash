@@ -160,11 +160,16 @@ def main():
     LOGGER.info("Waiting for all tasks to complete... (%d/%d pending)",
                 len(remaining_tasks), len(all_tasks))
 
+    errors = []
     for task in concurrent.futures.as_completed(all_tasks):
         try:
             task.result()
-        except Exception:  # pylint:disable=broad-exception-caught
+        except Exception as err:  # pylint:disable=broad-exception-caught
             LOGGER.exception("Background task generated an exception")
+            errors.append(err)
+
+    if errors:
+        sys.exit(1)
 
     LOGGER.info("Done")
 
