@@ -14,6 +14,8 @@ LOGGER = logging.getLogger(__name__)
 
 def load_image(in_path: str) -> PIL.Image:
     """ Load an image into memory, pooling it """
+    if not os.path.isfile(in_path):
+        raise FileNotFoundError(f"Couldn't find image {in_path}")
     return PIL.Image.open(in_path)
 
 
