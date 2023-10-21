@@ -53,7 +53,7 @@ class Options:
     mp3_encoder_args: list[str] = dataclasses.field(
         default_factory="-q:a 0".split().copy)
     ogg_encoder_args: list[str] = dataclasses.field(
-        default_factory="-q:a 10".split().copy)
+        default_factory="-q:a 5".split().copy)
     flac_encoder_args: list[str] = dataclasses.field(default_factory=list)
 
     butler_path: typing.Optional[str] = shutil.which('butler')
