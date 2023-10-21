@@ -448,7 +448,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
     def encode_album(self):
         """ Run the encoder process """
-        # pylint:disable=too-many-branches,too-many-statements
+        # pylint:disable=too-many-branches,too-many-statements,too-many-locals
         LOGGER.debug("AlbumEditor.encode_album")
         self.apply()
 
@@ -513,7 +513,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
                     threadpool.shutdown(cancel_futures=True)
 
                 task.result()
-        except Exception as e: #pylint:disable=broad-exception-caught
+        except Exception as e:  # pylint:disable=broad-exception-caught
             threadpool.shutdown(cancel_futures=True)
             errors.append(e)
 
@@ -522,7 +522,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
         for task in all_tasks:
             try:
                 task.result()
-            except Exception as e: #pylint:disable=broad-exception-caught
+            except Exception as e:  # pylint:disable=broad-exception-caught
                 errors.append(e)
 
         if errors:
@@ -538,12 +538,16 @@ class AlbumEditor(QtWidgets.QMainWindow):
             msgbox.setText(text)
             msgbox.exec()
         elif not progress.wasCanceled() and all_tasks:
-            result = QtWidgets.QMessageBox.information(self,
-                                                       "Encode complete",
-                                                       "Encoding completed successfully",
-                                                       QtWidgets.QMessageBox.StandardButton.Open |
-                                                       QtWidgets.QMessageBox.StandardButton.Ok,
-                                                       QtWidgets.QMessageBox.StandardButton.Open)
+            task_names = "Encode"
+            if config.do_butler:
+                task_names += " and upload"
+            result = QtWidgets.QMessageBox.information(
+                self,
+                "Encode complete",
+                f"{task_names} completed successfully",
+                QtWidgets.QMessageBox.StandardButton.Open |
+                QtWidgets.QMessageBox.StandardButton.Ok,
+                QtWidgets.QMessageBox.StandardButton.Open)
             if result == QtWidgets.QMessageBox.StandardButton.Open:
                 QtGui.QDesktopServices.openUrl(
                     QtCore.QUrl.fromLocalFile(config.output_dir))
