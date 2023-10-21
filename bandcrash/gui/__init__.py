@@ -22,6 +22,8 @@ from .track_editor import TrackListing
 LOG_LEVELS = [logging.WARNING, logging.INFO, logging.DEBUG]
 LOGGER = logging.getLogger(__name__)
 
+ALBUM_FILTER = "Album files (*.bcalbum *.json)"
+
 
 def to_checkstate(val):
     """ Convert a bool to a qt CheckState """
@@ -242,6 +244,9 @@ class AlbumEditor(QtWidgets.QMainWindow):
         if path:
             AlbumEditor.default_open_dir(os.path.dirname(path))
             self.reload(path)
+            if '_gui' in self.data:
+                if geom := self.data['_gui'].get('geom'):
+                    self.setGeometry(geom[0], geom[1], geom[2], geom[3])
 
         layout = QtWidgets.QFormLayout(
             fieldGrowthPolicy=QtWidgets.QFormLayout.AllNonFixedFieldsGrow)
@@ -322,7 +327,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
         """ Dialog box to open an existing file """
         path, _ = QtWidgets.QFileDialog.getOpenFileName(
             caption="New album file",
-            filter="Album files (*.json *.bcalbum)",
+            filter=ALBUM_FILTER,
             dir=AlbumEditor.default_open_dir())
         if path:
             editor = AlbumEditor(path)
@@ -410,6 +415,12 @@ class AlbumEditor(QtWidgets.QMainWindow):
         ))
         self.track_listing.apply()
 
+
+        if '_gui' not in self.data:
+            self.data['_gui'] = {}
+        geom = self.geometry()
+        self.data['_gui']['geom'] = [geom.x(), geom.y(), geom.width(), geom.height()]
+
     def save(self):
         """ Save the file to disk """
         LOGGER.debug("AlbumEditor.save")
@@ -428,7 +439,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
         path, _ = QtWidgets.QFileDialog.getSaveFileName(
             caption="Select your album file",
-            filter="Album files (*.bcalbum *.json)",
+            filter=ALBUM_FILTER,
             dir=os.path.dirname(self.filename) or AlbumEditor.default_open_dir())
         if path:
             self.renormalize_paths(self.filename, path)
@@ -621,9 +632,10 @@ class BandcrashApplication(QtWidgets.QApplication):
     def open_on_startup(self):
         """ Hacky way to open the file dialog on startup. there must be a better way... """
         if not self.opened:
-            path, _ = QtWidgets.QFileDialog.getOpenFileName(caption="Open album",
-                                                            filter="Album files (*.json *.bcalbum)",
-                                                            dir=AlbumEditor.default_open_dir())
+            path, _ = QtWidgets.QFileDialog.getOpenFileName(
+                caption="Open album",
+                filter=ALBUM_FILTER,
+                dir=AlbumEditor.default_open_dir())
             AlbumEditor(path).show()
 
     def event(self, evt):
