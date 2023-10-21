@@ -63,6 +63,9 @@ def run_encoder(infile, outfile, args):
     :param list args: The entire arglist (including output file path)
     """
 
+    if not os.path.isfile(infile):
+        raise FileNotFoundError(f"Can't encode {outfile}: {infile} not found")
+
     if util.is_newer(infile, outfile):
         try:
             subprocess.run([util.ffmpeg_path(),
@@ -75,16 +78,13 @@ def run_encoder(infile, outfile, args):
                                subprocess, 'CREATE_NO_WINDOW', 0),
                            )
         except subprocess.CalledProcessError as err:
+            os.remove(outfile)
             raise RuntimeError(
-                f'Exit status {err.returncode}: {err.output}') from err
-        except Exception as err:
-            LOGGER.error("Got error encoding %s: %s", outfile, err)
+                f'Error {err.returncode} encoding {outfile}: {err.output}') from err
+        except KeyboardInterrupt as err:
             os.remove(outfile)
-            raise
-        except KeyboardInterrupt:
-            LOGGER.error("User aborted while encoding %s", outfile)
-            os.remove(outfile)
-            raise
+            raise RuntimeError(
+                f'User aborted while encoding {outfile}')  from err
 
 
 def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None):
@@ -301,7 +301,7 @@ def submit_butler(config, target, futures):
     except subprocess.CalledProcessError as err:
         if 'Please set BUTLER_API_KEY' in err.output.decode():
             raise RuntimeError("Butler login needed") from err
-        raise RuntimeError(err.output) from err
+        raise RuntimeError(f'Butler error: {err.output}') from err
 
 
 def encode_tracks(config, album, protections, pool, futures):

@@ -489,43 +489,53 @@ class AlbumEditor(QtWidgets.QMainWindow):
             max_workers=int(settings.value("num_threads", os.cpu_count())))
         futures = collections.defaultdict(list)
 
-        try:
-            process(config, self.data, threadpool, futures)
-        except RuntimeError as e:
-            QtWidgets.QMessageBox.critical(self, "An error occurred", str(e))
-            return
-
-        # Eventually I want to use FuturesProgress to show structured info but
-        # for now this'll do
+        # Eventually I want to use FuturesProgress to show structured info
+        # and not block the UI thread but for now this'll do
 
         errors = []
-        all_tasks = list(itertools.chain(*futures.values()))
         progress = QtWidgets.QProgressDialog(
-            "Encoding album...", "Abort", 0, len(all_tasks), self)
+            "Encoding album...", "Abort", 0, 1, self)
         progress.setWindowModality(QtCore.Qt.WindowModal)
 
-        for task in concurrent.futures.as_completed(all_tasks):
-            pending = [t for t in all_tasks if not t.done()]
-            LOGGER.debug("%d pending tasks", len(pending))
+        all_tasks = []
+        try:
+            process(config, self.data, threadpool, futures)
 
-            progress.setValue(len(all_tasks) - len(pending))
-            if progress.wasCanceled():
-                threadpool.shutdown(cancel_futures=True)
+            all_tasks = list(itertools.chain(*futures.values()))
+            progress.setMaximum(len(all_tasks))
 
+            for task in concurrent.futures.as_completed(all_tasks):
+                pending = [t for t in all_tasks if not t.done()]
+                LOGGER.debug("%d pending tasks", len(pending))
+
+                progress.setValue(len(all_tasks) - len(pending))
+                if progress.wasCanceled():
+                    threadpool.shutdown(cancel_futures=True)
+
+                task.result()
+        except Exception as e: #pylint:disable=broad-exception-caught
+            threadpool.shutdown(cancel_futures=True)
+            errors.append(e)
+
+        progress.reset()
+
+        for task in all_tasks:
             try:
                 task.result()
-            except Exception as e:  # pylint:disable=broad-exception-caught
-                LOGGER.exception("Background task generated an exception")
+            except Exception as e: #pylint:disable=broad-exception-caught
                 errors.append(e)
 
         if errors:
-            msgbox = QtWidgets.QMessageBox(self)
-            if len(errors) == 1:
-                msgbox.setText("An error occurred")
-            else:
-                msgbox.setText("Some errors occurred")
-            msgbox.setDetailedText('\n\n'.join(
-                f'{type(e)}: {e}' for e in errors))
+            LOGGER.debug("errors: %d %s", len(errors), errors)
+            msgbox = QtWidgets.QMessageBox(self, "Error", "An error occurred")
+            msgbox.setIcon(QtWidgets.QMessageBox.Critical)
+            text = f"An error occurred: {str(errors[0])}"
+            if len(errors) > 1:
+                text += f", plus {len(errors)-1} more."
+                msgbox.setDetailedText('\n\n'.join(
+                    str(e) for e in errors))
+                msgbox.setOptions(QtWidgets.QMessageBox.DontUseNativeDialog)
+            msgbox.setText(text)
             msgbox.exec()
         elif not progress.wasCanceled() and all_tasks:
             result = QtWidgets.QMessageBox.information(self,
