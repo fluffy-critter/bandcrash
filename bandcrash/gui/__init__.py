@@ -415,11 +415,11 @@ class AlbumEditor(QtWidgets.QMainWindow):
         ))
         self.track_listing.apply()
 
-
         if '_gui' not in self.data:
             self.data['_gui'] = {}
         geom = self.geometry()
-        self.data['_gui']['geom'] = [geom.x(), geom.y(), geom.width(), geom.height()]
+        self.data['_gui']['geom'] = [
+            geom.x(), geom.y(), geom.width(), geom.height()]
 
     def save(self):
         """ Save the file to disk """
