@@ -84,7 +84,7 @@ def run_encoder(infile, outfile, args):
         except KeyboardInterrupt as err:
             os.remove(outfile)
             raise RuntimeError(
-                f'User aborted while encoding {outfile}')  from err
+                f'User aborted while encoding {outfile}') from err
 
 
 def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None):
