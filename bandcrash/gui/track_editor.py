@@ -5,6 +5,8 @@ import os
 import os.path
 import typing
 
+from PySide6.QtCore import Qt
+from PySide6.QtGui import  QDropEvent
 from PySide6.QtWidgets import (QAbstractScrollArea, QCheckBox, QFileDialog,
                                QFormLayout, QHBoxLayout, QLineEdit,
                                QListWidget, QListWidgetItem, QPlainTextEdit,
@@ -141,7 +143,7 @@ class TrackEditor(QWidget):
         ))
 
 
-class TrackListing(QSplitter):
+class TrackListEditor(QSplitter):
     """ The track listing panel and editor """
     # pylint:disable=too-many-instance-attributes
 
@@ -181,9 +183,37 @@ class TrackListing(QSplitter):
                 return f"({os.path.basename(info['filename'])})"
             return "(unknown)"
 
+    class TrackList(QListWidget):
+        """ The actual track listing panel """
+
+        def __init__(self, parent):
+            super().__init__(parent)
+            self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
+            self.setAcceptDrops(True)
+
+        def dragEnterEvent(self, event):
+            LOGGER.debug("dragEnterEvent %s %s", event, event.proposedAction())
+            LOGGER.debug("hasurls: %s", event.mimeData().hasUrls())
+            if event.proposedAction() == Qt.CopyAction and event.mimeData().hasUrls():
+                urls = event.mimeData().urls()
+                # TODO: validate URLs
+                LOGGER.debug("accepted urls: %s", urls)
+                event.acceptProposedAction()
+            else:
+                return super().dragEnterEvent(event)
+
+        def dropEvent(self, event):
+            if event.proposedAction() == Qt.CopyAction and event.mimeData().hasUrls():
+                urls = event.mimeData().urls()
+                # TODO: validate and ingest URLs
+                LOGGER.debug("dropped urls: %s", urls)
+                event.acceptProposedAction()
+            else:
+                return super().dropEvent(event)
+
     def __init__(self, album_editor):
         super().__init__()
-        LOGGER.debug("TrackListing.__init__")
+        LOGGER.debug("TrackListEditor.__init__")
 
         self.data: datatypes.TrackList = []
         self.album_editor = album_editor
@@ -193,8 +223,7 @@ class TrackListing(QSplitter):
         left_panel.setContentsMargins(0, 0, 0, 0)
         self.addWidget(wrap_layout(self, left_panel))
 
-        self.track_listing = QListWidget(self)
-        self.track_listing.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
+        self.track_listing = TrackListEditor.TrackList(self)
         left_panel.addWidget(self.track_listing)
 
         self.button_add = QPushButton("+")
@@ -238,7 +267,7 @@ class TrackListing(QSplitter):
 
     def reset(self, data: datatypes.TrackList):
         """ Reset to the backing storage """
-        LOGGER.debug("TrackListing.reset")
+        LOGGER.debug("TrackListEditor.reset")
 
         current_row = self.track_listing.currentRow()
 
@@ -247,13 +276,13 @@ class TrackListing(QSplitter):
                            self.track_listing.count(), len(data))
 
         for idx, track in enumerate(data):
-            item = typing.cast(TrackListing.TrackItem,
+            item = typing.cast(TrackListEditor.TrackItem,
                                self.track_listing.item(idx))
             if item:
                 item.reset(track)
             else:
                 self.track_listing.addItem(
-                    TrackListing.TrackItem(self.album_editor, track))
+                    TrackListEditor.TrackItem(self.album_editor, track))
 
         while self.track_listing.count() > len(data):
             self.track_listing.takeItem(self.track_listing.count() - 1)
@@ -267,20 +296,20 @@ class TrackListing(QSplitter):
 
     def apply(self):
         """ Save any currently-edited track """
-        LOGGER.debug("TrackListing.apply")
+        LOGGER.debug("TrackListEditor.apply")
         self.data.clear()
         for row in range(self.track_listing.count()):
-            item = typing.cast(TrackListing.TrackItem,
+            item = typing.cast(TrackListEditor.TrackItem,
                                self.track_listing.item(row))
             item.editor.apply()
             self.data.append(item.editor.data)
 
     def set_item(self, row):
         """ Signal handler for row change """
-        LOGGER.debug("TrackListing.set_item")
+        LOGGER.debug("TrackListEditor.set_item")
         self.apply()
         self.editpanel.takeWidget()  # necessary to prevent Qt from GCing it on replacement
-        item = typing.cast(TrackListing.TrackItem,
+        item = typing.cast(TrackListEditor.TrackItem,
                            self.track_listing.item(row))
         if item:
             self.editpanel.setWidget(item.editor)
@@ -289,7 +318,7 @@ class TrackListing(QSplitter):
 
     def add_tracks(self):
         """ Add some tracks """
-        LOGGER.debug("TrackListing.add_tracks")
+        LOGGER.debug("TrackListEditor.add_tracks")
         role = FileRole.AUDIO
         filenames, _ = QFileDialog.getOpenFileNames(
             self,
@@ -302,7 +331,7 @@ class TrackListing(QSplitter):
             track = {'filename': filename, 'title': title}
             self.data.append(track)
             self.track_listing.addItem(
-                TrackListing.TrackItem(self.album_editor, track))
+                TrackListEditor.TrackItem(self.album_editor, track))
 
         if filenames:
             ref_file = filenames[0]
@@ -313,12 +342,12 @@ class TrackListing(QSplitter):
 
     def delete_track(self):
         """ Remove a track """
-        LOGGER.debug("TrackListing.delete_track")
+        LOGGER.debug("TrackListEditor.delete_track")
         self.track_listing.takeItem(self.track_listing.currentRow())
 
     def move_up(self):
         """ Move the currently-selected track up in the track listing """
-        LOGGER.debug("TrackListing.move_up")
+        LOGGER.debug("TrackListEditor.move_up")
         row = self.track_listing.currentRow()
         if row > 0:
             dest = row - 1
@@ -328,7 +357,7 @@ class TrackListing(QSplitter):
 
     def move_down(self):
         """ Move the currently-selected track up in the track listing """
-        LOGGER.debug("TrackListing.move_down")
+        LOGGER.debug("TrackListEditor.move_down")
         row = self.track_listing.currentRow()
         if row < self.track_listing.count() - 1:
             dest = row + 1
