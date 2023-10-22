@@ -13,12 +13,12 @@ import subprocess
 import threading
 import typing
 
-from PySide6 import QtCore, QtGui
+from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (QApplication, QDialog, QErrorMessage,
-                               QFileDialog, QFormLayout, QFrame, QLabel,
-                               QLineEdit, QMainWindow, QMessageBox,
-                               QProgressDialog, QSpinBox,QWidget,QCheckBox,QFormLayout,QHBoxLayout,QPushButton)
+from PySide6.QtWidgets import (QApplication, QCheckBox, QDialog, QErrorMessage,
+                               QFileDialog, QFormLayout, QFrame, QHBoxLayout,
+                               QLabel, QLineEdit, QMainWindow, QMessageBox,
+                               QProgressDialog, QPushButton, QSpinBox, QWidget)
 
 from .. import __version__, process, util
 from . import datatypes, widgets
@@ -162,7 +162,7 @@ class PreferencesWindow(QDialog):
 
         LOGGER.debug("foo 1")
 
-        self.num_threads.setValue(os.cpu_count())
+        self.num_threads.setValue(os.cpu_count() or 4)
         self.preview_encoder_args.setText(
             ' '.join(defaults.preview_encoder_args))
         self.mp3_encoder_args.setText(' '.join(defaults.mp3_encoder_args))
@@ -183,8 +183,8 @@ class PreferencesWindow(QDialog):
                                     capture_output=True,
                                     check=False,
                                     creationflags=getattr(
-                               subprocess, 'CREATE_NO_WINDOW', 0),
-                                    )
+            subprocess, 'CREATE_NO_WINDOW', 0),
+        )
         if connection.returncode:
             QMessageBox.warning(
                 self, "Connection failed", connection.stdout.decode())
@@ -214,8 +214,8 @@ class AlbumEditor(QMainWindow):
 
         self.setMinimumSize(600, 0)
 
-        self.output_dir = None
-        self.last_directory = {}
+        self.output_dir: typing.Optional[str] = None
+        self.last_directory: dict[str, str] = {}
 
         menubar = self.menuBar()
 
@@ -234,7 +234,7 @@ class AlbumEditor(QMainWindow):
 
         edit_menu = menubar.addMenu("&Edit")
         add_menu_item(edit_menu, "&Preferences", PreferencesWindow.show_preferences, "Ctrl+,",
-                      QtGui.QAction.PreferencesRole)
+                      QtGui.QAction.MenuRole.PreferencesRole)
 
         self.filename = path
         self.data: dict[str, typing.Any] = {'tracks': []}
@@ -244,19 +244,17 @@ class AlbumEditor(QMainWindow):
                 if geom := self.data['_gui'].get('geom'):
                     self.setGeometry(geom[0], geom[1], geom[2], geom[3])
 
-        layout = QFormLayout(
-            fieldGrowthPolicy=QFormLayout.AllNonFixedFieldsGrow)
-        self.setCentralWidget(QWidget(layout=layout))
-        self.layout = layout
+        layout = QFormLayout()
+        layout.setFieldGrowthPolicy(
+            QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+        self.setCentralWidget(widgets.wrap_layout(self, layout))
 
-        self.artist = QLineEdit(placeholderText="Artist name")
-        self.title = QLineEdit(placeholderText="Album title")
-        self.year = QLineEdit(
-            placeholderText="1978",
-            validator=QtGui.QIntValidator(0, 99999),
-            maxLength=5)
-        self.genre = QLineEdit(
-            placeholderText="Avant-Industrial Loungecore")
+        self.artist = QLineEdit()
+        self.title = QLineEdit()
+        self.year = QLineEdit()
+        self.year.setValidator(QtGui.QIntValidator(0, 99999))
+        self.year.setMaxLength(5)
+        self.genre = QLineEdit()
         self.artwork = widgets.FileSelector(FileRole.IMAGE, self)
         self.composer = QLineEdit()
         # self.fg_color = ColorSelector("Foreground")
@@ -273,7 +271,7 @@ class AlbumEditor(QMainWindow):
         # button hbox for colors
 
         self.track_listing = TrackListing(self)
-        layout.addRow("Audio Tracks", None)
+        layout.addRow("Audio Tracks", QWidget(self))
         layout.addRow(self.track_listing)
 
         checkboxes = widgets.FlowLayout()
@@ -293,10 +291,10 @@ class AlbumEditor(QMainWindow):
 
         butler_opts = QHBoxLayout()
         self.do_butler = QCheckBox()
-        self.butler_target = QLineEdit(
-            placeholderText="username/my-album-name")
-        self.butler_prefix = QLineEdit(
-            placeholderText="prefix", maxLength=10)
+        self.butler_target = QLineEdit()
+        self.butler_target.setPlaceholderText("username/my-album-name")
+        self.butler_prefix = QLineEdit()
+        self.butler_prefix.setPlaceholderText("prefix")
         butler_opts.addWidget(self.do_butler)
         butler_opts.addWidget(self.butler_target, 50)
         butler_opts.addWidget(self.butler_prefix, 10)
@@ -321,7 +319,7 @@ class AlbumEditor(QMainWindow):
         AlbumEditor('').show()
 
     @staticmethod
-    def file_open(or_new: bool=False):
+    def file_open(or_new: bool = False):
         """ Dialog box to open an existing file
 
         :param bool or_new: Fallback to a new document if
@@ -481,20 +479,21 @@ class AlbumEditor(QMainWindow):
         # find a good default directory to stash the output in
         settings = QtCore.QSettings()
         role = FileRole.OUTPUT
-        if self.output_dir is None:
+        if not self.output_dir:
             self.output_dir = role.default_directory
 
         # prompt for the actual output directory
         base_dir = QFileDialog.getExistingDirectory(
-            dir=self.output_dir,
-            caption="Choose an output directory")
+            self,
+            "Choose an output directory",
+            self.output_dir or '')
         if not base_dir:
             return
 
         # store our output directory for later
-        self.output_dir = base_dir
+        self.output_dir = base_dir or ''
 
-        role.default_directory = base_dir
+        role.default_directory = self.output_dir
 
         # Users will most likely be choosing a generic directory and NOT one that's
         # already sandboxed, so, let's make that sandbox for them (just for better UX).
@@ -508,8 +507,10 @@ class AlbumEditor(QMainWindow):
         LOGGER.info("Config options: %s", config)
 
         threadpool = concurrent.futures.ThreadPoolExecutor(
-            max_workers=int(settings.value("num_threads", os.cpu_count())))
-        futures = collections.defaultdict(list)
+            max_workers=typing.cast(int, settings.value("num_threads",
+                                                        os.cpu_count() or 4)))
+        futures: dict[str, list[concurrent.futures.Future]
+                      ] = collections.defaultdict(list)
 
         # Eventually I want to use FuturesProgress to show structured info
         # and not block the UI thread but for now this'll do
@@ -517,7 +518,7 @@ class AlbumEditor(QMainWindow):
         errors = []
         progress = QProgressDialog(
             "Encoding album...", "Abort", 0, 1, self)
-        progress.setWindowModality(QtCore.Qt.WindowModal)
+        progress.setWindowModality(Qt.WindowModality.WindowModal)
 
         all_tasks = []
         try:
@@ -549,14 +550,17 @@ class AlbumEditor(QMainWindow):
 
         if errors:
             LOGGER.debug("errors: %d %s", len(errors), errors)
-            msgbox = QMessageBox(self, "Error", "An error occurred")
-            msgbox.setIcon(QMessageBox.Critical)
+            msgbox = QMessageBox(
+                QMessageBox.Icon.Critical, "Error", "An error occurred")
+            msgbox.setParent(self)
             text = f"An error occurred: {str(errors[0])}"
             if len(errors) > 1:
+                # For some reason mypy isn't seeing setOption or the Option flag type
+                msgbox.setOption(  # type:ignore[attr-defined]
+                    QMessageBox.Option.DontUseNativeDialog)  # type:ignore[attr-defined]
                 text += f", plus {len(errors)-1} more."
                 msgbox.setDetailedText('\n\n'.join(
                     str(e) for e in errors))
-                msgbox.setOptions(QMessageBox.DontUseNativeDialog)
             msgbox.setText(text)
             msgbox.exec()
         elif not progress.wasCanceled() and all_tasks:
@@ -687,7 +691,7 @@ class BandcrashApplication(QApplication):
     def event(self, evt):
         """ Handle an application-level event """
         LOGGER.debug("Event: %s", evt)
-        if evt.type() == QtCore.QEvent.FileOpen:
+        if evt.type() == QtCore.QEvent.Type.FileOpen:
             LOGGER.debug("Got file open event: %s", evt.file())
             open_file(evt.file())
             self.opened = True
