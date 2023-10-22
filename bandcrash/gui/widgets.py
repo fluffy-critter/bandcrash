@@ -1,27 +1,36 @@
 """ Common custom widgets """
 
-from PySide6 import QtWidgets
+import logging
+import os
+import os.path
+
 from PySide6.QtCore import QMargins, QPoint, QRect, QSize, Qt
-from PySide6.QtWidgets import QSizePolicy
+from PySide6.QtWidgets import (QFileDialog, QFormLayout, QHBoxLayout, QLayout,
+                               QLineEdit, QProgressBar, QPushButton,
+                               QSizePolicy, QWidget)
 
 from .. import util
+from .file_utils import FileRole
+
+LOGGER = logging.getLogger(__name__)
 
 
-class FileSelector(QtWidgets.QWidget):
+class FileSelector(QWidget):
     """ A file selector textbox with ... button """
 
-    def __init__(self, album_editor=None, text=''):
+    def __init__(self, role: FileRole, album_editor=None, text=''):
         super().__init__()
 
-        layout = QtWidgets.QHBoxLayout()
-        # layout.setSpacing(0)
+        layout = QHBoxLayout()
+        layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.setLayout(layout)
 
+        self.role = role
         self.album_editor = album_editor
-        self.file_path = QtWidgets.QLineEdit(text=text)
-        self.button = QtWidgets.QPushButton("...")
+        self.file_path = QLineEdit(text=text)
+        self.button = QPushButton("...")
 
         layout.addWidget(self.file_path)
         layout.addWidget(self.button)
@@ -30,12 +39,33 @@ class FileSelector(QtWidgets.QWidget):
 
     def choose_file(self):
         """ Pick a file """
-        dialog = QtWidgets.QFileDialog()
-        (filename, _) = dialog.getOpenFileName(self)
+
+        path = self.file_path.text()
+        if self.album_editor:
+            start_dir = self.album_editor.get_last_directory(self.role, path)
+        elif self.file_path and os.path.isabs(path):
+            start_dir = os.path.dirname(path)
+        else:
+            start_dir = self.role.default_directory
+
+        LOGGER.debug("start_dir=%s filter=%s",
+                     start_dir, self.role.file_filter)
+        (filename, _) = QFileDialog.getOpenFileName(self,
+                                                    f'Select your {self.role.name}',
+                                                    start_dir,
+                                                    self.role.file_filter)
         if filename:
+            # Update the global default for files of this role
+            filedir = os.path.dirname(filename)
+            self.role.default_directory = filedir
+
             if self.album_editor:
+                # Update the album editor's default for files of this role
+                self.album_editor.set_last_directory(self.role, filedir)
                 filename = util.make_relative_path(
                     self.album_editor.filename)(filename)
+                os.path.dirname(filename)
+
             self.file_path.setText(filename)
 
     def text(self):
@@ -48,7 +78,7 @@ class FileSelector(QtWidgets.QWidget):
         return self.file_path.setText(text)
 
 
-class FuturesProgress(QtWidgets.QWidget):
+class FuturesProgress(QWidget):
     """ A stack of progress indicators """
 
     def __init__(self, futures):
@@ -57,9 +87,9 @@ class FuturesProgress(QtWidgets.QWidget):
         self.futures = futures
         self.mapping = {}
 
-        self.layout = QtWidgets.QFormLayout()
+        self.layout = QFormLayout()
         for key, tasks in futures.items():
-            progress_bar = QtWidgets.QProgressBar(
+            progress_bar = QProgressBar(
                 minimum=0, maximum=len(tasks))
             self.mapping[key] = progress_bar
             self.layout.addRow(key, progress_bar)
@@ -78,10 +108,11 @@ class FuturesProgress(QtWidgets.QWidget):
         return bool(self.mapping)
 
 
-class FlowLayout(QtWidgets.QLayout):
+class FlowLayout(QLayout):
     """ Layout with reflow
     adapted from https://doc.qt.io/qtforpython-6/examples/example_widgets_layouts_flowlayout.html
     """
+    # pylint:disable=invalid-name,missing-function-docstring
 
     def __init__(self, parent=None):
         super().__init__(parent)
