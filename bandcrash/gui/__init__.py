@@ -17,12 +17,11 @@ from PySide6 import QtCore, QtGui, QtWidgets
 
 from .. import __version__, process, util
 from . import datatypes, widgets
+from .file_utils import FileRole
 from .track_editor import TrackListing
 
 LOG_LEVELS = [logging.WARNING, logging.INFO, logging.DEBUG]
 LOGGER = logging.getLogger(__name__)
-
-ALBUM_FILTER = "Album files (*.bcalbum *.json)"
 
 
 def to_checkstate(val):
@@ -62,21 +61,6 @@ def get_encode_options():
                 setattr(config, field.name, settings.value(field.name))
 
     return config
-
-
-def default_music_dir(dfl):
-    """ Find the best default music storage directory """
-    for candidate in itertools.chain(
-        QtCore.QStandardPaths.standardLocations(
-            QtCore.QStandardPaths.MusicLocation),
-        QtCore.QStandardPaths.standardLocations(
-            QtCore.QStandardPaths.DocumentsLocation),
-        QtCore.QStandardPaths.standardLocations(
-            QtCore.QStandardPaths.HomeLocation),
-    ):
-        return candidate
-
-    return dfl
 
 
 class PreferencesWindow(QtWidgets.QDialog):
@@ -123,7 +107,8 @@ class PreferencesWindow(QtWidgets.QDialog):
 
         layout.addRow(QtWidgets.QFrame(frameShape=QtWidgets.QFrame.HLine))
 
-        self.butler_path = widgets.FileSelector(text=defaults.butler_path)
+        self.butler_path = widgets.FileSelector(
+            FileRole.BINARY, text=defaults.butler_path)
         layout.addRow("Butler binary", self.butler_path)
         connect_button = QtWidgets.QPushButton("Connect")
         self.butler_path.layout().addWidget(connect_button)
@@ -219,6 +204,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
         self.setMinimumSize(600, 0)
 
         self.output_dir = None
+        self.last_directory = {}
 
         menubar = self.menuBar()
 
@@ -242,7 +228,6 @@ class AlbumEditor(QtWidgets.QMainWindow):
         self.filename = path
         self.data: typing.Dict[str, typing.Any] = {'tracks': []}
         if path:
-            AlbumEditor.default_open_dir(os.path.dirname(path))
             self.reload(path)
             if '_gui' in self.data:
                 if geom := self.data['_gui'].get('geom'):
@@ -261,7 +246,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
             maxLength=5)
         self.genre = QtWidgets.QLineEdit(
             placeholderText="Avant-Industrial Loungecore")
-        self.artwork = widgets.FileSelector(self)
+        self.artwork = widgets.FileSelector(FileRole.IMAGE, self)
         self.composer = QtWidgets.QLineEdit()
         # self.fg_color = ColorSelector("Foreground")
         # self.bg_color = ColorSelector("Background")
@@ -323,13 +308,16 @@ class AlbumEditor(QtWidgets.QMainWindow):
         """ Create a new album file """
         AlbumEditor('').show()
 
-    def file_open(self):
+    @staticmethod
+    def file_open():
         """ Dialog box to open an existing file """
+        role = FileRole.ALBUM
         path, _ = QtWidgets.QFileDialog.getOpenFileName(
-            caption="New album file",
-            filter=ALBUM_FILTER,
-            dir=AlbumEditor.default_open_dir())
+            caption="Open album",
+            filter=role.file_filter,
+            dir=role.default_directory)
         if path:
+            role.default_directory = os.path.dirname(path)
             editor = AlbumEditor(path)
             editor.show()
 
@@ -381,6 +369,8 @@ class AlbumEditor(QtWidgets.QMainWindow):
         self.do_butler.setCheckState(
             datatypes.to_checkstate(self.data.get('do_butler', True)))
 
+        self.last_directory = self.data.get('_gui', {}).get('lastdir', {})
+
     def apply(self):
         """ Apply edits to the saved data """
         LOGGER.debug("AlbumEditor.apply")
@@ -415,11 +405,11 @@ class AlbumEditor(QtWidgets.QMainWindow):
         ))
         self.track_listing.apply()
 
-        if '_gui' not in self.data:
-            self.data['_gui'] = {}
         geom = self.geometry()
-        self.data['_gui']['geom'] = [
-            geom.x(), geom.y(), geom.width(), geom.height()]
+        self.data['_gui'] = {
+            'geom': [geom.x(), geom.y(), geom.width(), geom.height()],
+            'lastdir': self.last_directory
+        }
 
     def save(self):
         """ Save the file to disk """
@@ -437,17 +427,18 @@ class AlbumEditor(QtWidgets.QMainWindow):
         LOGGER.debug("AlbumEditor.save_as")
         self.apply()
 
+        role = FileRole.ALBUM
         path, _ = QtWidgets.QFileDialog.getSaveFileName(
             caption="Select your album file",
-            filter=ALBUM_FILTER,
-            dir=os.path.dirname(self.filename) or AlbumEditor.default_open_dir())
+            filter=role.file_filter,
+            dir=os.path.dirname(self.filename) or role.default_directory)
         if path:
             self.renormalize_paths(self.filename, path)
             self.filename = path
             self.setWindowTitle(self.filename)
             self.reset()
             self.save()
-            AlbumEditor.default_open_dir(os.path.dirname(self.filename))
+            role.default_directory = os.path.dirname(self.filename)
 
         self.reset()
 
@@ -468,11 +459,9 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
         # find a good default directory to stash the output in
         settings = QtCore.QSettings()
+        role = FileRole.OUTPUT
         if self.output_dir is None:
-            if settings.contains("last_album_output"):
-                self.output_dir = settings.value("last_album_output")
-            else:
-                self.output_dir = default_music_dir(config.input_dir)
+            self.output_dir = role.default_directory
 
         # prompt for the actual output directory
         base_dir = QtWidgets.QFileDialog.getExistingDirectory(
@@ -483,7 +472,8 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
         # store our output directory for later
         self.output_dir = base_dir
-        settings.setValue("last_album_output", self.output_dir)
+
+        role.default_directory = base_dir
 
         # Users will most likely be choosing a generic directory and NOT one that's
         # already sandboxed, so, let's make that sandbox for them (just for better UX).
@@ -576,9 +566,9 @@ class AlbumEditor(QtWidgets.QMainWindow):
                 return path
 
             old_abs = abspath(path)
-            if not os.path.isfile(old_abs):
+            if not os.path.exists(old_abs):
                 LOGGER.warning(
-                    "Not touching non-file path %s (%s)", path, old_abs)
+                    "Not touching nonexisting path %s (%s)", path, old_abs)
                 return path
 
             out = relpath(old_abs)
@@ -594,19 +584,58 @@ class AlbumEditor(QtWidgets.QMainWindow):
                 if key in track and isinstance(track[key], str):
                     track[key] = renorm(track[key])
 
-    @staticmethod
-    def default_open_dir(set_value=None):
-        """ Set or get the default directory for album files """
-        settings = QtCore.QSettings()
-        if set_value:
-            settings.setValue("last_album_dir", set_value)
-            settings.sync()
+        # last_directory is aliased into data instead of being copied
+        LOGGER.debug("last_directory before %s", self.last_directory)
+        self.last_directory.update({
+            key: renorm(value)
+            for key, value
+            in self.last_directory.items()
+        })
+        LOGGER.debug("after %s", self.last_directory)
 
-        dfl = default_music_dir(os.getcwd())
-        ret = settings.value("last_album_dir", dfl)
-        if not os.path.isdir(ret):
-            ret = dfl
-        return ret
+    def get_last_directory(self, role: FileRole, file_path: typing.Optional[str] = None):
+        """ Get the last directory used for a file of a particular type
+
+        :param role: The role
+        :param str file_path: The current path to use as a reference
+        """
+        LOGGER.debug("get_last_directory %s %s", role, file_path)
+        LOGGER.debug("   %s", self.last_directory)
+
+        if file_path:
+            if os.path.isabs(file_path):
+                # We can just use the existing file's directory
+                return os.path.dirname(file_path)
+
+            if self.filename:
+                # Just make it absolute to our directory
+                return os.path.dirname(util.make_absolute_path(self.filename)(file_path))
+
+        if self.filename:
+            # We know where we are
+            if role.name in self.last_directory:
+                # And we know where the last file of this type was put
+                return util.make_absolute_path(self.filename)(self.last_directory[role.name])
+            # just assume the album's directory
+            return os.path.dirname(self.filename)
+
+        # We're not mapped to the filesystem, so just use the system default
+        return role.default_directory
+
+    def set_last_directory(self, role: FileRole, dir_path: str):
+        """ Set the last directory for this role relative to our album file
+
+        :param role: The role
+        :param str dir_path: The directory to use as the reference
+        """
+        LOGGER.debug("set_last_directory %s %s", role, dir_path)
+        if self.filename:
+            self.last_directory[role.name] = util.make_relative_path(
+                self.filename)(dir_path)
+        else:
+            # We aren't mapped to the filesystem so let's just stash it as absolute
+            self.last_directory[role.name] = dir_path
+        LOGGER.debug("   -> %s", self.last_directory[role.name])
 
 
 def open_file(path):
@@ -632,11 +661,7 @@ class BandcrashApplication(QtWidgets.QApplication):
     def open_on_startup(self):
         """ Hacky way to open the file dialog on startup. there must be a better way... """
         if not self.opened:
-            path, _ = QtWidgets.QFileDialog.getOpenFileName(
-                caption="Open album",
-                filter=ALBUM_FILTER,
-                dir=AlbumEditor.default_open_dir())
-            AlbumEditor(path).show()
+            AlbumEditor.file_open()
 
     def event(self, evt):
         """ Handle an application-level event """
