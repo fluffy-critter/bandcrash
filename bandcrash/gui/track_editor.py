@@ -3,11 +3,13 @@
 import logging
 import os
 import os.path
+import typing
 
-from PySide6.QtWidgets import (QAbstractScrollArea, QCheckBox, QFormLayout,
-                               QHBoxLayout, QLineEdit, QListWidget,
-                               QListWidgetItem, QPlainTextEdit, QPushButton,
-                               QSplitter, QVBoxLayout, QWidget,QScrollArea)
+from PySide6.QtWidgets import (QAbstractScrollArea, QCheckBox, QFileDialog,
+                               QFormLayout, QHBoxLayout, QLineEdit,
+                               QListWidget, QListWidgetItem, QPlainTextEdit,
+                               QPushButton, QScrollArea, QSizePolicy,
+                               QSplitter, QVBoxLayout, QWidget)
 
 from .. import util
 from . import datatypes
@@ -21,7 +23,7 @@ class TrackEditor(QWidget):
     """ A track editor pane """
     # pylint:disable=too-many-instance-attributes
 
-    def __init__(self, album_editor, data):
+    def __init__(self, album_editor, data: datatypes.TrackData):
         """ edit an individual track
 
         :param dict data: The metadata blob
@@ -30,7 +32,7 @@ class TrackEditor(QWidget):
         self.setMinimumSize(400, 0)
 
         self.album_editor = album_editor
-        self.data = None
+        self.data = data
 
         layout = QFormLayout()
         layout.setFieldGrowthPolicy(
@@ -71,7 +73,7 @@ class TrackEditor(QWidget):
 
         self.reset(data)
 
-    def reset(self, data):
+    def reset(self, data: datatypes.TrackData):
         """ Reset to the specified backing data """
         self.data = data
 
@@ -146,7 +148,7 @@ class TrackListing(QSplitter):
     class TrackItem(QListWidgetItem):
         """ an item in the track listing """
 
-        def __init__(self, album_editor, data):
+        def __init__(self, album_editor, data: datatypes.TrackData):
             super().__init__()
             self.editor = TrackEditor(album_editor, data)
             self.setText(self.display_name)
@@ -154,7 +156,7 @@ class TrackListing(QSplitter):
             self.editor.title.textChanged.connect(self.apply)
             self.editor.filename.file_path.textChanged.connect(self.apply)
 
-        def reset(self, data):
+        def reset(self, data: datatypes.TrackData):
             """ Reset the track listing from a new tracklist
 
             :param list data: album['data']
@@ -183,7 +185,7 @@ class TrackListing(QSplitter):
         super().__init__()
         LOGGER.debug("TrackListing.__init__")
 
-        self.data = None
+        self.data: datatypes.TrackList = []
         self.album_editor = album_editor
 
         left_panel = QVBoxLayout(self)
@@ -228,12 +230,12 @@ class TrackListing(QSplitter):
 
         for widget in (self, self.track_listing):
             policy = widget.sizePolicy()
-            policy.setVerticalPolicy(QSizePolicy.Expanding)
+            policy.setVerticalPolicy(QSizePolicy.Policy.Expanding)
             widget.setSizePolicy(policy)
 
         self.setSizes([1, 10])
 
-    def reset(self, data):
+    def reset(self, data: datatypes.TrackList):
         """ Reset to the backing storage """
         LOGGER.debug("TrackListing.reset")
 
@@ -244,7 +246,8 @@ class TrackListing(QSplitter):
                            self.track_listing.count(), len(data))
 
         for idx, track in enumerate(data):
-            item = self.track_listing.item(idx)
+            item = typing.cast(TrackListing.TrackItem,
+                               self.track_listing.item(idx))
             if item:
                 item.reset(track)
             else:
@@ -266,7 +269,8 @@ class TrackListing(QSplitter):
         LOGGER.debug("TrackListing.apply")
         self.data.clear()
         for row in range(self.track_listing.count()):
-            item = self.track_listing.item(row)
+            item = typing.cast(TrackListing.TrackItem,
+                               self.track_listing.item(row))
             item.editor.apply()
             self.data.append(item.editor.data)
 
@@ -275,7 +279,8 @@ class TrackListing(QSplitter):
         LOGGER.debug("TrackListing.set_item")
         self.apply()
         self.editpanel.takeWidget()  # necessary to prevent Qt from GCing it on replacement
-        item = self.track_listing.item(row)
+        item = typing.cast(TrackListing.TrackItem,
+                           self.track_listing.item(row))
         if item:
             self.editpanel.setWidget(item.editor)
         else:

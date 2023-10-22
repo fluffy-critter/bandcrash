@@ -1,6 +1,11 @@
 """ Data type conversion functions """
 
+import typing
+
 from PySide6.QtCore import Qt
+
+TrackData = dict[str, typing.Any]
+TrackList = list[TrackData]
 
 
 def to_checkstate(val):

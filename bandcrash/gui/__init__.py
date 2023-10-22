@@ -13,7 +13,12 @@ import subprocess
 import threading
 import typing
 
-from PySide6 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtGui
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (QApplication, QDialog, QErrorMessage,
+                               QFileDialog, QFormLayout, QFrame, QLabel,
+                               QLineEdit, QMainWindow, QMessageBox,
+                               QProgressDialog, QSpinBox,QWidget,QCheckBox,QFormLayout,QHBoxLayout,QPushButton)
 
 from .. import __version__, process, util
 from . import datatypes, widgets
@@ -22,11 +27,6 @@ from .track_editor import TrackListing
 
 LOG_LEVELS = [logging.WARNING, logging.INFO, logging.DEBUG]
 LOGGER = logging.getLogger(__name__)
-
-
-def to_checkstate(val):
-    """ Convert a bool to a qt CheckState """
-    return QtCore.Qt.Checked if val else QtCore.Qt.Unchecked
 
 
 def add_menu_item(menu, name, method, shortcut, role=None):
@@ -56,14 +56,15 @@ def get_encode_options():
             LOGGER.debug("type=%s value=%s", field.type,
                          settings.value(field.name))
             if field.type == list[str]:
-                setattr(config, field.name, settings.value(field.name).split())
+                setattr(config, field.name, str(
+                    settings.value(field.name)).split())
             else:
                 setattr(config, field.name, settings.value(field.name))
 
     return config
 
 
-class PreferencesWindow(QtWidgets.QDialog):
+class PreferencesWindow(QDialog):
     """ Sets application-level preferences """
     # pylint:disable=too-many-instance-attributes
 
@@ -74,53 +75,62 @@ class PreferencesWindow(QtWidgets.QDialog):
 
         self.settings = QtCore.QSettings()
 
-        layout = QtWidgets.QFormLayout(
-            fieldGrowthPolicy=QtWidgets.QFormLayout.AllNonFixedFieldsGrow)
+        def separator():
+            frame = QFrame()
+            frame.setFrameShape(QFrame.Shape.HLine)
+            return frame
+
+        layout = QFormLayout()
+        layout.setFieldGrowthPolicy(
+            QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         self.setLayout(layout)
 
-        # App-specific settings
-
-        self.num_threads = QtWidgets.QSpinBox(minimum=1, maximum=128, value=int(
-            self.settings.value("num_threads", os.cpu_count())))
+        self.num_threads = QSpinBox(self)
+        self.num_threads.setMinimum(1)
+        self.num_threads.setMaximum(128)
+        self.num_threads.setValue(
+            typing.cast(int,
+                        self.settings.value("num_threads",
+                                            os.cpu_count())))
         layout.addRow("Number of Threads", self.num_threads)
 
-        layout.addRow(QtWidgets.QFrame(frameShape=QtWidgets.QFrame.HLine))
-
-        # Encode settings
+        layout.addRow(separator())
 
         defaults = get_encode_options()
 
-        self.preview_encoder_args = QtWidgets.QLineEdit(
-            text=' '.join(defaults.preview_encoder_args))
+        self.preview_encoder_args = QLineEdit()
+        self.preview_encoder_args.setText(
+            ' '.join(defaults.preview_encoder_args))
         layout.addRow("Preview encoder options", self.preview_encoder_args)
-        self.mp3_encoder_args = QtWidgets.QLineEdit(
-            text=' '.join(defaults.mp3_encoder_args))
+
+        self.mp3_encoder_args = QLineEdit()
+        self.mp3_encoder_args.setText(' '.join(defaults.mp3_encoder_args))
         layout.addRow("MP3 encoder options", self.mp3_encoder_args)
 
-        self.ogg_encoder_args = QtWidgets.QLineEdit(
-            text=' '.join(defaults.ogg_encoder_args))
+        self.ogg_encoder_args = QLineEdit()
+        self.ogg_encoder_args.setText(' '.join(defaults.ogg_encoder_args))
         layout.addRow("Ogg encoder options", self.ogg_encoder_args)
 
-        self.flac_encoder_args = QtWidgets.QLineEdit(
-            text=' '.join(defaults.flac_encoder_args))
+        self.flac_encoder_args = QLineEdit()
+        self.flac_encoder_args.setText(' '.join(defaults.flac_encoder_args))
         layout.addRow("FLAC encoder options", self.flac_encoder_args)
 
-        layout.addRow(QtWidgets.QFrame(frameShape=QtWidgets.QFrame.HLine))
+        layout.addRow(separator())
 
         self.butler_path = widgets.FileSelector(
             FileRole.BINARY, text=defaults.butler_path)
         layout.addRow("Butler binary", self.butler_path)
-        connect_button = QtWidgets.QPushButton("Connect")
+        connect_button = QPushButton("Connect")
         self.butler_path.layout().addWidget(connect_button)
         connect_button.clicked.connect(self.connect_butler)
 
-        buttons = QtWidgets.QHBoxLayout()
+        buttons = QHBoxLayout()
 
-        reset_button = QtWidgets.QPushButton("Load Defaults")
+        reset_button = QPushButton("Load Defaults")
         reset_button.clicked.connect(self.reset_defaults)
         buttons.addWidget(reset_button)
 
-        apply_button = QtWidgets.QPushButton("Apply")
+        apply_button = QPushButton("Apply")
         apply_button.clicked.connect(self.accept)
         apply_button.setDefault(True)
         buttons.addWidget(apply_button)
@@ -172,13 +182,14 @@ class PreferencesWindow(QtWidgets.QDialog):
         connection = subprocess.run([self.butler_path.text(), 'login'],
                                     capture_output=True,
                                     check=False,
-                                    creationflags=subprocess.CREATE_NO_WINDOW,
+                                    creationflags=getattr(
+                               subprocess, 'CREATE_NO_WINDOW', 0),
                                     )
         if connection.returncode:
-            QtWidgets.QMessageBox.warning(
+            QMessageBox.warning(
                 self, "Connection failed", connection.stdout.decode())
         else:
-            QtWidgets.QMessageBox.information(
+            QMessageBox.information(
                 self, "Butler connected", connection.stdout.decode())
 
     @staticmethod
@@ -189,7 +200,7 @@ class PreferencesWindow(QtWidgets.QDialog):
         prefs_window.exec()
 
 
-class AlbumEditor(QtWidgets.QMainWindow):
+class AlbumEditor(QMainWindow):
     """ An album editor window """
     # pylint:disable=too-many-instance-attributes
 
@@ -233,21 +244,21 @@ class AlbumEditor(QtWidgets.QMainWindow):
                 if geom := self.data['_gui'].get('geom'):
                     self.setGeometry(geom[0], geom[1], geom[2], geom[3])
 
-        layout = QtWidgets.QFormLayout(
-            fieldGrowthPolicy=QtWidgets.QFormLayout.AllNonFixedFieldsGrow)
-        self.setCentralWidget(QtWidgets.QWidget(layout=layout))
+        layout = QFormLayout(
+            fieldGrowthPolicy=QFormLayout.AllNonFixedFieldsGrow)
+        self.setCentralWidget(QWidget(layout=layout))
         self.layout = layout
 
-        self.artist = QtWidgets.QLineEdit(placeholderText="Artist name")
-        self.title = QtWidgets.QLineEdit(placeholderText="Album title")
-        self.year = QtWidgets.QLineEdit(
+        self.artist = QLineEdit(placeholderText="Artist name")
+        self.title = QLineEdit(placeholderText="Album title")
+        self.year = QLineEdit(
             placeholderText="1978",
             validator=QtGui.QIntValidator(0, 99999),
             maxLength=5)
-        self.genre = QtWidgets.QLineEdit(
+        self.genre = QLineEdit(
             placeholderText="Avant-Industrial Loungecore")
         self.artwork = widgets.FileSelector(FileRole.IMAGE, self)
-        self.composer = QtWidgets.QLineEdit()
+        self.composer = QLineEdit()
         # self.fg_color = ColorSelector("Foreground")
         # self.bg_color = ColorSelector("Background")
         # self.highlight_color = ColorSelector("Highlight")
@@ -266,12 +277,12 @@ class AlbumEditor(QtWidgets.QMainWindow):
         layout.addRow(self.track_listing)
 
         checkboxes = widgets.FlowLayout()
-        self.do_preview = QtWidgets.QCheckBox("Web preview")
-        self.do_mp3 = QtWidgets.QCheckBox("MP3")
-        self.do_ogg = QtWidgets.QCheckBox("Ogg Vorbis")
-        self.do_flac = QtWidgets.QCheckBox("FLAC")
-        self.do_zip = QtWidgets.QCheckBox("Build .zip files")
-        self.do_cleanup = QtWidgets.QCheckBox("Clean extra files")
+        self.do_preview = QCheckBox("Web preview")
+        self.do_mp3 = QCheckBox("MP3")
+        self.do_ogg = QCheckBox("Ogg Vorbis")
+        self.do_flac = QCheckBox("FLAC")
+        self.do_zip = QCheckBox("Build .zip files")
+        self.do_cleanup = QCheckBox("Clean extra files")
         checkboxes.addWidget(self.do_preview)
         checkboxes.addWidget(self.do_mp3)
         checkboxes.addWidget(self.do_ogg)
@@ -280,20 +291,20 @@ class AlbumEditor(QtWidgets.QMainWindow):
         checkboxes.addWidget(self.do_cleanup)
         layout.addRow("Build options", checkboxes)
 
-        butler_opts = QtWidgets.QHBoxLayout()
-        self.do_butler = QtWidgets.QCheckBox()
-        self.butler_target = QtWidgets.QLineEdit(
+        butler_opts = QHBoxLayout()
+        self.do_butler = QCheckBox()
+        self.butler_target = QLineEdit(
             placeholderText="username/my-album-name")
-        self.butler_prefix = QtWidgets.QLineEdit(
+        self.butler_prefix = QLineEdit(
             placeholderText="prefix", maxLength=10)
         butler_opts.addWidget(self.do_butler)
         butler_opts.addWidget(self.butler_target, 50)
         butler_opts.addWidget(self.butler_prefix, 10)
         layout.addRow("itch.io", butler_opts)
 
-        buttons = QtWidgets.QHBoxLayout()
+        buttons = QHBoxLayout()
 
-        start_button = QtWidgets.QPushButton("Encode")
+        start_button = QPushButton("Encode")
         start_button.clicked.connect(self.encode_album)
 
         buttons.addWidget(start_button)
@@ -304,22 +315,30 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
         self.reset()
 
-    def file_new(self):
+    @staticmethod
+    def file_new():
         """ Create a new album file """
         AlbumEditor('').show()
 
     @staticmethod
-    def file_open():
-        """ Dialog box to open an existing file """
+    def file_open(or_new: bool=False):
+        """ Dialog box to open an existing file
+
+        :param bool or_new: Fallback to a new document if
+         """
         role = FileRole.ALBUM
-        path, _ = QtWidgets.QFileDialog.getOpenFileName(None,
-                                                        "Open album",
-                                                        role.default_directory,
-                                                        role.file_filter)
-        if path:
-            role.default_directory = os.path.dirname(path)
+        path, _ = QFileDialog.getOpenFileName(None,
+                                              "Open album",
+                                              role.default_directory,
+                                              role.file_filter)
+        if path or or_new:
+            if path:
+                role.default_directory = os.path.dirname(path)
             editor = AlbumEditor(path)
             editor.show()
+            return editor
+
+        return None
 
     def reload(self, path):
         """ Load from the backing storage """
@@ -329,7 +348,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
                 if 'tracks' not in self.data:
                     raise KeyError('tracks')
             except (json.decoder.JSONDecodeError, KeyError, TypeError):
-                err = QtWidgets.QErrorMessage(self)
+                err = QErrorMessage(self)
                 err.showMessage("Invalid album JSON file")
                 self.filename = ''
                 self.data = {'tracks': []}
@@ -428,7 +447,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
         self.apply()
 
         role = FileRole.ALBUM
-        path, _ = QtWidgets.QFileDialog.getSaveFileName(
+        path, _ = QFileDialog.getSaveFileName(
             self,
             "Select your album file",
             os.path.dirname(self.filename) or role.default_directory,
@@ -466,7 +485,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
             self.output_dir = role.default_directory
 
         # prompt for the actual output directory
-        base_dir = QtWidgets.QFileDialog.getExistingDirectory(
+        base_dir = QFileDialog.getExistingDirectory(
             dir=self.output_dir,
             caption="Choose an output directory")
         if not base_dir:
@@ -496,7 +515,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
         # and not block the UI thread but for now this'll do
 
         errors = []
-        progress = QtWidgets.QProgressDialog(
+        progress = QProgressDialog(
             "Encoding album...", "Abort", 0, 1, self)
         progress.setWindowModality(QtCore.Qt.WindowModal)
 
@@ -530,28 +549,28 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
         if errors:
             LOGGER.debug("errors: %d %s", len(errors), errors)
-            msgbox = QtWidgets.QMessageBox(self, "Error", "An error occurred")
-            msgbox.setIcon(QtWidgets.QMessageBox.Critical)
+            msgbox = QMessageBox(self, "Error", "An error occurred")
+            msgbox.setIcon(QMessageBox.Critical)
             text = f"An error occurred: {str(errors[0])}"
             if len(errors) > 1:
                 text += f", plus {len(errors)-1} more."
                 msgbox.setDetailedText('\n\n'.join(
                     str(e) for e in errors))
-                msgbox.setOptions(QtWidgets.QMessageBox.DontUseNativeDialog)
+                msgbox.setOptions(QMessageBox.DontUseNativeDialog)
             msgbox.setText(text)
             msgbox.exec()
         elif not progress.wasCanceled() and all_tasks:
             task_names = "Encode"
             if config.do_butler:
                 task_names += " and upload"
-            result = QtWidgets.QMessageBox.information(
+            result = QMessageBox.information(
                 self,
                 "Encode complete",
                 f"{task_names} completed successfully",
-                QtWidgets.QMessageBox.StandardButton.Open |
-                QtWidgets.QMessageBox.StandardButton.Ok,
-                QtWidgets.QMessageBox.StandardButton.Open)
-            if result == QtWidgets.QMessageBox.StandardButton.Open:
+                QMessageBox.StandardButton.Open |
+                QMessageBox.StandardButton.Ok,
+                QMessageBox.StandardButton.Open)
+            if result == QMessageBox.StandardButton.Open:
                 QtGui.QDesktopServices.openUrl(
                     QtCore.QUrl.fromLocalFile(config.output_dir))
 
@@ -646,7 +665,7 @@ def open_file(path):
     editor.show()
 
 
-class BandcrashApplication(QtWidgets.QApplication):
+class BandcrashApplication(QApplication):
     """ Application event handler """
 
     def __init__(self, open_files):
@@ -663,7 +682,7 @@ class BandcrashApplication(QtWidgets.QApplication):
     def open_on_startup(self):
         """ Hacky way to open the file dialog on startup. there must be a better way... """
         if not self.opened:
-            AlbumEditor.file_open()
+            AlbumEditor.file_open(or_new=True)
 
     def event(self, evt):
         """ Handle an application-level event """
