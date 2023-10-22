@@ -1,11 +1,11 @@
 """ Data type conversion functions """
 
-from PySide6 import QtCore
+from PySide6.QtCore import Qt
 
 
 def to_checkstate(val):
     """ Convert a bool to a qt CheckState """
-    return QtCore.Qt.Checked if val else QtCore.Qt.Unchecked
+    return Qt.CheckState.Checked if val else Qt.CheckState.Unchecked
 
 
 def apply_text_fields(data, fields, xform=lambda x: x):
@@ -28,7 +28,7 @@ def apply_checkbox_fields(data, fields):
     :param list fields: List of (dict_key, widget, default)
     """
     for key, widget, dfl in fields:
-        value = widget.checkState() == QtCore.Qt.Checked
+        value = widget.checkState() == Qt.CheckState.Checked
         if value != dfl:
             data[key] = value
         elif key in data:

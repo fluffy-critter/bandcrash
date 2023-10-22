@@ -8,6 +8,7 @@ from PySide6 import QtWidgets
 
 from .. import util
 from . import datatypes
+from .file_utils import FileRole
 from .widgets import FileSelector
 
 LOGGER = logging.getLogger(__name__)
@@ -32,7 +33,7 @@ class TrackEditor(QtWidgets.QWidget):
             fieldGrowthPolicy=QtWidgets.QFormLayout.AllNonFixedFieldsGrow)
         self.setLayout(layout)
 
-        self.filename = FileSelector(album_editor)
+        self.filename = FileSelector(FileRole.AUDIO, album_editor)
         self.group = QtWidgets.QLineEdit(placeholderText="Track grouping")
         self.title = QtWidgets.QLineEdit(placeholderText="Song title")
         self.genre = QtWidgets.QLineEdit()
@@ -41,7 +42,7 @@ class TrackEditor(QtWidgets.QWidget):
         self.composer = QtWidgets.QLineEdit()
         self.cover_of = QtWidgets.QLineEdit(
             placeholderText="Original performing artist (leave blank if none)")
-        self.artwork = FileSelector(album_editor)
+        self.artwork = FileSelector(FileRole.IMAGE, album_editor)
         self.lyrics = QtWidgets.QPlainTextEdit()
         self.about = QtWidgets.QLineEdit()
 
@@ -156,13 +157,13 @@ class TrackListing(QtWidgets.QSplitter):
 
             :param list data: album['data']
             """
-            LOGGER.debug("TrackItem.__reset__ %d", self.display_name)
+            LOGGER.debug("TrackItem.__reset__ %s", self.display_name)
             self.editor.reset(data)
             self.setText(self.display_name)
 
         def apply(self):
             """ Apply the GUI values to the backing store """
-            LOGGER.debug("TrackItem.__apply__ %d", self.display_name)
+            LOGGER.debug("TrackItem.__apply__ %s", self.display_name)
             self.editor.apply()
             self.setText(self.display_name)
 
@@ -281,10 +282,12 @@ class TrackListing(QtWidgets.QSplitter):
     def add_tracks(self):
         """ Add some tracks """
         LOGGER.debug("TrackListing.add_tracks")
+        role = FileRole.AUDIO
         filenames, _ = QtWidgets.QFileDialog.getOpenFileNames(
             self,
             "Select audio files",
-            filter="Audio files (*.wav *.ogg *.flac *.mp3 *.aif *.aiff)")
+            dir=self.album_editor.get_last_directory(role),
+            filter=role.file_filter)
 
         for filename in filenames:
             _, title = util.guess_track_title(filename)
@@ -292,6 +295,13 @@ class TrackListing(QtWidgets.QSplitter):
             self.data.append(track)
             self.track_listing.addItem(
                 TrackListing.TrackItem(self.album_editor, track))
+
+        if filenames:
+            ref_file = filenames[0]
+            LOGGER.debug("Using filename %s", ref_file)
+            role.default_directory = os.path.dirname(ref_file)
+            self.album_editor.set_last_directory(
+                role, os.path.dirname(ref_file))
 
     def delete_track(self):
         """ Remove a track """
