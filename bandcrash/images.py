@@ -103,3 +103,11 @@ def fix_orientation(image: PIL.Image) -> PIL.Image:
         # either no EXIF tags or no orientation tag
         pass
     return image
+
+
+@functools.lru_cache()
+def known_extensions():
+    """ Get a list of known image file extensions """
+    # adapted from https://stackoverflow.com/a/71114152/318857
+    exts = PIL.Image.registered_extensions()
+    return {ex for ex, f in exts.items() if f in PIL.Image.OPEN}
