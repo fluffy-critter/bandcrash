@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (QAbstractScrollArea, QCheckBox, QFileDialog,
                                QFormLayout, QHBoxLayout, QLineEdit,
                                QListWidget, QListWidgetItem, QPlainTextEdit,
                                QPushButton, QScrollArea, QSizePolicy,
-                               QSplitter, QVBoxLayout, QWidget)
+                               QSplitter, QVBoxLayout, QWidget, QAbstractItemView)
 
 from .. import util
 from . import datatypes
@@ -194,6 +194,7 @@ class TrackListing(QSplitter):
         self.addWidget(wrap_layout(self, left_panel))
 
         self.track_listing = QListWidget(self)
+        self.track_listing.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
         left_panel.addWidget(self.track_listing)
 
         self.button_add = QPushButton("+")
