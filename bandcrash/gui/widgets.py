@@ -15,6 +15,12 @@ from .file_utils import FileRole
 LOGGER = logging.getLogger(__name__)
 
 
+def wrap_layout(parent: QWidget, layout: QLayout):
+    widget = QWidget(parent)
+    widget.setLayout(layout)
+    return widget
+
+
 class FileSelector(QWidget):
     """ A file selector textbox with ... button """
 
@@ -29,7 +35,7 @@ class FileSelector(QWidget):
 
         self.role = role
         self.album_editor = album_editor
-        self.file_path = QLineEdit(text=text)
+        self.file_path = QLineEdit(text)
         self.button = QPushButton("...")
 
         layout.addWidget(self.file_path)
@@ -87,14 +93,15 @@ class FuturesProgress(QWidget):
         self.futures = futures
         self.mapping = {}
 
-        self.layout = QFormLayout()
+        self.form = QFormLayout(self)
         for key, tasks in futures.items():
-            progress_bar = QProgressBar(
-                minimum=0, maximum=len(tasks))
+            progress_bar = QProgressBar(self)
+            progress_bar.setMinimum(0)
+            progress_bar.setMaximum(len(tasks))
             self.mapping[key] = progress_bar
-            self.layout.addRow(key, progress_bar)
+            self.form.addRow(key, progress_bar)
 
-        self.setLayout(self.layout)
+        self.setLayout(self.form)
 
     def update(self):
         """ Update the progress indicators; returns True if everything's done """
@@ -102,7 +109,7 @@ class FuturesProgress(QWidget):
             if key in self.mapping:
                 if len([task for task in tasks if task.done()]) == len(tasks):
                     # This task set is finished, so we can remove the progress bar
-                    self.layout.removeRow(self.mapping[key])
+                    self.form.removeRow(self.mapping[key])
                     del self.mapping[key]
 
         return bool(self.mapping)
@@ -181,10 +188,14 @@ class FlowLayout(QLayout):
         for item in self._item_list:
             style = item.widget().style()
             layout_spacing_x = style.layoutSpacing(
-                QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Horizontal
+                QSizePolicy.ControlType.PushButton,
+                QSizePolicy.ControlType.PushButton,
+                Qt.Orientation.Horizontal
             )
             layout_spacing_y = style.layoutSpacing(
-                QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Vertical
+                QSizePolicy.ControlType.PushButton,
+                QSizePolicy.ControlType.PushButton,
+                Qt.Orientation.Vertical
             )
             space_x = spacing + layout_spacing_x
             space_y = spacing + layout_spacing_y
