@@ -23,6 +23,7 @@ class FileRole(enum.Enum):
     IMAGE = (
         "image", f"Image files ({' '.join(f'*{ext}' for ext in images.known_extensions())})")
     OUTPUT = ("output", '')
+    BINARY = ("binary", '')
 
     @property
     def default_directory(self):
