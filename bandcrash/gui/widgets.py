@@ -16,6 +16,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def wrap_layout(parent: QWidget, layout: QLayout):
+    """ Wrap a layout in a QWidget, which is for some reason not a standard Qt function """
     widget = QWidget(parent)
     widget.setLayout(layout)
     return widget
