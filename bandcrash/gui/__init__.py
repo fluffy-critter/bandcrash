@@ -226,7 +226,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
                       QtGui.QAction.PreferencesRole)
 
         self.filename = path
-        self.data: typing.Dict[str, typing.Any] = {'tracks': []}
+        self.data: dict[str, typing.Any] = {'tracks': []}
         if path:
             self.reload(path)
             if '_gui' in self.data:
@@ -312,10 +312,10 @@ class AlbumEditor(QtWidgets.QMainWindow):
     def file_open():
         """ Dialog box to open an existing file """
         role = FileRole.ALBUM
-        path, _ = QtWidgets.QFileDialog.getOpenFileName(
-            caption="Open album",
-            filter=role.file_filter,
-            dir=role.default_directory)
+        path, _ = QtWidgets.QFileDialog.getOpenFileName(None,
+                                                        "Open album",
+                                                        role.default_directory,
+                                                        role.file_filter)
         if path:
             role.default_directory = os.path.dirname(path)
             editor = AlbumEditor(path)
@@ -325,7 +325,7 @@ class AlbumEditor(QtWidgets.QMainWindow):
         """ Load from the backing storage """
         with open(path, 'r', encoding='utf8') as file:
             try:
-                self.data = json.load(file)
+                self.data = typing.cast(dict[str, typing.Any], json.load(file))
                 if 'tracks' not in self.data:
                     raise KeyError('tracks')
             except (json.decoder.JSONDecodeError, KeyError, TypeError):
@@ -429,9 +429,11 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
         role = FileRole.ALBUM
         path, _ = QtWidgets.QFileDialog.getSaveFileName(
-            caption="Select your album file",
-            filter=role.file_filter,
-            dir=os.path.dirname(self.filename) or role.default_directory)
+            self,
+            "Select your album file",
+            os.path.dirname(self.filename) or role.default_directory,
+            role.file_filter,
+        )
         if path:
             self.renormalize_paths(self.filename, path)
             self.filename = path
