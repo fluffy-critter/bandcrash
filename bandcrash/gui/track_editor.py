@@ -4,17 +4,20 @@ import logging
 import os
 import os.path
 
-from PySide6 import QtWidgets
+from PySide6.QtWidgets import (QAbstractScrollArea, QCheckBox, QFormLayout,
+                               QHBoxLayout, QLineEdit, QListWidget,
+                               QListWidgetItem, QPlainTextEdit, QPushButton,
+                               QSplitter, QVBoxLayout, QWidget,QScrollArea)
 
 from .. import util
 from . import datatypes
 from .file_utils import FileRole
-from .widgets import FileSelector
+from .widgets import FileSelector, wrap_layout
 
 LOGGER = logging.getLogger(__name__)
 
 
-class TrackEditor(QtWidgets.QWidget):
+class TrackEditor(QWidget):
     """ A track editor pane """
     # pylint:disable=too-many-instance-attributes
 
@@ -29,30 +32,29 @@ class TrackEditor(QtWidgets.QWidget):
         self.album_editor = album_editor
         self.data = None
 
-        layout = QtWidgets.QFormLayout(
-            fieldGrowthPolicy=QtWidgets.QFormLayout.AllNonFixedFieldsGrow)
+        layout = QFormLayout()
+        layout.setFieldGrowthPolicy(
+            QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         self.setLayout(layout)
 
         self.filename = FileSelector(FileRole.AUDIO, album_editor)
-        self.group = QtWidgets.QLineEdit(placeholderText="Track grouping")
-        self.title = QtWidgets.QLineEdit(placeholderText="Song title")
-        self.genre = QtWidgets.QLineEdit()
-        self.artist = QtWidgets.QLineEdit(
-            placeholderText="Track-specific artist (leave blank if none)")
-        self.composer = QtWidgets.QLineEdit()
-        self.cover_of = QtWidgets.QLineEdit(
-            placeholderText="Original performing artist (leave blank if none)")
+        self.group = QLineEdit()
+        self.title = QLineEdit()
+        self.genre = QLineEdit()
+        self.artist = QLineEdit()
+        self.composer = QLineEdit()
+        self.cover_of = QLineEdit()
         self.artwork = FileSelector(FileRole.IMAGE, album_editor)
-        self.lyrics = QtWidgets.QPlainTextEdit()
-        self.about = QtWidgets.QLineEdit()
+        self.lyrics = QPlainTextEdit()
+        self.about = QLineEdit()
 
-        self.preview = QtWidgets.QCheckBox("Generate preview")
-        self.hidden = QtWidgets.QCheckBox("Hidden track")
+        self.preview = QCheckBox("Generate preview")
+        self.hidden = QCheckBox("Hidden track")
 
         layout.addRow("Audio file", self.filename)
         layout.addRow("Title", self.title)
 
-        player_options = QtWidgets.QHBoxLayout()
+        player_options = QHBoxLayout()
         player_options.setSpacing(0)
         player_options.setContentsMargins(0, 0, 0, 0)
         player_options.addWidget(self.preview)
@@ -137,11 +139,11 @@ class TrackEditor(QtWidgets.QWidget):
         ))
 
 
-class TrackListing(QtWidgets.QSplitter):
+class TrackListing(QSplitter):
     """ The track listing panel and editor """
     # pylint:disable=too-many-instance-attributes
 
-    class TrackItem(QtWidgets.QListWidgetItem):
+    class TrackItem(QListWidgetItem):
         """ an item in the track listing """
 
         def __init__(self, album_editor, data):
@@ -171,9 +173,9 @@ class TrackListing(QtWidgets.QSplitter):
         def display_name(self):
             """ Get the display name of this track """
             info = self.editor.data
-            if 'title' in info:
+            if info and 'title' in info:
                 return info['title']
-            if 'filename' in info:
+            if info and 'filename' in info:
                 return f"({os.path.basename(info['filename'])})"
             return "(unknown)"
 
@@ -184,24 +186,24 @@ class TrackListing(QtWidgets.QSplitter):
         self.data = None
         self.album_editor = album_editor
 
-        left_panel = QtWidgets.QVBoxLayout(self)
+        left_panel = QVBoxLayout(self)
         left_panel.setSpacing(0)
         left_panel.setContentsMargins(0, 0, 0, 0)
-        self.addWidget(QtWidgets.QWidget(layout=left_panel))
+        self.addWidget(wrap_layout(self, left_panel))
 
-        self.track_listing = QtWidgets.QListWidget(self)
+        self.track_listing = QListWidget(self)
         left_panel.addWidget(self.track_listing)
 
-        self.button_add = QtWidgets.QPushButton("+")
+        self.button_add = QPushButton("+")
         self.button_add.clicked.connect(self.add_tracks)
-        self.button_delete = QtWidgets.QPushButton("-")
+        self.button_delete = QPushButton("-")
         self.button_delete.clicked.connect(self.delete_track)
-        self.button_move_up = QtWidgets.QPushButton("^")
+        self.button_move_up = QPushButton("^")
         self.button_move_up.clicked.connect(self.move_up)
-        self.button_move_down = QtWidgets.QPushButton("v")
+        self.button_move_down = QPushButton("v")
         self.button_move_down.clicked.connect(self.move_down)
 
-        buttons = QtWidgets.QHBoxLayout(self)
+        buttons = QHBoxLayout(self)
         buttons.setSpacing(0)
         buttons.setContentsMargins(0, 0, 0, 0)
         buttons.addWidget(self.button_add)
@@ -209,16 +211,16 @@ class TrackListing(QtWidgets.QSplitter):
         buttons.addStretch(1000)
         buttons.addWidget(self.button_move_up)
         buttons.addWidget(self.button_move_down)
-        left_panel.addWidget(QtWidgets.QWidget(layout=buttons))
+        left_panel.addWidget(wrap_layout(self, buttons))
 
         self.slug = TrackEditor(album_editor, {})
         self.slug.setEnabled(False)
 
-        self.editpanel = QtWidgets.QScrollArea()
+        self.editpanel = QScrollArea()
         self.editpanel.setMinimumSize(450, 0)
         self.editpanel.setWidgetResizable(True)
         self.editpanel.setSizeAdjustPolicy(
-            QtWidgets.QAbstractScrollArea.AdjustToContents)
+            QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
         self.editpanel.setWidget(self.slug)
         self.addWidget(self.editpanel)
 
@@ -226,7 +228,7 @@ class TrackListing(QtWidgets.QSplitter):
 
         for widget in (self, self.track_listing):
             policy = widget.sizePolicy()
-            policy.setVerticalPolicy(QtWidgets.QSizePolicy.Expanding)
+            policy.setVerticalPolicy(QSizePolicy.Expanding)
             widget.setSizePolicy(policy)
 
         self.setSizes([1, 10])
@@ -283,7 +285,7 @@ class TrackListing(QtWidgets.QSplitter):
         """ Add some tracks """
         LOGGER.debug("TrackListing.add_tracks")
         role = FileRole.AUDIO
-        filenames, _ = QtWidgets.QFileDialog.getOpenFileNames(
+        filenames, _ = QFileDialog.getOpenFileNames(
             self,
             "Select audio files",
             dir=self.album_editor.get_last_directory(role),
