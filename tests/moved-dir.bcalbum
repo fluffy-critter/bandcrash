@@ -1,0 +1,70 @@
+{
+   "artist": "Test artist",
+   "year": 2022,
+   "title": "Test album",
+   "highlight_color": "#770077",
+   "artwork": "album/album_cover.png",
+   "genre": "blipcore",
+   "tracks": [
+      {
+         "filename": "album/test track.wav",
+         "lyrics": [
+            "I'm not sure just how I feel",
+            "When everything's just fine",
+            "Blah blah blah blah so surreal",
+            "Something borrowed time",
+            "",
+            "How you doing, now?!"
+         ]
+      },
+      {
+         "filename": "album/test track.wav",
+         "title": "This has a title"
+      },
+      {
+         "filename": "album/test track.wav",
+         "title": "This has no preview",
+         "preview": false
+      },
+      {
+         "filename": "album/test track.wav",
+         "title": "This track is hidden",
+         "artwork": "hidden_track.png",
+         "hidden": true
+      },
+      {
+         "filename": "album/test track.wav",
+         "artwork": "../../art/bclogo.png",
+         "lyrics": "lyric-file.txt",
+         "genre": "lo-fi jazzcore",
+         "group": "Meows I Have Known"
+      },
+      {
+         "filename": "album/test track.wav",
+         "title": "A different artist",
+         "artist": "Sluggy Puppernutters",
+         "lyrics": "lyrics-iso8859.txt",
+         "group": "Meows I Have Known"
+      },
+      {
+         "filename": "album/test track.wav",
+         "title": "Test Track"
+      },
+      {
+         "filename": "derived/unnumbered track.wav",
+         "title": "Unnumbered Track"
+      }
+   ],
+   "_gui": {
+      "geom": [
+         -1724,
+         295,
+         1244,
+         929
+      ],
+      "lastdir": {
+         "AUDIO": "derived",
+         "IMAGE": "../art"
+      }
+   }
+}

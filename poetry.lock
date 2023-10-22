@@ -577,7 +577,7 @@ testutils = ["gitpython (>3)"]
 name = "pyside6"
 version = "6.6.0"
 description = "Python bindings for the Qt cross-platform application and UI framework"
-optional = true
+optional = false
 python-versions = "<3.13,>=3.8"
 files = [
     {file = "PySide6-6.6.0-cp38-abi3-macosx_11_0_universal2.whl", hash = "sha256:8103f14ed46a05e81acccbfc8388e3321e392fe54f3aa4a13336bd2ed8af5cd4"},
@@ -595,7 +595,7 @@ shiboken6 = "6.6.0"
 name = "pyside6-addons"
 version = "6.6.0"
 description = "Python bindings for the Qt cross-platform application and UI framework (Addons)"
-optional = true
+optional = false
 python-versions = "<3.13,>=3.8"
 files = [
     {file = "PySide6_Addons-6.6.0-cp38-abi3-macosx_11_0_universal2.whl", hash = "sha256:82fe1bb6a1aabf5ab3d8632072dc908aa37fc75b4b46e520258c441bd6b103fb"},
@@ -612,7 +612,7 @@ shiboken6 = "6.6.0"
 name = "pyside6-essentials"
 version = "6.6.0"
 description = "Python bindings for the Qt cross-platform application and UI framework (Essentials)"
-optional = true
+optional = false
 python-versions = "<3.13,>=3.8"
 files = [
     {file = "PySide6_Essentials-6.6.0-cp38-abi3-macosx_11_0_universal2.whl", hash = "sha256:26d27e3e3a18acbc770a69a30774fd345414fe4932fcb89d2cfc4fc130c3eb33"},
@@ -623,6 +623,24 @@ files = [
 
 [package.dependencies]
 shiboken6 = "6.6.0"
+
+[[package]]
+name = "pyside6-stubs"
+version = "6.4.2.0"
+description = "PEP561 stub files for the *Qt for Python/PySide6* framework"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "PySide6-stubs-6.4.2.0.tar.gz", hash = "sha256:d5578eb1597d1c07831c899b35636410b08915a4695ce6e41cceb6707c400fcf"},
+    {file = "PySide6_stubs-6.4.2.0-py3-none-any.whl", hash = "sha256:e825ded4b3555d540f297f405e3a9dc0943c032a96c53184cf644a8e4c4a6b0b"},
+]
+
+[package.dependencies]
+mypy = ">=1.0"
+PySide6 = ">=6.0"
+
+[package.extras]
+dev = ["pytest"]
 
 [[package]]
 name = "pywin32-ctypes"
@@ -752,7 +770,7 @@ testing-integration = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "jar
 name = "shiboken6"
 version = "6.6.0"
 description = "Python/C++ bindings helper module"
-optional = true
+optional = false
 python-versions = "<3.13,>=3.8"
 files = [
     {file = "shiboken6-6.6.0-cp38-abi3-macosx_11_0_universal2.whl", hash = "sha256:bf23c43e53ffe6097853666ced05358c6640c378e992902a36c4cf77efb0223b"},
@@ -848,4 +866,4 @@ gui = ["pyside6"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.12"
-content-hash = "20913edc0528720b3464032ca41666f1c44b9aec830d7f5bdde37e9969cdb70d"
+content-hash = "9f4c349285290735d44e3a1f1c069b6380357f0c714a313f2d63f1531a1dbeda"
