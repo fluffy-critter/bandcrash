@@ -8,18 +8,14 @@
    "tracks": [
       {
          "filename": "album/test track.wav",
-         "title": "A different artist",
+         "title": "1 A different artist",
          "artist": "Sluggy Puppernutters",
          "lyrics": "lyrics-iso8859.txt",
          "group": "Meows I Have Known"
       },
       {
          "filename": "album/test track.wav",
-         "title": "This has a title"
-      },
-      {
-         "filename": "album/test track.wav",
-         "title": "This has no preview",
+         "title": "3 This has no preview",
          "preview": false
       },
       {
@@ -32,6 +28,10 @@
       {
          "filename": "album/test track.wav",
          "title": "Test Track"
+      },
+      {
+         "filename": "album/test track.wav",
+         "title": "2 This has a title"
       },
       {
          "filename": "album/test track.wav",
