@@ -14,20 +14,19 @@ import threading
 import typing
 
 from PySide6 import QtCore, QtGui, QtWidgets
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (QApplication, QCheckBox, QDialog, QErrorMessage,
+                               QFileDialog, QFormLayout, QFrame, QHBoxLayout,
+                               QLabel, QLineEdit, QMainWindow, QMessageBox,
+                               QProgressDialog, QPushButton, QSpinBox, QWidget)
 
 from .. import __version__, process, util
 from . import datatypes, widgets
+from .file_utils import FileRole
 from .track_editor import TrackListing
 
 LOG_LEVELS = [logging.WARNING, logging.INFO, logging.DEBUG]
 LOGGER = logging.getLogger(__name__)
-
-ALBUM_FILTER = "Album files (*.bcalbum *.json)"
-
-
-def to_checkstate(val):
-    """ Convert a bool to a qt CheckState """
-    return QtCore.Qt.Checked if val else QtCore.Qt.Unchecked
 
 
 def add_menu_item(menu, name, method, shortcut, role=None):
@@ -57,29 +56,15 @@ def get_encode_options():
             LOGGER.debug("type=%s value=%s", field.type,
                          settings.value(field.name))
             if field.type == list[str]:
-                setattr(config, field.name, settings.value(field.name).split())
+                setattr(config, field.name, str(
+                    settings.value(field.name)).split())
             else:
                 setattr(config, field.name, settings.value(field.name))
 
     return config
 
 
-def default_music_dir(dfl):
-    """ Find the best default music storage directory """
-    for candidate in itertools.chain(
-        QtCore.QStandardPaths.standardLocations(
-            QtCore.QStandardPaths.MusicLocation),
-        QtCore.QStandardPaths.standardLocations(
-            QtCore.QStandardPaths.DocumentsLocation),
-        QtCore.QStandardPaths.standardLocations(
-            QtCore.QStandardPaths.HomeLocation),
-    ):
-        return candidate
-
-    return dfl
-
-
-class PreferencesWindow(QtWidgets.QDialog):
+class PreferencesWindow(QDialog):
     """ Sets application-level preferences """
     # pylint:disable=too-many-instance-attributes
 
@@ -90,52 +75,62 @@ class PreferencesWindow(QtWidgets.QDialog):
 
         self.settings = QtCore.QSettings()
 
-        layout = QtWidgets.QFormLayout(
-            fieldGrowthPolicy=QtWidgets.QFormLayout.AllNonFixedFieldsGrow)
+        def separator():
+            frame = QFrame()
+            frame.setFrameShape(QFrame.Shape.HLine)
+            return frame
+
+        layout = QFormLayout()
+        layout.setFieldGrowthPolicy(
+            QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         self.setLayout(layout)
 
-        # App-specific settings
-
-        self.num_threads = QtWidgets.QSpinBox(minimum=1, maximum=128, value=int(
-            self.settings.value("num_threads", os.cpu_count())))
+        self.num_threads = QSpinBox(self)
+        self.num_threads.setMinimum(1)
+        self.num_threads.setMaximum(128)
+        self.num_threads.setValue(
+            typing.cast(int,
+                        self.settings.value("num_threads",
+                                            os.cpu_count())))
         layout.addRow("Number of Threads", self.num_threads)
 
-        layout.addRow(QtWidgets.QFrame(frameShape=QtWidgets.QFrame.HLine))
-
-        # Encode settings
+        layout.addRow(separator())
 
         defaults = get_encode_options()
 
-        self.preview_encoder_args = QtWidgets.QLineEdit(
-            text=' '.join(defaults.preview_encoder_args))
+        self.preview_encoder_args = QLineEdit()
+        self.preview_encoder_args.setText(
+            ' '.join(defaults.preview_encoder_args))
         layout.addRow("Preview encoder options", self.preview_encoder_args)
-        self.mp3_encoder_args = QtWidgets.QLineEdit(
-            text=' '.join(defaults.mp3_encoder_args))
+
+        self.mp3_encoder_args = QLineEdit()
+        self.mp3_encoder_args.setText(' '.join(defaults.mp3_encoder_args))
         layout.addRow("MP3 encoder options", self.mp3_encoder_args)
 
-        self.ogg_encoder_args = QtWidgets.QLineEdit(
-            text=' '.join(defaults.ogg_encoder_args))
+        self.ogg_encoder_args = QLineEdit()
+        self.ogg_encoder_args.setText(' '.join(defaults.ogg_encoder_args))
         layout.addRow("Ogg encoder options", self.ogg_encoder_args)
 
-        self.flac_encoder_args = QtWidgets.QLineEdit(
-            text=' '.join(defaults.flac_encoder_args))
+        self.flac_encoder_args = QLineEdit()
+        self.flac_encoder_args.setText(' '.join(defaults.flac_encoder_args))
         layout.addRow("FLAC encoder options", self.flac_encoder_args)
 
-        layout.addRow(QtWidgets.QFrame(frameShape=QtWidgets.QFrame.HLine))
+        layout.addRow(separator())
 
-        self.butler_path = widgets.FileSelector(text=defaults.butler_path)
+        self.butler_path = widgets.FileSelector(
+            FileRole.BINARY, text=defaults.butler_path)
         layout.addRow("Butler binary", self.butler_path)
-        connect_button = QtWidgets.QPushButton("Connect")
+        connect_button = QPushButton("Connect")
         self.butler_path.layout().addWidget(connect_button)
         connect_button.clicked.connect(self.connect_butler)
 
-        buttons = QtWidgets.QHBoxLayout()
+        buttons = QHBoxLayout()
 
-        reset_button = QtWidgets.QPushButton("Load Defaults")
+        reset_button = QPushButton("Load Defaults")
         reset_button.clicked.connect(self.reset_defaults)
         buttons.addWidget(reset_button)
 
-        apply_button = QtWidgets.QPushButton("Apply")
+        apply_button = QPushButton("Apply")
         apply_button.clicked.connect(self.accept)
         apply_button.setDefault(True)
         buttons.addWidget(apply_button)
@@ -167,7 +162,7 @@ class PreferencesWindow(QtWidgets.QDialog):
 
         LOGGER.debug("foo 1")
 
-        self.num_threads.setValue(os.cpu_count())
+        self.num_threads.setValue(os.cpu_count() or 4)
         self.preview_encoder_args.setText(
             ' '.join(defaults.preview_encoder_args))
         self.mp3_encoder_args.setText(' '.join(defaults.mp3_encoder_args))
@@ -187,13 +182,14 @@ class PreferencesWindow(QtWidgets.QDialog):
         connection = subprocess.run([self.butler_path.text(), 'login'],
                                     capture_output=True,
                                     check=False,
-                                    creationflags=subprocess.CREATE_NO_WINDOW,
-                                    )
+                                    creationflags=getattr(
+            subprocess, 'CREATE_NO_WINDOW', 0),
+        )
         if connection.returncode:
-            QtWidgets.QMessageBox.warning(
+            QMessageBox.warning(
                 self, "Connection failed", connection.stdout.decode())
         else:
-            QtWidgets.QMessageBox.information(
+            QMessageBox.information(
                 self, "Butler connected", connection.stdout.decode())
 
     @staticmethod
@@ -204,7 +200,7 @@ class PreferencesWindow(QtWidgets.QDialog):
         prefs_window.exec()
 
 
-class AlbumEditor(QtWidgets.QMainWindow):
+class AlbumEditor(QMainWindow):
     """ An album editor window """
     # pylint:disable=too-many-instance-attributes
 
@@ -218,7 +214,8 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
         self.setMinimumSize(600, 0)
 
-        self.output_dir = None
+        self.output_dir: typing.Optional[str] = None
+        self.last_directory: dict[str, str] = {}
 
         menubar = self.menuBar()
 
@@ -237,32 +234,29 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
         edit_menu = menubar.addMenu("&Edit")
         add_menu_item(edit_menu, "&Preferences", PreferencesWindow.show_preferences, "Ctrl+,",
-                      QtGui.QAction.PreferencesRole)
+                      QtGui.QAction.MenuRole.PreferencesRole)
 
         self.filename = path
-        self.data: typing.Dict[str, typing.Any] = {'tracks': []}
+        self.data: dict[str, typing.Any] = {'tracks': []}
         if path:
-            AlbumEditor.default_open_dir(os.path.dirname(path))
             self.reload(path)
             if '_gui' in self.data:
                 if geom := self.data['_gui'].get('geom'):
                     self.setGeometry(geom[0], geom[1], geom[2], geom[3])
 
-        layout = QtWidgets.QFormLayout(
-            fieldGrowthPolicy=QtWidgets.QFormLayout.AllNonFixedFieldsGrow)
-        self.setCentralWidget(QtWidgets.QWidget(layout=layout))
-        self.layout = layout
+        layout = QFormLayout()
+        layout.setFieldGrowthPolicy(
+            QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+        self.setCentralWidget(widgets.wrap_layout(self, layout))
 
-        self.artist = QtWidgets.QLineEdit(placeholderText="Artist name")
-        self.title = QtWidgets.QLineEdit(placeholderText="Album title")
-        self.year = QtWidgets.QLineEdit(
-            placeholderText="1978",
-            validator=QtGui.QIntValidator(0, 99999),
-            maxLength=5)
-        self.genre = QtWidgets.QLineEdit(
-            placeholderText="Avant-Industrial Loungecore")
-        self.artwork = widgets.FileSelector(self)
-        self.composer = QtWidgets.QLineEdit()
+        self.artist = QLineEdit()
+        self.title = QLineEdit()
+        self.year = QLineEdit()
+        self.year.setValidator(QtGui.QIntValidator(0, 99999))
+        self.year.setMaxLength(5)
+        self.genre = QLineEdit()
+        self.artwork = widgets.FileSelector(FileRole.IMAGE, self)
+        self.composer = QLineEdit()
         # self.fg_color = ColorSelector("Foreground")
         # self.bg_color = ColorSelector("Background")
         # self.highlight_color = ColorSelector("Highlight")
@@ -277,16 +271,16 @@ class AlbumEditor(QtWidgets.QMainWindow):
         # button hbox for colors
 
         self.track_listing = TrackListing(self)
-        layout.addRow("Audio Tracks", None)
+        layout.addRow("Audio Tracks", QWidget(self))
         layout.addRow(self.track_listing)
 
         checkboxes = widgets.FlowLayout()
-        self.do_preview = QtWidgets.QCheckBox("Web preview")
-        self.do_mp3 = QtWidgets.QCheckBox("MP3")
-        self.do_ogg = QtWidgets.QCheckBox("Ogg Vorbis")
-        self.do_flac = QtWidgets.QCheckBox("FLAC")
-        self.do_zip = QtWidgets.QCheckBox("Build .zip files")
-        self.do_cleanup = QtWidgets.QCheckBox("Clean extra files")
+        self.do_preview = QCheckBox("Web preview")
+        self.do_mp3 = QCheckBox("MP3")
+        self.do_ogg = QCheckBox("Ogg Vorbis")
+        self.do_flac = QCheckBox("FLAC")
+        self.do_zip = QCheckBox("Build .zip files")
+        self.do_cleanup = QCheckBox("Clean extra files")
         checkboxes.addWidget(self.do_preview)
         checkboxes.addWidget(self.do_mp3)
         checkboxes.addWidget(self.do_ogg)
@@ -295,20 +289,20 @@ class AlbumEditor(QtWidgets.QMainWindow):
         checkboxes.addWidget(self.do_cleanup)
         layout.addRow("Build options", checkboxes)
 
-        butler_opts = QtWidgets.QHBoxLayout()
-        self.do_butler = QtWidgets.QCheckBox()
-        self.butler_target = QtWidgets.QLineEdit(
-            placeholderText="username/my-album-name")
-        self.butler_prefix = QtWidgets.QLineEdit(
-            placeholderText="prefix", maxLength=10)
+        butler_opts = QHBoxLayout()
+        self.do_butler = QCheckBox()
+        self.butler_target = QLineEdit()
+        self.butler_target.setPlaceholderText("username/my-album-name")
+        self.butler_prefix = QLineEdit()
+        self.butler_prefix.setPlaceholderText("prefix")
         butler_opts.addWidget(self.do_butler)
         butler_opts.addWidget(self.butler_target, 50)
         butler_opts.addWidget(self.butler_prefix, 10)
         layout.addRow("itch.io", butler_opts)
 
-        buttons = QtWidgets.QHBoxLayout()
+        buttons = QHBoxLayout()
 
-        start_button = QtWidgets.QPushButton("Encode")
+        start_button = QPushButton("Encode")
         start_button.clicked.connect(self.encode_album)
 
         buttons.addWidget(start_button)
@@ -319,29 +313,40 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
         self.reset()
 
-    def file_new(self):
+    @staticmethod
+    def file_new():
         """ Create a new album file """
         AlbumEditor('').show()
 
-    def file_open(self):
-        """ Dialog box to open an existing file """
-        path, _ = QtWidgets.QFileDialog.getOpenFileName(
-            caption="New album file",
-            filter=ALBUM_FILTER,
-            dir=AlbumEditor.default_open_dir())
-        if path:
+    @staticmethod
+    def file_open(or_new: bool = False):
+        """ Dialog box to open an existing file
+
+        :param bool or_new: Fallback to a new document if
+         """
+        role = FileRole.ALBUM
+        path, _ = QFileDialog.getOpenFileName(None,
+                                              "Open album",
+                                              role.default_directory,
+                                              role.file_filter)
+        if path or or_new:
+            if path:
+                role.default_directory = os.path.dirname(path)
             editor = AlbumEditor(path)
             editor.show()
+            return editor
+
+        return None
 
     def reload(self, path):
         """ Load from the backing storage """
         with open(path, 'r', encoding='utf8') as file:
             try:
-                self.data = json.load(file)
+                self.data = typing.cast(dict[str, typing.Any], json.load(file))
                 if 'tracks' not in self.data:
                     raise KeyError('tracks')
             except (json.decoder.JSONDecodeError, KeyError, TypeError):
-                err = QtWidgets.QErrorMessage(self)
+                err = QErrorMessage(self)
                 err.showMessage("Invalid album JSON file")
                 self.filename = ''
                 self.data = {'tracks': []}
@@ -381,6 +386,8 @@ class AlbumEditor(QtWidgets.QMainWindow):
         self.do_butler.setCheckState(
             datatypes.to_checkstate(self.data.get('do_butler', True)))
 
+        self.last_directory = self.data.get('_gui', {}).get('lastdir', {})
+
     def apply(self):
         """ Apply edits to the saved data """
         LOGGER.debug("AlbumEditor.apply")
@@ -415,11 +422,11 @@ class AlbumEditor(QtWidgets.QMainWindow):
         ))
         self.track_listing.apply()
 
-        if '_gui' not in self.data:
-            self.data['_gui'] = {}
         geom = self.geometry()
-        self.data['_gui']['geom'] = [
-            geom.x(), geom.y(), geom.width(), geom.height()]
+        self.data['_gui'] = {
+            'geom': [geom.x(), geom.y(), geom.width(), geom.height()],
+            'lastdir': self.last_directory
+        }
 
     def save(self):
         """ Save the file to disk """
@@ -437,17 +444,20 @@ class AlbumEditor(QtWidgets.QMainWindow):
         LOGGER.debug("AlbumEditor.save_as")
         self.apply()
 
-        path, _ = QtWidgets.QFileDialog.getSaveFileName(
-            caption="Select your album file",
-            filter=ALBUM_FILTER,
-            dir=os.path.dirname(self.filename) or AlbumEditor.default_open_dir())
+        role = FileRole.ALBUM
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Select your album file",
+            os.path.dirname(self.filename) or role.default_directory,
+            role.file_filter,
+        )
         if path:
             self.renormalize_paths(self.filename, path)
             self.filename = path
             self.setWindowTitle(self.filename)
             self.reset()
             self.save()
-            AlbumEditor.default_open_dir(os.path.dirname(self.filename))
+            role.default_directory = os.path.dirname(self.filename)
 
         self.reset()
 
@@ -468,22 +478,22 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
         # find a good default directory to stash the output in
         settings = QtCore.QSettings()
-        if self.output_dir is None:
-            if settings.contains("last_album_output"):
-                self.output_dir = settings.value("last_album_output")
-            else:
-                self.output_dir = default_music_dir(config.input_dir)
+        role = FileRole.OUTPUT
+        if not self.output_dir:
+            self.output_dir = role.default_directory
 
         # prompt for the actual output directory
-        base_dir = QtWidgets.QFileDialog.getExistingDirectory(
-            dir=self.output_dir,
-            caption="Choose an output directory")
+        base_dir = QFileDialog.getExistingDirectory(
+            self,
+            "Choose an output directory",
+            self.output_dir or '')
         if not base_dir:
             return
 
         # store our output directory for later
-        self.output_dir = base_dir
-        settings.setValue("last_album_output", self.output_dir)
+        self.output_dir = base_dir or ''
+
+        role.default_directory = self.output_dir
 
         # Users will most likely be choosing a generic directory and NOT one that's
         # already sandboxed, so, let's make that sandbox for them (just for better UX).
@@ -497,16 +507,18 @@ class AlbumEditor(QtWidgets.QMainWindow):
         LOGGER.info("Config options: %s", config)
 
         threadpool = concurrent.futures.ThreadPoolExecutor(
-            max_workers=int(settings.value("num_threads", os.cpu_count())))
-        futures = collections.defaultdict(list)
+            max_workers=typing.cast(int, settings.value("num_threads",
+                                                        os.cpu_count() or 4)))
+        futures: dict[str, list[concurrent.futures.Future]
+                      ] = collections.defaultdict(list)
 
         # Eventually I want to use FuturesProgress to show structured info
         # and not block the UI thread but for now this'll do
 
         errors = []
-        progress = QtWidgets.QProgressDialog(
+        progress = QProgressDialog(
             "Encoding album...", "Abort", 0, 1, self)
-        progress.setWindowModality(QtCore.Qt.WindowModal)
+        progress.setWindowModality(Qt.WindowModality.WindowModal)
 
         all_tasks = []
         try:
@@ -538,28 +550,31 @@ class AlbumEditor(QtWidgets.QMainWindow):
 
         if errors:
             LOGGER.debug("errors: %d %s", len(errors), errors)
-            msgbox = QtWidgets.QMessageBox(self, "Error", "An error occurred")
-            msgbox.setIcon(QtWidgets.QMessageBox.Critical)
+            msgbox = QMessageBox(
+                QMessageBox.Icon.Critical, "Error", "An error occurred")
+            msgbox.setParent(self)
             text = f"An error occurred: {str(errors[0])}"
             if len(errors) > 1:
+                # For some reason mypy isn't seeing setOption or the Option flag type
+                msgbox.setOption(  # type:ignore[attr-defined]
+                    QMessageBox.Option.DontUseNativeDialog)  # type:ignore[attr-defined]
                 text += f", plus {len(errors)-1} more."
                 msgbox.setDetailedText('\n\n'.join(
                     str(e) for e in errors))
-                msgbox.setOptions(QtWidgets.QMessageBox.DontUseNativeDialog)
             msgbox.setText(text)
             msgbox.exec()
         elif not progress.wasCanceled() and all_tasks:
             task_names = "Encode"
             if config.do_butler:
                 task_names += " and upload"
-            result = QtWidgets.QMessageBox.information(
+            result = QMessageBox.information(
                 self,
                 "Encode complete",
                 f"{task_names} completed successfully",
-                QtWidgets.QMessageBox.StandardButton.Open |
-                QtWidgets.QMessageBox.StandardButton.Ok,
-                QtWidgets.QMessageBox.StandardButton.Open)
-            if result == QtWidgets.QMessageBox.StandardButton.Open:
+                QMessageBox.StandardButton.Open |
+                QMessageBox.StandardButton.Ok,
+                QMessageBox.StandardButton.Open)
+            if result == QMessageBox.StandardButton.Open:
                 QtGui.QDesktopServices.openUrl(
                     QtCore.QUrl.fromLocalFile(config.output_dir))
 
@@ -576,9 +591,9 @@ class AlbumEditor(QtWidgets.QMainWindow):
                 return path
 
             old_abs = abspath(path)
-            if not os.path.isfile(old_abs):
+            if not os.path.exists(old_abs):
                 LOGGER.warning(
-                    "Not touching non-file path %s (%s)", path, old_abs)
+                    "Not touching nonexisting path %s (%s)", path, old_abs)
                 return path
 
             out = relpath(old_abs)
@@ -594,19 +609,58 @@ class AlbumEditor(QtWidgets.QMainWindow):
                 if key in track and isinstance(track[key], str):
                     track[key] = renorm(track[key])
 
-    @staticmethod
-    def default_open_dir(set_value=None):
-        """ Set or get the default directory for album files """
-        settings = QtCore.QSettings()
-        if set_value:
-            settings.setValue("last_album_dir", set_value)
-            settings.sync()
+        # last_directory is aliased into data instead of being copied
+        LOGGER.debug("last_directory before %s", self.last_directory)
+        self.last_directory.update({
+            key: renorm(value)
+            for key, value
+            in self.last_directory.items()
+        })
+        LOGGER.debug("after %s", self.last_directory)
 
-        dfl = default_music_dir(os.getcwd())
-        ret = settings.value("last_album_dir", dfl)
-        if not os.path.isdir(ret):
-            ret = dfl
-        return ret
+    def get_last_directory(self, role: FileRole, file_path: typing.Optional[str] = None):
+        """ Get the last directory used for a file of a particular type
+
+        :param role: The role
+        :param str file_path: The current path to use as a reference
+        """
+        LOGGER.debug("get_last_directory %s %s", role, file_path)
+        LOGGER.debug("   %s", self.last_directory)
+
+        if file_path:
+            if os.path.isabs(file_path):
+                # We can just use the existing file's directory
+                return os.path.dirname(file_path)
+
+            if self.filename:
+                # Just make it absolute to our directory
+                return os.path.dirname(util.make_absolute_path(self.filename)(file_path))
+
+        if self.filename:
+            # We know where we are
+            if role.name in self.last_directory:
+                # And we know where the last file of this type was put
+                return util.make_absolute_path(self.filename)(self.last_directory[role.name])
+            # just assume the album's directory
+            return os.path.dirname(self.filename)
+
+        # We're not mapped to the filesystem, so just use the system default
+        return role.default_directory
+
+    def set_last_directory(self, role: FileRole, dir_path: str):
+        """ Set the last directory for this role relative to our album file
+
+        :param role: The role
+        :param str dir_path: The directory to use as the reference
+        """
+        LOGGER.debug("set_last_directory %s %s", role, dir_path)
+        if self.filename:
+            self.last_directory[role.name] = util.make_relative_path(
+                self.filename)(dir_path)
+        else:
+            # We aren't mapped to the filesystem so let's just stash it as absolute
+            self.last_directory[role.name] = dir_path
+        LOGGER.debug("   -> %s", self.last_directory[role.name])
 
 
 def open_file(path):
@@ -615,7 +669,7 @@ def open_file(path):
     editor.show()
 
 
-class BandcrashApplication(QtWidgets.QApplication):
+class BandcrashApplication(QApplication):
     """ Application event handler """
 
     def __init__(self, open_files):
@@ -632,16 +686,12 @@ class BandcrashApplication(QtWidgets.QApplication):
     def open_on_startup(self):
         """ Hacky way to open the file dialog on startup. there must be a better way... """
         if not self.opened:
-            path, _ = QtWidgets.QFileDialog.getOpenFileName(
-                caption="Open album",
-                filter=ALBUM_FILTER,
-                dir=AlbumEditor.default_open_dir())
-            AlbumEditor(path).show()
+            AlbumEditor.file_open(or_new=True)
 
     def event(self, evt):
         """ Handle an application-level event """
         LOGGER.debug("Event: %s", evt)
-        if evt.type() == QtCore.QEvent.FileOpen:
+        if evt.type() == QtCore.QEvent.Type.FileOpen:
             LOGGER.debug("Got file open event: %s", evt.file())
             open_file(evt.file())
             self.opened = True

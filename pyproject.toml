@@ -26,6 +26,7 @@ types-python-slugify = "^8.0.0.3"
 types-chardet = "^5.0.4.6"
 pyinstaller = "^6.0.0"
 delocate = "^0.10.4"
+pyside6-stubs = "^6.4.2.0"
 
 [tool.poetry.extras]
 gui = [ "pyside6" ]
