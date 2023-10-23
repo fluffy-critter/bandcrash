@@ -6,17 +6,16 @@ import os.path
 import typing
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import  QDropEvent
-from PySide6.QtWidgets import (QAbstractScrollArea, QCheckBox, QFileDialog,
-                               QFormLayout, QHBoxLayout, QLineEdit,
-                               QListWidget, QListWidgetItem, QPlainTextEdit,
-                               QPushButton, QScrollArea, QSizePolicy,
-                               QSplitter, QVBoxLayout, QWidget, QAbstractItemView)
+from PySide6.QtWidgets import (QAbstractItemView, QAbstractScrollArea,
+                               QCheckBox, QFileDialog, QFormLayout,
+                               QHBoxLayout, QLineEdit, QListWidget,
+                               QListWidgetItem, QPlainTextEdit, QPushButton,
+                               QScrollArea, QSizePolicy, QSplitter,
+                               QVBoxLayout, QWidget)
 
 from .. import util
-from . import datatypes
+from . import datatypes, file_utils
 from .file_utils import FileRole
-from . import file_utils
 from .widgets import FileSelector, wrap_layout
 
 LOGGER = logging.getLogger(__name__)
@@ -196,21 +195,21 @@ class TrackListEditor(QSplitter):
         def dragEnterEvent(self, event):
             LOGGER.debug("dragEnterEvent %s %s", event, event.proposedAction())
             LOGGER.debug("hasurls: %s", event.mimeData().hasUrls())
-            if event.proposedAction() == Qt.CopyAction and event.mimeData().hasUrls():
+            if event.proposedAction() == Qt.DropAction.CopyAction and event.mimeData().hasUrls():
                 if files := file_utils.filter_audio_urls(event.mimeData().urls()):
                     LOGGER.debug("accepted files: %s", files)
                     event.acceptProposedAction()
             else:
-                return super().dragEnterEvent(event)
+                super().dragEnterEvent(event)
 
         def dropEvent(self, event):
-            if event.proposedAction() == Qt.CopyAction and event.mimeData().hasUrls():
+            if event.proposedAction() == Qt.DropAction.CopyAction and event.mimeData().hasUrls():
                 if files := file_utils.filter_audio_urls(event.mimeData().urls()):
                     LOGGER.debug("adding files: %s", files)
                     self.album.add_files(files)
                     event.acceptProposedAction()
             else:
-                return super().dropEvent(event)
+                super().dropEvent(event)
 
     def __init__(self, album_editor):
         super().__init__()
@@ -338,7 +337,6 @@ class TrackListEditor(QSplitter):
 
         self.add_files(filenames)
 
-
     def add_files(self, filenames):
         """ Accepts files into the track listing """
         LOGGER.debug("TrackListEditor.add_files")
@@ -348,7 +346,6 @@ class TrackListEditor(QSplitter):
             self.data.append(track)
             self.track_listing.addItem(
                 TrackListEditor.TrackItem(self.album_editor, track))
-
 
     def delete_track(self):
         """ Remove a track """

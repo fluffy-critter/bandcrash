@@ -13,7 +13,6 @@ LOGGER = logging.getLogger(__name__)
 ACCEPT_AUDIO_EXTS = ('.wav', '.ogg', '.flac', '.mp3', '.aif', '.aiff')
 
 
-
 class FileRole(enum.Enum):
     """ File roles, for file selector widgets """
 
@@ -22,7 +21,8 @@ class FileRole(enum.Enum):
         self.file_filter = file_filter
 
     ALBUM = ("album", "Bandcrash album (*.bcalbum *.json)")
-    AUDIO = ("track", f"Audio files ({' '.join(f'*{ext}' for ext in ACCEPT_AUDIO_EXTS)})")
+    AUDIO = (
+        "track", f"Audio files ({' '.join(f'*{ext}' for ext in ACCEPT_AUDIO_EXTS)})")
     IMAGE = (
         "image", f"Image files ({' '.join(f'*{ext}' for ext in images.known_extensions())})")
     OUTPUT = ("output", '')
@@ -40,8 +40,8 @@ class FileRole(enum.Enum):
         sloc = QStandardPaths.StandardLocation
 
         for candidate in itertools.chain(
-                QStandardPaths.standardLocations(loc)
-                for loc in (sloc.MusicLocation, sloc.DocumentsLocation, sloc.HomeLocation)):
+                *[QStandardPaths.standardLocations(loc)
+                  for loc in (sloc.MusicLocation, sloc.DocumentsLocation, sloc.HomeLocation)]):
             return candidate
 
         LOGGER.warning(
@@ -56,9 +56,10 @@ class FileRole(enum.Enum):
         settings.setValue(self.name, file_dir)
         settings.sync()
 
-def filter_audio_urls(urls : list[QUrl]):
+
+def filter_audio_urls(urls: list[QUrl]):
     """ Given a list of audio URLs, provide ones which are a local file in an
     accepted format """
 
     return [path for path in [url.toLocalFile() for url in urls if url.isLocalFile()]
-        if os.path.splitext(path)[1] in ACCEPT_AUDIO_EXTS]
+            if os.path.splitext(path)[1] in ACCEPT_AUDIO_EXTS]
