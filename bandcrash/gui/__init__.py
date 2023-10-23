@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QDialog, QErrorMessage,
 from .. import __version__, process, util
 from . import datatypes, widgets
 from .file_utils import FileRole
-from .track_editor import TrackListing
+from .track_editor import TrackListEditor
 
 LOG_LEVELS = [logging.WARNING, logging.INFO, logging.DEBUG]
 LOGGER = logging.getLogger(__name__)
@@ -270,7 +270,7 @@ class AlbumEditor(QMainWindow):
 
         # button hbox for colors
 
-        self.track_listing = TrackListing(self)
+        self.track_listing = TrackListEditor(self)
         layout.addRow("Audio Tracks", QWidget(self))
         layout.addRow(self.track_listing)
 
