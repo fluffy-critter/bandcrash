@@ -246,7 +246,8 @@ class AlbumEditor(QMainWindow):
             self.reload(path)
             if '_gui' in self.data:
                 if geom := self.data['_gui'].get('geom'):
-                    self.setGeometry(geom[0], geom[1], geom[2], geom[3])
+                    # Geometry setting disabled, as it causes too many problems on Windows
+                    pass
 
         layout = QFormLayout()
         layout.setFieldGrowthPolicy(
