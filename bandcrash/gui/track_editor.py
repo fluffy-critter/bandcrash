@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (QAbstractScrollArea, QCheckBox, QFileDialog,
 from .. import util
 from . import datatypes
 from .file_utils import FileRole
+from . import file_utils
 from .widgets import FileSelector, wrap_layout
 
 LOGGER = logging.getLogger(__name__)
@@ -188,6 +189,7 @@ class TrackListEditor(QSplitter):
 
         def __init__(self, parent):
             super().__init__(parent)
+            self.album = parent
             self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
             self.setAcceptDrops(True)
 
@@ -195,19 +197,18 @@ class TrackListEditor(QSplitter):
             LOGGER.debug("dragEnterEvent %s %s", event, event.proposedAction())
             LOGGER.debug("hasurls: %s", event.mimeData().hasUrls())
             if event.proposedAction() == Qt.CopyAction and event.mimeData().hasUrls():
-                urls = event.mimeData().urls()
-                # TODO: validate URLs
-                LOGGER.debug("accepted urls: %s", urls)
-                event.acceptProposedAction()
+                if files := file_utils.filter_audio_urls(event.mimeData().urls()):
+                    LOGGER.debug("accepted files: %s", files)
+                    event.acceptProposedAction()
             else:
                 return super().dragEnterEvent(event)
 
         def dropEvent(self, event):
             if event.proposedAction() == Qt.CopyAction and event.mimeData().hasUrls():
-                urls = event.mimeData().urls()
-                # TODO: validate and ingest URLs
-                LOGGER.debug("dropped urls: %s", urls)
-                event.acceptProposedAction()
+                if files := file_utils.filter_audio_urls(event.mimeData().urls()):
+                    LOGGER.debug("adding files: %s", files)
+                    self.album.add_files(files)
+                    event.acceptProposedAction()
             else:
                 return super().dropEvent(event)
 
@@ -227,7 +228,7 @@ class TrackListEditor(QSplitter):
         left_panel.addWidget(self.track_listing)
 
         self.button_add = QPushButton("+")
-        self.button_add.clicked.connect(self.add_tracks)
+        self.button_add.clicked.connect(self.add_track_button)
         self.button_delete = QPushButton("-")
         self.button_delete.clicked.connect(self.delete_track)
         self.button_move_up = QPushButton("^")
@@ -316,16 +317,31 @@ class TrackListEditor(QSplitter):
         else:
             self.editpanel.setWidget(self.slug)
 
-    def add_tracks(self):
-        """ Add some tracks """
+    def add_track_button(self):
+        """ Prompt to add some tracks """
         LOGGER.debug("TrackListEditor.add_tracks")
         role = FileRole.AUDIO
+        LOGGER.debug("filter: %s", role.file_filter)
         filenames, _ = QFileDialog.getOpenFileNames(
             self,
             "Select audio files",
             dir=self.album_editor.get_last_directory(role),
             filter=role.file_filter)
 
+        if filenames:
+            # update the audio role selection path
+            ref_file = filenames[0]
+            LOGGER.debug("Audio role: using filename %s", ref_file)
+            role.default_directory = os.path.dirname(ref_file)
+            self.album_editor.set_last_directory(
+                role, os.path.dirname(ref_file))
+
+        self.add_files(filenames)
+
+
+    def add_files(self, filenames):
+        """ Accepts files into the track listing """
+        LOGGER.debug("TrackListEditor.add_files")
         for filename in filenames:
             _, title = util.guess_track_title(filename)
             track = {'filename': filename, 'title': title}
@@ -333,12 +349,6 @@ class TrackListEditor(QSplitter):
             self.track_listing.addItem(
                 TrackListEditor.TrackItem(self.album_editor, track))
 
-        if filenames:
-            ref_file = filenames[0]
-            LOGGER.debug("Using filename %s", ref_file)
-            role.default_directory = os.path.dirname(ref_file)
-            self.album_editor.set_last_directory(
-                role, os.path.dirname(ref_file))
 
     def delete_track(self):
         """ Remove a track """
