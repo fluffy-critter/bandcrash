@@ -29,7 +29,7 @@ LOG_LEVELS = [logging.WARNING, logging.INFO, logging.DEBUG]
 LOGGER = logging.getLogger(__name__)
 
 
-def add_menu_item(menu, name, method, shortcut, role=None):
+def add_menu_item(menu, name, method, shortcut=None, role=None):
     """ Add a menu item """
     action = menu.addAction(name)
     action.triggered.connect(method)
@@ -235,6 +235,10 @@ class AlbumEditor(QMainWindow):
         edit_menu = menubar.addMenu("&Edit")
         add_menu_item(edit_menu, "&Preferences", PreferencesWindow.show_preferences, "Ctrl+,",
                       QtGui.QAction.MenuRole.PreferencesRole)
+
+        help_menu = menubar.addMenu("&Help")
+        add_menu_item(help_menu, "&About...", self.show_about_box, None,
+                      QtGui.QAction.MenuRole.AboutRole)
 
         self.filename = path
         self.data: dict[str, typing.Any] = {'tracks': []}
@@ -482,6 +486,8 @@ class AlbumEditor(QMainWindow):
         if not self.output_dir:
             self.output_dir = role.default_directory
 
+        LOGGER.debug("self.output_dir = %s", self.output_dir)
+
         # prompt for the actual output directory
         base_dir = QFileDialog.getExistingDirectory(
             self,
@@ -661,6 +667,11 @@ class AlbumEditor(QMainWindow):
             # We aren't mapped to the filesystem so let's just stash it as absolute
             self.last_directory[role.name] = dir_path
         LOGGER.debug("   -> %s", self.last_directory[role.name])
+
+    def show_about_box(self):
+        """ Show the about box for the app """
+        QMessageBox.about(self, "Bandcrash",
+                          f"Bandcrash version {__version__.__version__}")
 
 
 def open_file(path):
