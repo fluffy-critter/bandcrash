@@ -57,6 +57,11 @@ def make_absolute_path(base_file):
     Returns a function to provide an absolute path for the specified
     filename based on a base path
     """
+
+    if not base_file:
+        # We don't have a reference path so we can't really do anything
+        return lambda path: path
+
     if os.path.isdir(base_file):
         dirname = base_file
     else:
@@ -72,15 +77,30 @@ def make_relative_path(base_file):
     or directory
     """
 
+    if not base_file:
+        # We don't have a reference path so we can't really do anything
+        return lambda path: path
+
     if os.path.isdir(base_file):
         dirname = base_file
     else:
         dirname = os.path.dirname(base_file)
 
     def normalize(path):
-        abspath = path if os.path.isabs(
-            path) else os.path.normpath(os.path.join(dirname, path))
-        return os.path.relpath(abspath, dirname)
+        abspath = os.path.realpath(path) if os.path.isabs(
+            path) else os.path.realpath(os.path.join(dirname, path))
+        try:
+            relpath = os.path.relpath(abspath, dirname)
+        except ValueError:
+            # path couldn't be made relative
+            return abspath
+
+        # See if we're escaping all the way back out to root, in which case
+        # there's no reasont to use a relative path.
+        if os.path.commonpath([abspath, base_file]) == os.path.sep:
+            return abspath
+
+        return relpath
     return normalize
 
 
