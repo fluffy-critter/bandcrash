@@ -244,10 +244,6 @@ class AlbumEditor(QMainWindow):
         self.data: dict[str, typing.Any] = {'tracks': []}
         if path:
             self.reload(path)
-            if '_gui' in self.data:
-                if geom := self.data['_gui'].get('geom'):
-                    # Geometry setting disabled, as it causes too many problems on Windows
-                    pass
 
         layout = QFormLayout()
         layout.setFieldGrowthPolicy(
