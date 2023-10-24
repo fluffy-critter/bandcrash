@@ -1,7 +1,8 @@
-all: setup version format mypy pylint
+all: setup format mypy pylint
 
 .PHONY: setup
 setup:
+	./bump-version.sh
 	poetry install -E gui
 	# Mac build hack: force any locally-built Pillow universal package into the environment
 	[ -n "$(shell find build/local-wheels -maxdepth 1 -name '*_universal2.whl' -print -quit)" ] && \
@@ -47,16 +48,8 @@ preflight:
 		&& echo "main branch differs from upstream" 1>&2 \
 		&& exit 1 || exit 0
 
-.PHONY: version
-version: bandcrash/__version__.py
-bandcrash/__version__.py: pyproject.toml
-	# Kind of a hacky way to get the version updated, until the poetry folks
-	# settle on a better approach
-	printf '""" version """\n__version__ = "%s"\n' \
-		$(shell poetry version -s) > bandcrash/__version__.py
-
 .PHONY: build
-build: version preflight pylint
+build: setup preflight pylint
 	poetry build
 
 .PHONY: clean
