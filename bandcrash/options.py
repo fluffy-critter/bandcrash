@@ -5,6 +5,13 @@ import shutil
 import typing
 
 
+def default_path(tool):
+    """ Wrapper to keep Sphinx from exposing local build info to the world """
+    def get():
+        return shutil.which(tool)
+    return get
+
+DEFAULT_BUTLER_PATH = shutil.which('butler')
 @dataclasses.dataclass
 class Options:
     """ Encoder options for processing an album.
@@ -14,12 +21,13 @@ class Options:
     :param str input_dir: The working directory for the input specification
     :param str output_dir: The output directory to store the various builds
 
-    :param str butler_path: The path to the itch.io Butler tool
+    :param str butler_path: The path to the itch.io Butler tool. By default,
+        searches for ``butler`` in the user's ``PATH``.
 
-    :param list preview_encoder_args: Endoer options for the web player
-    :param list mp3_encoder_args: Encoder options for the album download
-    :param list ogg_encoder_args: Encoder options for the Ogg album download
-    :param list flac_encoder_args: Encoder options for the FLAC album download
+    :param list preview_encoder_args: FFmpeg encoder options for the web player
+    :param list mp3_encoder_args: FFmpeg encoder options for the album download
+    :param list ogg_encoder_args: FFmpeg encoder options for the Ogg album download
+    :param list flac_encoder_args: FFmpeg encoder options for the FLAC album download
 
     The following parameters are set by the album's specification data, but may be
     overridden by the process runner (e.g. via command line arguments). A value of
@@ -55,7 +63,7 @@ class Options:
         default_factory="-q:a 5".split().copy)
     flac_encoder_args: list[str] = dataclasses.field(default_factory=list)
 
-    butler_path: typing.Optional[str] = shutil.which('butler')
+    butler_path: typing.Optional[str] = dataclasses.field(default_factory=default_path('butler'))
     # The following options can override the values set in the album specification
     # (thus the None values)
 
