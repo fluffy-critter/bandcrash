@@ -4,6 +4,8 @@ Bandcrash is a standalone program that automatically encodes an album of songs i
 
 [See it in action](https://fluffy.itch.io/novembeat-2021)!
 
+[![Documentation Status](https://readthedocs.org/projects/bandcrash/badge/?version=latest)](https://bandcrash.readthedocs.io/en/latest/?badge=latest)
+
 ## Features
 
 * Output as mp3, ogg, FLAC, and web preview (HTML5+mp3 at a lower bitrate)
