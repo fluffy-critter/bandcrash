@@ -110,6 +110,8 @@ class TrackEditor(QWidget):
         if not self.data:
             return
 
+        LOGGER.debug("TrackEditor.apply %s", self.data.get('filename'))
+
         relpath = util.make_relative_path(self.album_editor.filename)
 
         datatypes.apply_text_fields(self.data, (
@@ -155,22 +157,26 @@ class TrackListEditor(QSplitter):
             self.editor = TrackEditor(album_editor, data)
             self.setText(self.display_name)
 
-            self.editor.title.textChanged.connect(self.apply)
-            self.editor.filename.file_path.textChanged.connect(self.apply)
+            self.editor.title.textChanged.connect(self.update_name)
+            self.editor.filename.file_path.textChanged.connect(self.update_name)
 
         def reset(self, data: datatypes.TrackData):
             """ Reset the track listing from a new tracklist
 
             :param list data: album['data']
             """
-            LOGGER.debug("TrackItem.__reset__ %s", self.display_name)
+            LOGGER.debug("TrackItem.reset %s", self.display_name)
             self.editor.reset(data)
             self.setText(self.display_name)
 
         def apply(self):
             """ Apply the GUI values to the backing store """
-            LOGGER.debug("TrackItem.__apply__ %s", self.display_name)
+            LOGGER.debug("TrackItem.apply %s", self.display_name)
             self.editor.apply()
+            self.update_name()
+
+        def update_name(self):
+            """ Update the display name """
             self.setText(self.display_name)
 
         @property
@@ -210,6 +216,8 @@ class TrackListEditor(QSplitter):
                     event.acceptProposedAction()
             else:
                 super().dropEvent(event)
+
+            self.album.apply()
 
     def __init__(self, album_editor):
         super().__init__()
@@ -301,7 +309,8 @@ class TrackListEditor(QSplitter):
         for row in range(self.track_listing.count()):
             item = typing.cast(TrackListEditor.TrackItem,
                                self.track_listing.item(row))
-            item.editor.apply()
+            item.apply()
+            LOGGER.debug("  -- append %s", item.display_name)
             self.data.append(item.editor.data)
 
     def set_item(self, row):
