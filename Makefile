@@ -56,7 +56,7 @@ clean:
 
 .PHONY: upload
 upload: clean test build
-	poetry publish -r pypi
+	poetry publish
 
 .PHONY: app
 app: setup format pylint mypy
