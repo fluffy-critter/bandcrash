@@ -83,8 +83,11 @@ There are also a number of preferences you can set (``Bandcrash > Preferences`` 
    :alt: The preferences window
 
 * Number of threads: This is the maximum number of processes to run in parallel while encoding an album. You should generally set this to the number of cores on your CPU.
-* Encoder options: These are the options used by the built-in FFMPEG encoder for each encode type. Preview and MP3 use the `libmp3lame settings <https://www.ffmpeg.org/ffmpeg-codecs.html#libmp3lame-1>`_, Ogg Vorbis uses `libvorbis <https://www.ffmpeg.org/ffmpeg-codecs.html#libvorbis>`_, and FLAC uses `flac <https://www.ffmpeg.org/ffmpeg-codecs.html#flac-2>`_.
-* Butler binary: This is the external tool used to automatically upload files to itch.io.
+* Encoder options: These are the options used by the built-in FFMPEG encoder for each encode type:
+    * Preview and MP3 use `libmp3lame <https://www.ffmpeg.org/ffmpeg-codecs.html#libmp3lame-1>`_
+    * Ogg Vorbis uses `libvorbis <https://www.ffmpeg.org/ffmpeg-codecs.html#libvorbis>`_
+    * FLAC uses `flac <https://www.ffmpeg.org/ffmpeg-codecs.html#flac-2>`_
+* Butler binary: Where to find butler, the tool used to automatically upload files to itch.io.
 
 Uploading to itch
 -----------------
