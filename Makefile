@@ -60,7 +60,7 @@ upload: clean test build
 
 .PHONY: doc
 doc:
-	poetry run sphinx-build -b html docs/ docs/_build
+	poetry run sphinx-build -b html docs/ docs/_build -D html_theme=alabaster
 
 .PHONY: app
 app: setup format pylint mypy
