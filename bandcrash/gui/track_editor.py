@@ -158,7 +158,8 @@ class TrackListEditor(QSplitter):
             self.setText(self.display_name)
 
             self.editor.title.textChanged.connect(self.update_name)
-            self.editor.filename.file_path.textChanged.connect(self.update_name)
+            self.editor.filename.file_path.textChanged.connect(
+                self.update_name)
 
         def reset(self, data: datatypes.TrackData):
             """ Reset the track listing from a new tracklist
