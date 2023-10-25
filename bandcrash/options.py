@@ -11,7 +11,10 @@ def default_path(tool):
         return shutil.which(tool)
     return get
 
+
 DEFAULT_BUTLER_PATH = shutil.which('butler')
+
+
 @dataclasses.dataclass
 class Options:
     """ Encoder options for processing an album.
@@ -63,7 +66,8 @@ class Options:
         default_factory="-q:a 5".split().copy)
     flac_encoder_args: list[str] = dataclasses.field(default_factory=list)
 
-    butler_path: typing.Optional[str] = dataclasses.field(default_factory=default_path('butler'))
+    butler_path: typing.Optional[str] = dataclasses.field(
+        default_factory=default_path('butler'))
     # The following options can override the values set in the album specification
     # (thus the None values)
 
