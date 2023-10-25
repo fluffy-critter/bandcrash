@@ -2,7 +2,7 @@ all: setup format mypy pylint
 
 .PHONY: setup
 setup:
-	./bump-version.sh
+	@echo "Current version: $(shell ./get-version.sh)"
 	poetry install -E gui
 
 .PHONY: format
@@ -68,7 +68,7 @@ upload-mac: preflight app
 	mkdir -p dist/macos
 	cp -rP dist/Bandcrash.app README.md dist/macos
 	butler push dist/macos fluffy/bandcrash:macos \
-		--userversion=$(shell poetry version -s)-$(shell git rev-parse --short HEAD) \
+		--userversion=$(shell ./get-version.sh) \
 		--fix-permissions
 
 .PHONY: upload-win
@@ -77,5 +77,5 @@ upload-win: preflight app
 	mkdir -p dist/win
 	cp dist/Bandcrash.exe README.md dist/win
 	butler push dist/win fluffy/bandcrash:win \
-		--userversion=$(shell poetry version -s)-$(shell git rev-parse --short HEAD) \
+		--userversion=$(shell ./get-version.sh) \
 		--fix-permissions
