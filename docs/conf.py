@@ -1,4 +1,5 @@
 import sphinx_rtd_theme
+
 project = "bandcrash"
 master_doc = "index"
 extensions = ["sphinx.ext.autodoc"]

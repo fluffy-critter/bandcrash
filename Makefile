@@ -70,8 +70,8 @@ app: setup format pylint mypy
 upload-mac: preflight app doc
 	rm -rf dist/macos
 	mkdir -p dist/macos
-	cp -rP dist/Bandcrash.app README.md dist/macos
-	cp -r docs/_build dist/macos/docs
+	cp -a dist/Bandcrash.app dist/macos
+	cp -a docs/_build dist/macos/docs
 	butler push dist/macos fluffy/bandcrash:macos \
 		--userversion=$(shell ./get-version.sh) \
 		--fix-permissions
@@ -80,8 +80,8 @@ upload-mac: preflight app doc
 upload-win: preflight app doc
 	rm -rf dist/win
 	mkdir -p dist/win
-	cp dist/Bandcrash.exe README.md dist/win
-	cp -r docs/_build dist/win/docs
+	cp dist/Bandcrash.exe dist/win
+	cp -a docs/_build dist/win/docs
 	butler push dist/win fluffy/bandcrash:win \
 		--userversion=$(shell ./get-version.sh) \
 		--fix-permissions
