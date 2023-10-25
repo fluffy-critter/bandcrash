@@ -4,9 +4,6 @@ all: setup format mypy pylint
 setup:
 	./bump-version.sh
 	poetry install -E gui
-	# Mac build hack: force any locally-built Pillow universal package into the environment
-	[ -n "$(shell find build/local-wheels -maxdepth 1 -name '*_universal2.whl' -print -quit)" ] && \
-		poetry run pip install build/local-wheels/*_universal2.whl --force-reinstall || true
 
 .PHONY: format
 format:
@@ -59,10 +56,10 @@ clean:
 
 .PHONY: upload
 upload: clean test build
-	poetry publish
+	poetry publish -r pypi
 
 .PHONY: app
-app: format pylint mypy
+app: setup format pylint mypy
 	poetry run pyInstaller Bandcrash.spec -y
 
 .PHONY: upload-mac
