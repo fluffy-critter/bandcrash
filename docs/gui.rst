@@ -94,4 +94,7 @@ If you plan on uploading your albums to `itch.io <https://itch.io>`_, it is high
 .. TIP::
    If you're using the Itch app, you can find the binary by going to Butler in your library, clicking the gear icon, then selecting "Manage" and looking at the ``Show in Finder/Explorer`` button.
 
-After that, click the "Connect" button to log in to itch via Butler, and you should be all set.
+   .. image:: wheres-butler.png
+      :alt: Where to see the Butler binary path
+
+After that, click the "Connect" button on the Bandcrash preferences dialog to log in to itch via Butler (or run ``butler login`` from the command line), and you should be all set.
