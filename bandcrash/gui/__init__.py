@@ -71,6 +71,7 @@ class PreferencesWindow(QDialog):
     def __init__(self):
         super().__init__()
         LOGGER.debug("Creating prefs window")
+        self.setWindowTitle("Bandcrash Preferences")
         self.setMinimumSize(500, 0)
 
         self.settings = QtCore.QSettings()

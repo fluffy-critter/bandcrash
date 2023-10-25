@@ -175,7 +175,7 @@ And each track contains (all optional except `filename`):
 * `lyrics`: An array of strings, one line of lyrics per string; alternately, the name of a text file to read the lyrics from (relative or absolute paths okay)
 * `hidden`: A boolean for whether to hide this track from the web player entirely (e.g. a purchase bonus); defaults to `false`
 * `preview`: A boolen for whether to generate a preview for the web player; defaults to `true`
-* `about`: Detailed commentary about the track
+* `comment`: Track comment
 
 See the [sample album JSON file](https://github.com/fluffy-critter/Bandcrash/blob/main/tests/album/album.json) for a rough example.
 

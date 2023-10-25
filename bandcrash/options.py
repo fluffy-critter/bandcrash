@@ -14,9 +14,6 @@ class Options:
     :param str input_dir: The working directory for the input specification
     :param str output_dir: The output directory to store the various builds
 
-    :param str lame_path: The path to the LAME encoder binary
-    :param str oggenc_path: The path to the Ogg encoder binary
-    :param str flac_path: The path to the FLAC encoder binary
     :param str butler_path: The path to the itch.io Butler tool
 
     :param list preview_encoder_args: Endoer options for the web player
@@ -35,14 +32,16 @@ class Options:
     :param bool do_ogg: Whether to build the Ogg album download
     :param bool do_flac: Whether to build the FLAC album download
 
+    :param bool do_cleanup: Whether to clean up extra files from the target directories
     :param bool do_zip: Whether to build a .zip archive
 
-    :param bool do_butler: Whether to automatically upload builds to itch.io via Butler
+    :param bool do_butler: Whether to automatically upload builds to
+       `itch.io <https://itch.io>`_ via `Butler <https://itch.io/docs/butler/>`_
 
     :param str butler_target: The Butler target for the upload
-        (e.g. `fluffy/novembeat-2022` for `https://fluffy.itch.io/novembeat-2022`)
+        (e.g. ``fluffy/novembeat-2022`` for ``https://fluffy.itch.io/novembeat-2022``)
     :param str butler_prefix: A prefix to add to the Butler channel name; used for
-        variations (e.g. `bob-` gives channel names of `bob-mp3`, `bob-flac`, etc.)
+        variations (e.g. ``bob-`` gives channel names of ``bob-mp3``, ``bob-flac``, etc.)
     """
     # pylint:disable=too-many-instance-attributes
     input_dir: typing.Optional[str] = None  # Base directory for all inputs

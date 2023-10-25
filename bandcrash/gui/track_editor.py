@@ -50,7 +50,7 @@ class TrackEditor(QWidget):
         self.cover_of = QLineEdit()
         self.artwork = FileSelector(FileRole.IMAGE, album_editor)
         self.lyrics = QPlainTextEdit()
-        self.about = QLineEdit()
+        self.comment = QLineEdit()
 
         self.preview = QCheckBox("Generate preview")
         self.hidden = QCheckBox("Hidden track")
@@ -71,7 +71,7 @@ class TrackEditor(QWidget):
         layout.addRow("Lyrics", self.lyrics)
         layout.addRow("Genre", self.genre)
         layout.addRow("Grouping", self.group)
-        layout.addRow("Track comment", self.about)
+        layout.addRow("Track comment", self.comment)
 
         self.reset(data)
 
@@ -88,7 +88,7 @@ class TrackEditor(QWidget):
             ('cover_of', self.cover_of),
             ('artwork', self.artwork.file_path),
             ('group', self.group),
-            ('about', self.about),
+            ('comment', self.comment),
         ):
             widget.setText(self.data.get(key, ''))
 
@@ -126,7 +126,7 @@ class TrackEditor(QWidget):
             ('composer', self.composer),
             ('cover_of', self.cover_of),
             ('group', self.group),
-            ('about', self.about),
+            ('comment', self.comment),
         ))
 
         def split_lyrics(text):
