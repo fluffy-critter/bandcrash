@@ -123,7 +123,7 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
         id3.TCOM: track.get('composer', album.get('composer')),
         id3.USLT: '\n'.join(track['lyrics']) if 'lyrics' in track else None,
 
-        id3.COMM: track.get('about'),
+        id3.COMM: track.get('comment'),
     }
 
     for frame, val in frames.items():
@@ -150,7 +150,7 @@ def tag_vorbis(tags, idx, album, track):
         'TRACKNUMBER': str(idx),
         'GENRE': track.get('genre', album.get('genre')),
         'LYRICS': '\n'.join(track['lyrics']) if 'lyrics' in track else None,
-        'DESCRIPTION': track.get('about'),
+        'DESCRIPTION': track.get('comment'),
     }
     if track.get('cover_of', album.get('cover_of')):
         # Covers are handled weirdly in Vorbiscomment; see https://dogphilosophy.net/?page_id=66
@@ -378,18 +378,29 @@ def process(config, album, pool, futures):
     """
     Process the album given the parsed config and the loaded album data
 
-    :param config: Runtime config from :func:`parse_args`
-    :param dict album: Album metadata
+    :param options.Options config: Encoder configuration
+    :param dict album: :doc:`Album metadata <metadata>`
     :param concurrent.Futures.Executor pool: The threadpool to submit tasks to
     :param dict futures: Pending tasks for a particular build phase; should be
-        a `collections.defaultdict(list)` or similar
+        a :py:class:`collections.defaultdict(list)` or similar
 
     Each format has the following phases:
 
-    1. encode: Encodes and tags the output files
-    2. build: Builds any extra files (e.g. the web player); depends on encode
-    2. clean: Cleans up the directory; depends and build
-    3. butler: Pushes the build to itch.io via the butler tool; depends on clean
+    1. **encode**: Encodes and tags the output files
+    2. **build**: Builds any extra files (e.g. the web player); depends on encode
+    3. **clean**: Cleans up the directory; depends and build
+    4. **butler**: Pushes the build to itch.io via the butler tool; depends on clean
+
+    When this function exits, the futures dict will be fully-populated with a
+    mapping from each phase to a list of :py:class:`concurrent.futures.Future` for
+    that phase.
+
+    You can wait on each phase's list separately, or you can collapse it with e.g.:
+
+    .. code-block:: python
+
+        all_futures = list(itertools.chain(*futures.values()))
+        concurrent.futures.wait(all_futures)
 
     """
     # pylint:disable=too-many-branches
