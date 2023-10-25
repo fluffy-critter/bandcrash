@@ -480,14 +480,16 @@ class AlbumEditor(QMainWindow):
     def revert(self):
         """ Revert all changes """
         LOGGER.debug("AlbumEditor.revert")
+        self.apply()
+
         do_revert = True
         if self.unsaved():
             do_revert = False
             answer = QMessageBox.question(self, "Confirmation",
-                                          "Reverting file. Are you sure?",
+                                          "Really revert all changes?",
                                           (QMessageBox.StandardButton.Yes |
-                                           QMessageBox.StandardButton.Cancel),
-                                          QMessageBox.StandardButton.Cancel)
+                                           QMessageBox.StandardButton.No),
+                                          QMessageBox.StandardButton.No)
 
             if answer == QMessageBox.StandardButton.Yes:
                 do_revert = True
