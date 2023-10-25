@@ -440,7 +440,6 @@ class AlbumEditor(QMainWindow):
 
         geom = self.geometry()
         self.data['_gui'] = {
-            'geom': [geom.x(), geom.y(), geom.width(), geom.height()],
             'lastdir': self.last_directory
         }
 
