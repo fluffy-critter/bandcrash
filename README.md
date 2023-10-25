@@ -1,4 +1,4 @@
-# Bandcrash (formerly pyBlamscamp)
+# Bandcrash
 
 Bandcrash is a standalone program that automatically encodes an album of songs into a bunch of different formats for distribution on various platforms, such as [itch.io](https://itch.io/), or for hosting on your own website. The embedded player is originally based on the one from [blamscamp](https://github.com/blackle/blamscamp) by [@blackle](https://github.com/blackle), although it has been pretty thoroughly modified at this point.
 
@@ -16,6 +16,7 @@ Bandcrash is a standalone program that automatically encodes an album of songs i
 ## Usage
 
 Please see [the online documentation](https://bandcrash.readthedocs.io) for installation and usage instructions.
+
 ## Contributing
 
 Pull requests are welcome! But please note the following:
@@ -48,13 +49,15 @@ Back when this project started, it was named pyBlamscamp as the intention was to
 
 Currently the only connection between Bandcrash and blamscamp is that Bandcrash uses a highly-modified version of blamscamp's web player. They serve different goals.
 
-### Why run it locally instead of as a web app?
+### Why make a local GUI instead instead of a web app?
 
 You already have your large .wav files on your local hard drive. Your local drive is also a good place to keep your previous encoding results. Your local computer also has a lot more space available than a typical cloud server, doesn't have to juggle cloud storage credentials, doesn't have to worry about the security of the server running the encoder app, the cost of running servers or paying for cloud storage, and so on.
 
 Basically, it's easier for everyone.
 
 Sometimes local apps are just Better™.
+
+That said, Bandcrash is also embeddable as a library, so someone could conceivably build a web-based system that uses it for encoding and tagging files. If they do so, I hope they avoid it becoming yet another walled garden.
 
 ## Credits
 
