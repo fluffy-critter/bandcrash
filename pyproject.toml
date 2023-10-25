@@ -16,10 +16,8 @@ chardet = "^4.0.0"
 pyside6 = {version = "^6.5.3", optional = true}
 pyffmpeg = "^2.4.2.18.1"
 pillow = [
-    { platform = "universal2", version = "^10.1.0", source = "devpi-fluffy" },
-    { platform = "win32", version = "^10.1.0", source = "pypi" },
-    { platform = "win64", version = "^10.1.0", source = "pypi" },
-    { platform = "linux", version = "^10.1.0", source = "pypi" },
+    { platform = "darwin", version = "^10.1.0", source = "devpi-fluffy" },
+    { markers = "sys_platform != 'darwin'", version = "^10.1.0", source = "pypi"}
 ]
 
 

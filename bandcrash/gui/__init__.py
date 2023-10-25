@@ -241,9 +241,11 @@ class AlbumEditor(QMainWindow):
                       QtGui.QAction.MenuRole.AboutRole)
 
         self.filename = path
+        self.save_hash = 0
         self.data: dict[str, typing.Any] = {'tracks': []}
         if path:
             self.reload(path)
+        self.update_hash()
 
         layout = QFormLayout()
         layout.setFieldGrowthPolicy(
@@ -314,6 +316,18 @@ class AlbumEditor(QMainWindow):
 
         self.reset()
 
+    def update_hash(self):
+        """ Update the fingerprint hash """
+        old_hash = self.save_hash
+        self.save_hash = hash(repr(self.data))
+        LOGGER.debug("updating hash from %s to %s", old_hash, self.save_hash)
+
+    def unsaved(self):
+        """ Returns whether there are unsaved changes """
+        current_hash = hash(repr(self.data))
+        LOGGER.debug("save_hash=%d cur_hash=%d", self.save_hash, current_hash)
+        return self.save_hash != current_hash
+
     @staticmethod
     def file_new():
         """ Create a new album file """
@@ -346,6 +360,7 @@ class AlbumEditor(QMainWindow):
                 self.data = typing.cast(dict[str, typing.Any], json.load(file))
                 if 'tracks' not in self.data:
                     raise KeyError('tracks')
+                self.update_hash()
             except (json.decoder.JSONDecodeError, KeyError, TypeError):
                 err = QErrorMessage(self)
                 err.showMessage("Invalid album JSON file")
@@ -432,13 +447,14 @@ class AlbumEditor(QMainWindow):
     def save(self):
         """ Save the file to disk """
         LOGGER.debug("AlbumEditor.save")
-        if self.filename:
-            self.apply()
+        self.apply()
+        if not self.filename:
+            return self.save_as()
 
-            with open(self.filename, 'w', encoding='utf8') as file:
-                json.dump(self.data, file, indent=3)
-        else:
-            self.save_as()
+        with open(self.filename, 'w', encoding='utf8') as file:
+            json.dump(self.data, file, indent=3)
+            self.update_hash()
+        return True
 
     def save_as(self):
         """ Save the file and change the name """
@@ -459,14 +475,27 @@ class AlbumEditor(QMainWindow):
             self.reset()
             self.save()
             role.default_directory = os.path.dirname(self.filename)
-
-        self.reset()
+            return True
+        return False
 
     def revert(self):
         """ Revert all changes """
         LOGGER.debug("AlbumEditor.revert")
-        self.reload(self.filename)
-        self.reset()
+        do_revert = True
+        if self.unsaved():
+            do_revert = False
+            answer = QMessageBox.question(self, "Confirmation",
+                                          "Reverting file. Are you sure?",
+                                          (QMessageBox.StandardButton.Yes |
+                                           QMessageBox.StandardButton.Cancel),
+                                          QMessageBox.StandardButton.Cancel)
+
+            if answer == QMessageBox.StandardButton.Yes:
+                do_revert = True
+
+        if do_revert:
+            self.reload(self.filename)
+            self.reset()
 
     def encode_album(self):
         """ Run the encoder process """
@@ -669,6 +698,25 @@ class AlbumEditor(QMainWindow):
         """ Show the about box for the app """
         QMessageBox.about(self, "Bandcrash",
                           f"Bandcrash version {__version__.__version__}")
+
+    def closeEvent(self, event):
+        self.apply()
+        do_close = True
+        if self.unsaved():
+            do_close = False
+            answer = QMessageBox.question(self, "Unsaved changes",
+                                          "You have unsaved changes. Really close?",
+                                          (QMessageBox.StandardButton.Save |
+                                           QMessageBox.StandardButton.Close |
+                                           QMessageBox.StandardButton.Cancel))
+
+            if answer == QMessageBox.StandardButton.Save:
+                do_close = self.save()
+            elif answer == QMessageBox.StandardButton.Close:
+                do_close = True
+
+        if not do_close:
+            event.ignore()
 
 
 def open_file(path):
