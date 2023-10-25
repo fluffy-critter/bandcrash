@@ -15,7 +15,13 @@ Jinja2 = "^3.0.3"
 chardet = "^4.0.0"
 pyside6 = {version = "^6.5.3", optional = true}
 pyffmpeg = "^2.4.2.18.1"
-pillow = "^10.1.0"
+pillow = [
+    { platform = "universal2", version = "^10.1.0", source = "devpi-fluffy" },
+    { platform = "win32", version = "^10.1.0", source = "pypi" },
+    { platform = "win64", version = "^10.1.0", source = "pypi" },
+    { platform = "linux", version = "^10.1.0", source = "pypi" },
+]
+
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.0.4"
@@ -30,6 +36,16 @@ pyside6-stubs = "^6.4.2.0"
 
 [tool.poetry.extras]
 gui = [ "pyside6" ]
+
+[[tool.poetry.source]]
+name = "PyPI"
+priority = "primary"
+
+
+[[tool.poetry.source]]
+name = "devpi-fluffy"
+url = "https://m.devpi.net/fluffy/prod/+simple"
+priority = "explicit"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
