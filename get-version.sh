@@ -16,7 +16,7 @@ else
     tag=$(git rev-parse --short HEAD)
 fi
 
-echo "Current version is $version-$tag"
+echo "$version-$tag"
 
 cat > bandcrash/__version__.py << EOF
 """ Version information """
