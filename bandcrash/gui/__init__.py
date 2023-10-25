@@ -438,7 +438,6 @@ class AlbumEditor(QMainWindow):
         ))
         self.track_listing.apply()
 
-        geom = self.geometry()
         self.data['_gui'] = {
             'lastdir': self.last_directory
         }
