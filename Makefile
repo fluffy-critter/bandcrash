@@ -67,19 +67,21 @@ app: setup format pylint mypy
 	poetry run pyInstaller Bandcrash.spec -y
 
 .PHONY: upload-mac
-upload-mac: preflight app
+upload-mac: preflight app doc
 	rm -rf dist/macos
 	mkdir -p dist/macos
 	cp -rP dist/Bandcrash.app README.md dist/macos
+	cp -r docs/_build dist/macos/docs
 	butler push dist/macos fluffy/bandcrash:macos \
 		--userversion=$(shell ./get-version.sh) \
 		--fix-permissions
 
 .PHONY: upload-win
-upload-win: preflight app
+upload-win: preflight app doc
 	rm -rf dist/win
 	mkdir -p dist/win
 	cp dist/Bandcrash.exe README.md dist/win
+	cp -r docs/_build dist/win/docs
 	butler push dist/win fluffy/bandcrash:win \
 		--userversion=$(shell ./get-version.sh) \
 		--fix-permissions
