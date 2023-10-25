@@ -246,7 +246,6 @@ class AlbumEditor(QMainWindow):
         self.data: dict[str, typing.Any] = {'tracks': []}
         if path:
             self.reload(path)
-        self.update_hash()
 
         layout = QFormLayout()
         layout.setFieldGrowthPolicy(
@@ -316,6 +315,8 @@ class AlbumEditor(QMainWindow):
         self.setWindowTitle(self.filename or 'New Album')
 
         self.reset()
+        self.apply()
+        self.update_hash()
 
     def update_hash(self):
         """ Update the fingerprint hash """
