@@ -59,11 +59,8 @@ upload: clean test build
 	poetry publish
 
 .PHONY: doc
-doc: requirements.txt
+doc:
 	poetry run sphinx-build -b html docs/ docs/_build
-
-requirements.txt: poetry.lock
-	poetry export -o requirements.txt
 
 .PHONY: app
 app: setup format pylint mypy
