@@ -389,12 +389,17 @@ def process(config, album, pool, futures):
     :param dict futures: Pending tasks for a particular build phase; should be
         a :py:class:`collections.defaultdict(list)` or similar
 
-    Each format has the following phases:
+    Each format has the following phases, each one depending on the previous:
 
-    1. **encode**: Encodes and tags the output files
-    2. **build**: Builds any extra files (e.g. the web player); depends on encode
-    3. **clean**: Cleans up the directory; depends and build
-    4. **butler**: Pushes the build to itch.io via the butler tool; depends on clean
+    1. ``encode``: Encodes and tags the output files
+    2. ``build``: Builds any extra files (e.g. the web player)
+    3. ``clean``: Directory cleanup tasks
+
+    And then these two phases are shared across formats but depend on ``clean``
+    (and may run in parallel):
+
+    1. ``butler``: Pushes the build to itch.io via the butler tool
+    2. ``zip``: Builds the local .zip file for manual uploading
 
     When this function exits, the futures dict will be fully-populated with a
     mapping from each phase to a list of :py:class:`concurrent.futures.Future` for
@@ -479,14 +484,13 @@ def process(config, album, pool, futures):
 
     # make clean block on build for all targets
     for target in formats:
-        futures[f'clean-{target}'].append(pool.submit(
-            wait_futures, futures[f'build-{target}']))
-
-    if config.do_cleanup:
-        for target in formats:
+        if config.do_cleanup:
             futures[f'clean-{target}'].append(pool.submit(
                 clean_subdir, os.path.join(config.output_dir, target),
                 protections[target], futures[f'build-{target}']))
+        else:
+            futures[f'clean-{target}'].append(pool.submit(
+                wait_futures, futures[f'build-{target}']))
 
     if config.do_butler and config.butler_target:
         for target in formats:
