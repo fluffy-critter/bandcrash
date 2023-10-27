@@ -700,7 +700,7 @@ class AlbumEditor(QMainWindow):
     def show_about_box(self):
         """ Show the about box for the app """
         QMessageBox.about(self, "Bandcrash",
-                          f"Bandcrash version {__version__.__version__}")
+                          f"Bandcrash version {__version__}")
 
     def closeEvent(self, event):
         self.apply()
@@ -769,7 +769,7 @@ def main():
     parser.add_argument('-v', '--verbosity', action="count",
                         help="increase output verbosity", default=0)
     parser.add_argument('--version', action='version',
-                        version="%(prog)s " + __version__.__version__)
+                        version=f"%(prog)s {__version__}")
     parser.add_argument('open_files', type=str, nargs='*')
     options = parser.parse_args()
 
