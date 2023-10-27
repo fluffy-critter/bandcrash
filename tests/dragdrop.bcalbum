@@ -48,8 +48,9 @@
       {
          "artwork": "hidden_track.png",
          "filename": "album/test track.wav",
-         "hidden": true,
-         "title": "This track is hidden"
+         "title": "This track is hidden",
+         "preview": false,
+         "hidden": true
       },
       {
          "filename": "derived/unnumbered track.wav",
