@@ -7,23 +7,11 @@
    "genre": "blipcore",
    "tracks": [
       {
-         "filename": "album/test track.wav",
-         "title": "1 A different artist",
-         "artist": "Sluggy Puppernutters",
-         "lyrics": "lyrics-iso8859.txt",
-         "group": "Meows I Have Known"
-      },
-      {
-         "filename": "album/test track.wav",
-         "title": "3 This has no preview",
-         "preview": false
-      },
-      {
-         "filename": "album/test track.wav",
          "artwork": "../../art/bclogo.png",
-         "lyrics": "lyric-file.txt",
+         "filename": "album/test track.wav",
          "genre": "lo-fi jazzcore",
-         "group": "Meows I Have Known"
+         "group": "Meows I Have Known",
+         "lyrics": "lyric-file.txt"
       },
       {
          "filename": "album/test track.wav",
@@ -34,6 +22,13 @@
          "title": "2 This has a title"
       },
       {
+         "artist": "Sluggy Puppernutters",
+         "filename": "album/test track.wav",
+         "group": "Meows I Have Known",
+         "lyrics": "lyrics-iso8859.txt",
+         "title": "1 A different artist"
+      },
+      {
          "filename": "album/test track.wav",
          "lyrics": [
             "I'm not sure just how I feel",
@@ -42,13 +37,19 @@
             "Something borrowed time",
             "",
             "How you doing, now?!"
-         ]
+         ],
+         "title": "asdfasdf"
       },
       {
          "filename": "album/test track.wav",
-         "title": "This track is hidden",
+         "preview": false,
+         "title": "3 This has no preview blah blah blah"
+      },
+      {
          "artwork": "hidden_track.png",
-         "hidden": true
+         "filename": "album/test track.wav",
+         "hidden": true,
+         "title": "This track is hidden"
       },
       {
          "filename": "derived/unnumbered track.wav",
@@ -56,12 +57,6 @@
       }
    ],
    "_gui": {
-      "geom": [
-         -1724,
-         295,
-         769,
-         929
-      ],
       "lastdir": {
          "AUDIO": "derived",
          "IMAGE": "../art"
