@@ -4,6 +4,10 @@ sphinx:
 python:
   install:
     - requirements: docs/requirements.txt
+    - method: pip
+      path: .
+      extra_requirements:
+        - gui
 build:
   os: ubuntu-22.04
   tools:
