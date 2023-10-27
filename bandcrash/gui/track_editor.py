@@ -73,6 +73,7 @@ class TrackEditor(QWidget):
         layout.addRow("Player options", player_options)
 
         layout.addRow("Track artist", self.artist)
+        layout.addRow("Composer", self.composer)
         layout.addRow("Cover of", self.cover_of)
         layout.addRow("Artwork", self.artwork)
         layout.addRow("Lyrics", self.lyrics)
