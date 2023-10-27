@@ -5,5 +5,5 @@ test_output
 tests/derived/derived.json
 build/
 *~lock~
-__version__.py
 docs/_build/
+__build_version__.py
