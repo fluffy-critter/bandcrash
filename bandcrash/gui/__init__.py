@@ -571,6 +571,7 @@ class AlbumEditor(QMainWindow):
 
                 task.result()
         except Exception as e:  # pylint:disable=broad-exception-caught
+            LOGGER.exception("Got exception, canceling pending tasks")
             threadpool.shutdown(cancel_futures=True)
             errors.append(e)
 
