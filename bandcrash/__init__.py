@@ -290,7 +290,7 @@ def submit_butler(config, target, futures):
 
     LOGGER.info("Butler: pushing '%s' to channel '%s'", output_dir, channel)
     try:
-        subprocess.run([config.butler_path, 'push',
+        subprocess.run([config.butler_path, 'push', *config.butler_args,
                        output_dir, channel],
                        stdin=subprocess.DEVNULL,
                        capture_output=True,

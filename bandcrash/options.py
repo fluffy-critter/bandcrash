@@ -26,6 +26,8 @@ class Options:
 
     :param str butler_path: The path to the itch.io Butler tool. By default,
         searches for ``butler`` in the user's ``PATH``.
+    :param str butler_args: Extra arguments to give to the butler tool (e.g. upload
+        version, ``--identity``, etc.)
 
     :param list preview_encoder_args: FFmpeg encoder options for the web player
     :param list mp3_encoder_args: FFmpeg encoder options for the album download
@@ -68,6 +70,8 @@ class Options:
 
     butler_path: typing.Optional[str] = dataclasses.field(
         default_factory=default_path('butler'))
+    butler_args: list[str] = dataclasses.field(default_factory=list)
+
     # The following options can override the values set in the album specification
     # (thus the None values)
 
