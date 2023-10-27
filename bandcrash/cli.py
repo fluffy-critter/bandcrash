@@ -30,7 +30,7 @@ def parse_args():
     parser.add_argument("-v", "--verbosity", action="count",
                         help="Increase output logging level", default=0)
     parser.add_argument("--version", action="version",
-                        version=f"%(prog)s {__version__.__version__}")
+                        version=f"%(prog)s {__version__}")
 
     parser.add_argument('--num-threads', '-t', type=int,
                         dest='num_threads',
