@@ -25,7 +25,7 @@ class TrackEditor(QWidget):
     """ A track editor pane """
     # pylint:disable=too-many-instance-attributes
 
-    def __init__(self, album_editor, data: datatypes.TrackData):
+    def __init__(self, album_editor):
         """ edit an individual track
 
         :param dict data: The metadata blob
@@ -34,7 +34,8 @@ class TrackEditor(QWidget):
         self.setMinimumSize(400, 0)
 
         self.album_editor = album_editor
-        self.data = data
+        self.data: typing.Optional[datatypes.TrackData] = None
+        self.setEnabled(False)
 
         layout = QFormLayout()
         layout.setFieldGrowthPolicy(
@@ -73,11 +74,10 @@ class TrackEditor(QWidget):
         layout.addRow("Grouping", self.group)
         layout.addRow("Track comment", self.comment)
 
-        self.reset(data)
-
     def reset(self, data: datatypes.TrackData):
         """ Reset to the specified backing data """
         self.data = data
+        self.setEnabled(data is not None)
 
         for key, widget in (
             ('filename', self.filename.file_path),
@@ -108,6 +108,7 @@ class TrackEditor(QWidget):
         # pylint:disable=too-many-branches
 
         if not self.data:
+            LOGGER.debug("TrackEditor apply - no data")
             return
 
         LOGGER.debug("TrackEditor.apply %s", self.data.get('filename'))
@@ -144,6 +145,8 @@ class TrackEditor(QWidget):
             ('hidden', self.hidden, False),
         ))
 
+        LOGGER.debug("applied: %s", self.data)
+
 
 class TrackListEditor(QSplitter):
     """ The track listing panel and editor """
@@ -152,14 +155,10 @@ class TrackListEditor(QSplitter):
     class TrackItem(QListWidgetItem):
         """ an item in the track listing """
 
-        def __init__(self, album_editor, data: datatypes.TrackData):
+        def __init__(self, track: datatypes.TrackData):
             super().__init__()
-            self.editor = TrackEditor(album_editor, data)
+            self.track_data = track
             self.setText(self.display_name)
-
-            self.editor.title.textChanged.connect(self.update_name)
-            self.editor.filename.file_path.textChanged.connect(
-                self.update_name)
 
         def reset(self, data: datatypes.TrackData):
             """ Reset the track listing from a new tracklist
@@ -167,13 +166,12 @@ class TrackListEditor(QSplitter):
             :param list data: album['data']
             """
             LOGGER.debug("TrackItem.reset %s", self.display_name)
-            self.editor.reset(data)
+            self.track_data = data
             self.setText(self.display_name)
 
         def apply(self):
             """ Apply the GUI values to the backing store """
             LOGGER.debug("TrackItem.apply %s", self.display_name)
-            self.editor.apply()
             self.update_name()
 
         def update_name(self):
@@ -183,7 +181,7 @@ class TrackListEditor(QSplitter):
         @property
         def display_name(self):
             """ Get the display name of this track """
-            info = self.editor.data
+            info = self.track_data
             if info and 'title' in info:
                 return info['title']
             if info and 'filename' in info:
@@ -254,15 +252,15 @@ class TrackListEditor(QSplitter):
         buttons.addWidget(self.button_move_down)
         left_panel.addWidget(wrap_layout(self, buttons))
 
-        self.slug = TrackEditor(album_editor, {})
-        self.slug.setEnabled(False)
+        self.track_editor = TrackEditor(album_editor)
+        self.track_editor.setEnabled(False)
 
         self.editpanel = QScrollArea()
         self.editpanel.setMinimumSize(450, 0)
         self.editpanel.setWidgetResizable(True)
         self.editpanel.setSizeAdjustPolicy(
             QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
-        self.editpanel.setWidget(self.slug)
+        self.editpanel.setWidget(self.track_editor)
         self.addWidget(self.editpanel)
 
         self.track_listing.currentRowChanged.connect(self.set_item)
@@ -291,7 +289,7 @@ class TrackListEditor(QSplitter):
                 item.reset(track)
             else:
                 self.track_listing.addItem(
-                    TrackListEditor.TrackItem(self.album_editor, track))
+                    TrackListEditor.TrackItem(track))
 
         while self.track_listing.count() > len(data):
             self.track_listing.takeItem(self.track_listing.count() - 1)
@@ -306,25 +304,28 @@ class TrackListEditor(QSplitter):
     def apply(self):
         """ Save any currently-edited track """
         LOGGER.debug("TrackListEditor.apply")
+        self.track_editor.apply()
+
         self.data.clear()
         for row in range(self.track_listing.count()):
             item = typing.cast(TrackListEditor.TrackItem,
                                self.track_listing.item(row))
             item.apply()
             LOGGER.debug("  -- append %s", item.display_name)
-            self.data.append(item.editor.data)
+            self.data.append(item.track_data)
 
     def set_item(self, row):
         """ Signal handler for row change """
         LOGGER.debug("TrackListEditor.set_item")
         self.apply()
-        self.editpanel.takeWidget()  # necessary to prevent Qt from GCing it on replacement
         item = typing.cast(TrackListEditor.TrackItem,
                            self.track_listing.item(row))
         if item:
-            self.editpanel.setWidget(item.editor)
+            self.track_editor.reset(item.track_data)
+            self.track_editor.setEnabled(True)
         else:
-            self.editpanel.setWidget(self.slug)
+            self.track_editor.reset({})
+            self.track_editor.setEnabled(False)
 
     def add_track_button(self):
         """ Prompt to add some tracks """
@@ -355,7 +356,7 @@ class TrackListEditor(QSplitter):
             track = {'filename': filename, 'title': title}
             self.data.append(track)
             self.track_listing.addItem(
-                TrackListEditor.TrackItem(self.album_editor, track))
+                TrackListEditor.TrackItem(track))
 
     def delete_track(self):
         """ Remove a track """
