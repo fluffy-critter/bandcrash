@@ -7,11 +7,11 @@ import typing
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QAbstractItemView, QAbstractScrollArea,
-                               QCheckBox, QFileDialog, QFormLayout,
+                               QButtonGroup, QFileDialog, QFormLayout,
                                QHBoxLayout, QLineEdit, QListWidget,
                                QListWidgetItem, QPlainTextEdit, QPushButton,
-                               QScrollArea, QSizePolicy, QSplitter,
-                               QVBoxLayout, QWidget)
+                               QRadioButton, QScrollArea, QSizePolicy,
+                               QSplitter, QVBoxLayout, QWidget)
 
 from .. import util
 from . import datatypes, file_utils
@@ -53,16 +53,22 @@ class TrackEditor(QWidget):
         self.lyrics = QPlainTextEdit()
         self.comment = QLineEdit()
 
-        self.preview = QCheckBox("Generate preview")
-        self.hidden = QCheckBox("Hidden track")
-
         layout.addRow("Audio file", self.filename)
         layout.addRow("Title", self.title)
 
+        self.preview = QRadioButton("Preview")
+        self.listed = QRadioButton("Listed")
+        self.hidden = QRadioButton("Hidden")
+
+        self.track_type = QButtonGroup()
+        self.track_type.addButton(self.preview)
+        self.track_type.addButton(self.listed)
+        self.track_type.addButton(self.hidden)
+
         player_options = QHBoxLayout()
-        player_options.setSpacing(0)
         player_options.setContentsMargins(0, 0, 0, 0)
         player_options.addWidget(self.preview)
+        player_options.addWidget(self.listed)
         player_options.addWidget(self.hidden)
         layout.addRow("Player options", player_options)
 
@@ -98,10 +104,13 @@ class TrackEditor(QWidget):
         else:
             self.lyrics.document().setPlainText('\n'.join(lyrics))
 
-        self.preview.setCheckState(
-            datatypes.to_checkstate(self.data.get('preview', True)))
-        self.hidden.setCheckState(
-            datatypes.to_checkstate(self.data.get('hidden', False)))
+        hidden = self.data.get('hidden', False)
+        preview = self.data.get('preview', True) and not hidden
+        listed = not hidden and not preview
+        LOGGER.debug("hidden=%s preview=%s listed=%s", hidden, preview, listed)
+        self.hidden.setChecked(hidden)
+        self.preview.setChecked(preview)
+        self.listed.setChecked(listed)
 
     def apply(self):
         """ Apply our data to the backing data """
@@ -140,7 +149,7 @@ class TrackEditor(QWidget):
         elif 'lyrics' in self.data:
             del self.data['lyrics']
 
-        datatypes.apply_checkbox_fields(self.data, (
+        datatypes.apply_radio_fields(self.data, (
             ('preview', self.preview, True),
             ('hidden', self.hidden, False),
         ))
