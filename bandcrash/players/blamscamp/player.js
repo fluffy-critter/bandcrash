@@ -51,7 +51,7 @@ window.addEventListener("load", () => {
         audio.pause();
     };
     slider.onchange = (event) => {
-        let time = slider.value;
+        let time = slider.value*0.001;
         audio.play();
         audio.currentTime = time;
         slider_locked = false;
