@@ -64,7 +64,7 @@ doc:
 
 .PHONY: app
 app: setup format pylint mypy
-	poetry run pyInstaller Bandcrash.spec -y
+	poetry run pyinstaller Bandcrash.spec -y
 
 .PHONY: upload-mac
 upload-mac: preflight app doc
@@ -85,3 +85,14 @@ upload-win: preflight app doc
 	butler push dist/win fluffy/bandcrash:win \
 		--userversion=$(shell ./get-version.sh) \
 		--fix-permissions
+
+.PHONY: upload-linux
+upload-linux: preflight app doc
+	rm -rf dist/linux
+	mkdir -p dist/linux
+	cp dist/bandcrash-gui dist/linux
+	cp -a docs/_build dist/linux/docs
+	butler push dist/linux fluffy/bandcrash:linux \
+		--userversion=$(shell ./get-version.sh) \
+		--fix-permissions
+
