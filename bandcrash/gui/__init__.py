@@ -239,7 +239,7 @@ class AlbumEditor(QMainWindow):
 
         album_menu = menubar.addMenu("&Album")
 
-        add_menu_item(album_menu, "&Encode", self.encode_album, "Ctrl+Enter")
+        add_menu_item(album_menu, "&Encode", self.encode_album, "Ctrl+Shift+E")
 
         edit_menu = menubar.addMenu("&Edit")
         self.undo_menu = add_menu_item(
@@ -460,7 +460,8 @@ class AlbumEditor(QMainWindow):
             self.history_state = self.undo_history.pop()
 
             self.undo_menu.setEnabled(bool(self.undo_history))
-            LOGGER.debug("history size = %d/%d", len(self.undo_history), len(self.redo_history))
+            LOGGER.debug("history size = %d/%d",
+                         len(self.undo_history), len(self.redo_history))
 
     def redo_step(self):
         """ Redo an undone action """
@@ -472,7 +473,8 @@ class AlbumEditor(QMainWindow):
             self.history_state = self.redo_history.pop()
 
             self.redo_menu.setEnabled(bool(self.redo_history))
-            LOGGER.debug("history size = %d/%d", len(self.undo_history), len(self.redo_history))
+            LOGGER.debug("history size = %d/%d",
+                         len(self.undo_history), len(self.redo_history))
 
     def record_undo(self):
         """ Record an undo step """
@@ -481,7 +483,8 @@ class AlbumEditor(QMainWindow):
         self.undo_menu.setEnabled(True)
         self.redo_history.clear()
         self.redo_menu.setEnabled(False)
-        LOGGER.debug("history size = %d/%d", len(self.undo_history), len(self.redo_history))
+        LOGGER.debug("history size = %d/%d",
+                     len(self.undo_history), len(self.redo_history))
 
     def apply(self):
         """ Apply edits to the saved data """

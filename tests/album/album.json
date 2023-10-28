@@ -51,11 +51,17 @@
          "title": "This track is hidden",
          "preview": false,
          "hidden": true
+      },
+      {
+         "filename": "test track.wav",
+         "title": "Test Track with profanity",
+         "lyrics": "Heck!!!!",
+         "explicit": true
       }
    ],
    "_gui": {
       "lastdir": {
-         "AUDIO": "derived",
+         "AUDIO": ".",
          "IMAGE": "../art"
       }
    },

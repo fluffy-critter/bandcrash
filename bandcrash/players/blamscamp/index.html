@@ -51,7 +51,11 @@
                     {% else %}
                     (Track {{loop.index}})
                     {% endif %}
+                    {% if track.explicit %}
+                    <span class="explicit" title="Explicit">E</span>
+                    {% endif %}
                 </span>
+
                 <time class="duration" datetime="{{track.duration_datetime}}">{{track.duration}}</time>
             </li>
             {% endif %}

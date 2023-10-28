@@ -144,6 +144,11 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
     tags.save(out_path, v2_version=3)
     LOGGER.info("Finished writing %s", out_path)
 
+def track_tag_title(track):
+    """ Get the tag title for a track """
+    title = track.get('title', 'Unknown Track')
+    if track.get('explicit'):
+        title += ' [explicit]'
 
 def tag_vorbis(tags, idx, album, track):
     """ Add a vorbis comment section to an ogg/flac file """
@@ -346,8 +351,9 @@ def encode_tracks(config, album, protections, pool, futures):
                 config.input_dir, track['artwork'])
 
         if 'lyrics' in track and isinstance(track['lyrics'], str):
-            track['lyrics'] = util.read_lines(
-                os.path.join(config.input_dir, track['lyrics']))
+            lyricfile = os.path.join(config.input_dir, track['lyrics'])
+            if os.path.isfile(lyricfile):
+                track['lyrics'] = util.read_lines(lyricfile)
 
         duration = util.get_audio_duration(input_filename)
         track['duration'] = seconds_to_timestamp(duration)
