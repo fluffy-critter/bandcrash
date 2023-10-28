@@ -23,7 +23,7 @@ if sys.platform == 'darwin':
         a.scripts,
         [],
         exclude_binaries=True,
-        name='Bandcrash',
+        name='bandcrash',
         debug=False,
         bootloader_ignore_signals=False,
         strip=False,
@@ -43,7 +43,7 @@ else:
         a.binaries,
         a.datas,
         [],
-        name='Bandcrash',
+        name='bandcrash-gui',
         debug=False,
         bootloader_ignore_signals=False,
         strip=False,
@@ -66,7 +66,7 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='Bandcrash',
+    name='bandcrash',
     icon='bclogo.png',
 )
 app = BUNDLE(
