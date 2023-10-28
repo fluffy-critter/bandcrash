@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QDialog, QErrorMessage,
                                QProgressDialog, QPushButton, QSpinBox, QWidget)
 
 from .. import __version__, process, util
+from ..players import blamscamp
 from . import datatypes, widgets
 from .file_utils import FileRole
 from .track_editor import TrackListEditor
@@ -260,9 +261,6 @@ class AlbumEditor(QMainWindow):
         self.genre = QLineEdit()
         self.artwork = widgets.FileSelector(FileRole.IMAGE, self)
         self.composer = QLineEdit()
-        # self.fg_color = ColorSelector("Foreground")
-        # self.bg_color = ColorSelector("Background")
-        # self.highlight_color = ColorSelector("Highlight")
 
         layout.addRow("Artist", self.artist)
         layout.addRow("Title", self.title)
@@ -271,7 +269,8 @@ class AlbumEditor(QMainWindow):
         layout.addRow("Genre", self.genre)
         layout.addRow("Artwork", self.artwork)
 
-        # button hbox for colors
+        self.player_editor = blamscamp.AlbumEditor()
+        layout.addRow("Blamscamp", self.player_editor)
 
         self.track_listing = TrackListEditor(self)
         layout.addRow("Audio Tracks", QWidget(self))
@@ -387,6 +386,8 @@ class AlbumEditor(QMainWindow):
         if 'year' in self.data:
             self.year.setText(str(self.data['year']))
 
+        self.player_editor.reset(self.data)
+
         self.track_listing.reset(self.data['tracks'])
 
         self.do_preview.setCheckState(
@@ -439,6 +440,7 @@ class AlbumEditor(QMainWindow):
             ('do_butler', self.do_butler, True),
         ))
         self.track_listing.apply()
+        self.player_editor.apply()
 
         self.data['_gui'] = {
             'lastdir': self.last_directory
