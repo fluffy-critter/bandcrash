@@ -165,18 +165,18 @@ class TrackListEditor(QSplitter):
     class TrackItem(QListWidgetItem):
         """ an item in the track listing """
 
-        def __init__(self, track_num:int, track: datatypes.TrackData):
+        def __init__(self, track_num: int, track: datatypes.TrackData):
             super().__init__()
             self.track_number = track_num
             self.track_data = track
             self.update_name()
 
-        def set_track_num(self, track_num:int):
+        def set_track_num(self, track_num: int):
             """ Update the track number for this one """
             self.track_number = track_num
             self.update_name()
 
-        def reset(self, track_num:int, data: datatypes.TrackData):
+        def reset(self, track_num: int, data: datatypes.TrackData):
             """ Reset the track listing from a new tracklist
 
             :param list data: album['data']
@@ -213,7 +213,7 @@ class TrackListEditor(QSplitter):
 
         def __init__(self, parent):
             super().__init__(parent)
-            self.album = parent
+            self.track_editor = parent
             self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
             self.setAcceptDrops(True)
 
@@ -231,12 +231,13 @@ class TrackListEditor(QSplitter):
             if event.proposedAction() == Qt.DropAction.CopyAction and event.mimeData().hasUrls():
                 if files := file_utils.filter_audio_urls(event.mimeData().urls()):
                     LOGGER.debug("adding files: %s", files)
-                    self.album.add_files(files)
+                    self.track_editor.add_files(files)
                     event.acceptProposedAction()
-            else:
+            elif event.proposedAction() == Qt.DropAction.MoveAction:
+                self.track_editor.album_editor.record_undo()
                 super().dropEvent(event)
 
-            self.album.apply()
+            self.track_editor.apply()
 
     def __init__(self, album_editor):
         super().__init__()
@@ -369,19 +370,31 @@ class TrackListEditor(QSplitter):
 
         self.add_files(filenames)
 
+    @property
+    def current_row(self):
+        """ The current selected row """
+        return self.track_listing.currentRow()
+
+    @current_row.setter
+    def current_row(self, idx):
+        """ Change the current row """
+        self.track_listing.setCurrentRow(idx)
+
     def add_files(self, filenames):
         """ Accepts files into the track listing """
         LOGGER.debug("TrackListEditor.add_files")
+        self.album_editor.record_undo()
         for filename in filenames:
             _, title = util.guess_track_title(filename)
             track = {'filename': filename, 'title': title}
-            self.data.append(track)
             self.track_listing.addItem(
-                TrackListEditor.TrackItem(track))
+                TrackListEditor.TrackItem(len(self.data), track))
+            self.data.append(track)
 
     def delete_track(self):
         """ Remove a track """
         LOGGER.debug("TrackListEditor.delete_track")
+        self.album_editor.record_undo()
         self.track_listing.takeItem(self.track_listing.currentRow())
 
     def select_previous(self):
@@ -399,6 +412,7 @@ class TrackListEditor(QSplitter):
     def move_up(self):
         """ Move the currently-selected track up in the track listing """
         LOGGER.debug("TrackListEditor.move_up")
+        self.album_editor.record_undo()
         row = self.track_listing.currentRow()
         if row > 0:
             dest = row - 1
@@ -409,6 +423,7 @@ class TrackListEditor(QSplitter):
     def move_down(self):
         """ Move the currently-selected track up in the track listing """
         LOGGER.debug("TrackListEditor.move_down")
+        self.album_editor.record_undo()
         row = self.track_listing.currentRow()
         if row < self.track_listing.count() - 1:
             dest = row + 1
