@@ -19,6 +19,7 @@ pillow = [
     { platform = "darwin", version = "^10.1.0", source = "devpi-fluffy" },
     { markers = "sys_platform != 'darwin'", version = "^10.1.0", source = "pypi"}
 ]
+soundfile = "^0.12.1"
 
 
 [tool.poetry.group.dev.dependencies]
