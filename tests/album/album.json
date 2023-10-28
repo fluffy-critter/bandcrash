@@ -2,14 +2,32 @@
    "artist": "Test artist",
    "year": 2022,
    "title": "Test album",
-   "blamscamp": {
-      "highlight": "#00ff77",
-      "background": "#330000",
-      "foreground": "#770077"
-   },
+   "highlight_color": "#770077",
    "artwork": "album_cover.png",
    "genre": "blipcore",
    "tracks": [
+      {
+         "artwork": "../../art/bclogo.png",
+         "filename": "test track.wav",
+         "genre": "lo-fi jazzcore",
+         "group": "Meows I Have Known",
+         "lyrics": "lyric-file.txt"
+      },
+      {
+         "filename": "test track.wav",
+         "title": "Test Track"
+      },
+      {
+         "filename": "test track.wav",
+         "title": "2 This has a title"
+      },
+      {
+         "artist": "Sluggy Puppernutters",
+         "filename": "test track.wav",
+         "group": "Meows I Have Known",
+         "lyrics": "lyrics-iso8859.txt",
+         "title": "1 A different artist"
+      },
       {
          "filename": "test track.wav",
          "lyrics": [
@@ -20,80 +38,28 @@
             "",
             "How you doing, now?!"
          ],
-         "title": "track 1",
-         "duration": "0:06",
-         "duration_datetime": "0m 6s",
-         "preview_mp3": "01 track 1.mp3"
+         "title": "asdfasdf"
       },
       {
          "filename": "test track.wav",
-         "title": "This has a title",
-         "duration": "0:06",
-         "duration_datetime": "0m 6s",
-         "preview_mp3": "02 This has a title.mp3"
-      },
-      {
-         "filename": "test track.wav",
-         "title": "This has no preview",
          "preview": false,
-         "duration": "0:06",
-         "duration_datetime": "0m 6s"
+         "title": "3 This has no preview blah blah blah"
       },
       {
+         "artwork": "hidden_track.png",
          "filename": "test track.wav",
          "title": "This track is hidden",
-         "artwork": "hidden_track.png",
-         "hidden": true,
-         "artwork_path": "/home/fluffy/projects/bandcrash/tests/album/hidden_track.png",
-         "duration": "0:06",
-         "duration_datetime": "0m 6s",
-         "artwork_preview": {
-            "1x": "hidden_track.150.jpg",
-            "2x": "hidden_track.300.jpg"
-         }
-      },
-      {
-         "filename": "test track.wav",
-         "artwork": "single_track.png",
-         "lyrics": [
-            "Some lyrics",
-            "In a file",
-            "Single file",
-            "",
-            "Blah blah",
-            "blahblahblah",
-            "This is easier for some folks",
-            "To do",
-            "than JSON"
-         ],
-         "genre": "lo-fi jazzcore",
-         "group": "Meows I Have Known",
-         "title": "track 5",
-         "artwork_path": "/home/fluffy/projects/bandcrash/tests/album/single_track.png",
-         "duration": "0:06",
-         "duration_datetime": "0m 6s",
-         "preview_mp3": "05 track 5.mp3",
-         "artwork_preview": {
-            "1x": "single_track.150.jpg",
-            "2x": "single_track.300.jpg"
-         }
-      },
-      {
-         "filename": "test track.wav",
-         "title": "A different artist",
-         "artist": "Sluggy Puppernutters",
-         "lyrics": [
-            "Here \u00e4re some lyrics",
-            "Encoded in something other",
-            "than utf-8"
-         ],
-         "group": "Meows I Have Known",
-         "duration": "0:06",
-         "duration_datetime": "0m 6s",
-         "preview_mp3": "06 Sluggy Puppernutters - A different artist.mp3"
+         "preview": false,
+         "hidden": true
       }
    ],
    "_gui": {
-      "lastdir": {}
+      "lastdir": {
+         "AUDIO": "derived",
+         "IMAGE": "../art"
+      }
+   },
+   "blamscamp": {
+      "highlight": "#7c0a87"
    }
 }
