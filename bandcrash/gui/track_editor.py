@@ -165,19 +165,26 @@ class TrackListEditor(QSplitter):
     class TrackItem(QListWidgetItem):
         """ an item in the track listing """
 
-        def __init__(self, track: datatypes.TrackData):
+        def __init__(self, track_num:int, track: datatypes.TrackData):
             super().__init__()
+            self.track_number = track_num
             self.track_data = track
-            self.setText(self.display_name)
+            self.update_name()
 
-        def reset(self, data: datatypes.TrackData):
+        def set_track_num(self, track_num:int):
+            """ Update the track number for this one """
+            self.track_number = track_num
+            self.update_name()
+
+        def reset(self, track_num:int, data: datatypes.TrackData):
             """ Reset the track listing from a new tracklist
 
             :param list data: album['data']
             """
             LOGGER.debug("TrackItem.reset %s", self.display_name)
+            self.track_number = track_num
             self.track_data = data
-            self.setText(self.display_name)
+            self.update_name()
 
         def apply(self):
             """ Apply the GUI values to the backing store """
@@ -193,10 +200,13 @@ class TrackListEditor(QSplitter):
             """ Get the display name of this track """
             info = self.track_data
             if info and 'title' in info:
-                return info['title']
-            if info and 'filename' in info:
-                return f"({os.path.basename(info['filename'])})"
-            return "(unknown)"
+                title = info['title']
+            elif info and 'filename' in info:
+                title = f"({os.path.basename(info['filename'])})"
+            else:
+                title = "(unknown)"
+
+            return f"{self.track_number + 1}. {title}"
 
     class TrackList(QListWidget):
         """ The actual track listing panel """
@@ -296,10 +306,10 @@ class TrackListEditor(QSplitter):
             item = typing.cast(TrackListEditor.TrackItem,
                                self.track_listing.item(idx))
             if item:
-                item.reset(track)
+                item.reset(idx, track)
             else:
                 self.track_listing.addItem(
-                    TrackListEditor.TrackItem(track))
+                    TrackListEditor.TrackItem(idx, track))
 
         while self.track_listing.count() > len(data):
             self.track_listing.takeItem(self.track_listing.count() - 1)
@@ -320,6 +330,7 @@ class TrackListEditor(QSplitter):
         for row in range(self.track_listing.count()):
             item = typing.cast(TrackListEditor.TrackItem,
                                self.track_listing.item(row))
+            item.set_track_num(row)
             item.apply()
             LOGGER.debug("  -- append %s", item.display_name)
             self.data.append(item.track_data)
