@@ -5,6 +5,7 @@ import os
 import os.path
 import re
 import string
+import subprocess
 import typing
 
 import chardet
@@ -184,3 +185,27 @@ def ffmpeg_path():
     ffmpeg = pyffmpeg.FFmpeg().get_ffmpeg_bin()
     LOGGER.debug("Got ffmpeg binary: %s", ffmpeg)
     return ffmpeg
+
+
+def get_audio_duration(path):
+    """ Abuse `ffmpeg -i` to get the audio duration, in seconds
+
+    Would normally use pyffmpeg.FFprobe but see
+    https://github.com/deuteronomy-works/pyffmpeg/issues/667
+    """
+    output = subprocess.run([ffmpeg_path(),
+                            '-hide_banner',
+                             '-i', path], check=False,
+                            capture_output=True,
+                            creationflags=getattr(
+        subprocess, 'CREATE_NO_WINDOW', 0),
+    )
+
+    text = output.stderr.decode().splitlines()
+    for line in text:
+        if match := re.search(r'Duration: *([0-9.:]+)', line):
+            total = 0.0
+            for chunk in match.group(1).split(':'):
+                total = total*60 + float(chunk)
+            return total
+    return 0

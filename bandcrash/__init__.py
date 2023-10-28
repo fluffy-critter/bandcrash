@@ -14,7 +14,6 @@ import os.path
 import shutil
 import subprocess
 import typing
-import soundfile
 
 from . import images, util
 
@@ -300,6 +299,7 @@ def submit_butler(config, target, futures):
             raise RuntimeError("Butler login needed") from err
         raise RuntimeError(f'Butler error: {err.output}') from err
 
+
 def seconds_to_timestamp(duration):
     """ Convert a duration (in seconds) to a timestamp like h:mm:ss """
     minutes, seconds = divmod(duration, 60)
@@ -308,6 +308,7 @@ def seconds_to_timestamp(duration):
     if hours:
         return f'{hours:.0f}:{minutes:02.0f}:{seconds:02.0f}'
     return f'{minutes:.0f}:{seconds:02.0f}'
+
 
 def seconds_to_datetime(duration):
     """ Convert a duration (in seconds) to an HTML5 datetime like 3h 5m 10s """
@@ -347,7 +348,7 @@ def encode_tracks(config, album, protections, pool, futures):
             track['lyrics'] = util.read_lines(
                 os.path.join(config.input_dir, track['lyrics']))
 
-        duration = soundfile.info(input_filename).duration
+        duration = util.get_audio_duration(input_filename)
         track['duration'] = seconds_to_timestamp(duration)
         track['duration_datetime'] = seconds_to_datetime(duration)
 
