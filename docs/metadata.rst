@@ -33,7 +33,8 @@ For the sake of clarity, here is a JSON file that represents a simple album.
              "title": "Yet another track",
              "preview": false,
              "lyrics": "third track.txt",
-             "artist": "Secret guest artist"
+             "artist": "Secret guest artist",
+             "explicit": true
           }
        ],
        "blamscamp": {
@@ -88,6 +89,7 @@ Each track can include the following metadata values:
 * **lyrics**: An array of strings, one line of lyrics per string; alternately, the filename to read lyrics from
 * **hidden**: A boolean value; if set to true, hides the track from the web player entirely (defaults to false)
 * **preview**: A boolean value; if set to true, generates a preview of this track (defaults to true)
+* **explicit**: Whether this track contains explicit content (Defaults to false)
 
 Player configuration
 --------------------
