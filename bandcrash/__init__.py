@@ -14,6 +14,7 @@ import os.path
 import shutil
 import subprocess
 import typing
+import soundfile
 
 from . import images, util
 
@@ -299,6 +300,24 @@ def submit_butler(config, target, futures):
             raise RuntimeError("Butler login needed") from err
         raise RuntimeError(f'Butler error: {err.output}') from err
 
+def seconds_to_timestamp(duration):
+    """ Convert a duration (in seconds) to a timestamp like h:mm:ss """
+    minutes, seconds = divmod(duration, 60)
+    hours, minutes = divmod(minutes, 60)
+
+    if hours:
+        return f'{hours:.0f}:{minutes:02.0f}:{seconds:02.0f}'
+    return f'{minutes:.0f}:{seconds:02.0f}'
+
+def seconds_to_datetime(duration):
+    """ Convert a duration (in seconds) to an HTML5 datetime like 3h 5m 10s """
+    minutes, seconds = divmod(duration, 60)
+    hours, minutes = divmod(minutes, 60)
+
+    if hours:
+        return f'{hours:.0f}h {minutes:.0f}m {seconds:.0f}s'
+    return f'{minutes:.0f}m {seconds:.0f}s'
+
 
 def encode_tracks(config, album, protections, pool, futures):
     """ run the track encode process """
@@ -327,6 +346,10 @@ def encode_tracks(config, album, protections, pool, futures):
         if 'lyrics' in track and isinstance(track['lyrics'], str):
             track['lyrics'] = util.read_lines(
                 os.path.join(config.input_dir, track['lyrics']))
+
+        duration = soundfile.info(input_filename).duration
+        track['duration'] = seconds_to_timestamp(duration)
+        track['duration_datetime'] = seconds_to_datetime(duration)
 
         # generate preview track, if desired
         if config.do_preview and not track.get('hidden') and track.get('preview', True):

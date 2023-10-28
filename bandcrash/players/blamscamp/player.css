@@ -104,6 +104,10 @@ img.trackart {
     color: var(--highlight);
 }
 
+.title {
+    margin-right: 1em;
+}
+
 h1,
 h2,
 h3,
