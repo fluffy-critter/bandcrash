@@ -18,7 +18,7 @@ try:
         def __init__(self):
             super().__init__()
 
-            LOGGER.debug("bandcrash.AlbumEditor.__init__")
+            LOGGER.debug("blamscamp.AlbumEditor.__init__")
 
             layout = widgets.FlowLayout(self)
             layout.setSpacing(0)
@@ -45,7 +45,7 @@ try:
 
         def reset(self, album):
             """ Reset the values from the album's storage """
-            LOGGER.debug("bandcrash.AlbumEditor.reset")
+            LOGGER.debug("blamscamp.AlbumEditor.reset")
 
             self.album = album
             self.data = self.album.get("blamscamp", {})
@@ -55,7 +55,7 @@ try:
 
         def apply(self):
             """ Apply the values to the album """
-            LOGGER.debug("bandcrash.AlbumEditor.apply")
+            LOGGER.debug("blamscamp.AlbumEditor.apply")
 
             for widget, key, dfl in self.mapping:
                 if widget.name() != dfl:
