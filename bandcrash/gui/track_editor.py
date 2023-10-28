@@ -7,16 +7,16 @@ import typing
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QAbstractItemView, QAbstractScrollArea,
-                               QButtonGroup, QFileDialog, QFormLayout,
-                               QHBoxLayout, QLineEdit, QListWidget,
-                               QListWidgetItem, QPlainTextEdit, QPushButton,
-                               QRadioButton, QScrollArea, QSizePolicy,
-                               QSplitter, QVBoxLayout, QWidget)
+                               QButtonGroup, QCheckBox, QFileDialog,
+                               QFormLayout, QHBoxLayout, QLineEdit,
+                               QListWidget, QListWidgetItem, QPlainTextEdit,
+                               QPushButton, QRadioButton, QScrollArea,
+                               QSizePolicy, QSplitter, QVBoxLayout, QWidget)
 
 from .. import util
 from . import datatypes, file_utils
 from .file_utils import FileRole
-from .widgets import FileSelector, wrap_layout
+from .widgets import FileSelector, FlowLayout, wrap_layout
 
 LOGGER = logging.getLogger(__name__)
 
@@ -65,12 +65,15 @@ class TrackEditor(QWidget):
         self.track_type.addButton(self.listed)
         self.track_type.addButton(self.hidden)
 
-        player_options = QHBoxLayout()
+        player_options = FlowLayout()
         player_options.setContentsMargins(0, 0, 0, 0)
         player_options.addWidget(self.preview)
         player_options.addWidget(self.listed)
         player_options.addWidget(self.hidden)
-        layout.addRow("Player options", player_options)
+        layout.addRow("Track type", player_options)
+
+        self.explicit = QCheckBox("Explicit")
+        player_options.addWidget(self.explicit)
 
         layout.addRow("Track artist", self.artist)
         layout.addRow("Composer", self.composer)
@@ -113,6 +116,9 @@ class TrackEditor(QWidget):
         self.preview.setChecked(preview)
         self.listed.setChecked(listed)
 
+        self.explicit.setCheckState(
+            datatypes.to_checkstate(self.data.get('explicit', False)))
+
     def apply(self):
         """ Apply our data to the backing data """
         # pylint:disable=too-many-branches
@@ -153,6 +159,10 @@ class TrackEditor(QWidget):
         datatypes.apply_radio_fields(self.data, (
             ('preview', self.preview, True),
             ('hidden', self.hidden, False),
+        ))
+
+        datatypes.apply_checkbox_fields(self.data, (
+            ('explicit', self.explicit, False),
         ))
 
         LOGGER.debug("applied: %s", self.data)

@@ -131,6 +131,15 @@ h3,
     opacity: 1;
 }
 
+.explicit {
+    display: inline-block;
+    font-size: small;
+    background: #ccc;
+    color: white;
+    border-radius: 3px;
+    padding: 3px;
+}
+
 .slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
