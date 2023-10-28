@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <title>{{album.title}} by {{album.artist}}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="generator" content="bandcrash {{__version__.__version__}}" />
+    <meta name="generator" content="bandcrash {{version}}" />
     <script src="player.js"></script>
     <link rel="stylesheet" href="player.css">
 </head>
@@ -19,7 +19,7 @@
     <h3>by <span class="artist">{{album.artist}}</span></h3>
     {% endif %}
     {% if album.artwork_preview %}
-    <img id="coverart" src="{{album.artwork_preview[0]}}" srcset="{{album.artwork_preview[0]}} 1x, {{album.artwork_preview[1]}} 2x" loading="lazy">
+    <img id="coverart" src="{{album.artwork_preview['1x']}}" srcset="{{album.artwork_preview['1x']}} 1x, {{album.artwork_preview['2x']}} 2x" loading="lazy">
     {% else %}
     <img id="coverart" loading="lazy">
     {% endif %}
@@ -38,7 +38,7 @@
                 {% if track.preview_mp3 %}
                 <button class="play paused" data-song="{{ track.preview_mp3 }}" title="{{loop.index}}. {{track.title}}">
                     {% if track.artwork_preview %}
-                    <img class="trackart" src="{{track.artwork_preview[0]}}" srcset="{{track.artwork_preview[0]}} 1x, {{track.artwork_preview[1]}} 2x">
+                    <img class="trackart" src="{{track.artwork_preview['1x']}}" srcset="{{track.artwork_preview['1x']}} 1x, {{track.artwork_preview['2x']}} 2x">
                     {% endif %}
                 </button>
                 {% endif %}
