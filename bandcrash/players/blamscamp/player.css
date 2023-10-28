@@ -1,17 +1,17 @@
 :root {
     --background:
     /* {{ '*/
-    ' ~ (album.bg_color or 'white') ~ '
+    ' ~ (blamscamp.background or 'white') ~ '
     /*' }} */
     ;
     --foreground:
     /* {{ '*/
-    ' ~ (album.fg_color or 'black') ~ '
+    ' ~ (blamscamp.foreground or 'black') ~ '
     /*' }} */
     ;
     --highlight:
     /* {{ '*/
-    ' ~ (album.highlight_color or '#770000') ~ '
+    ' ~ (blamscamp.highlight or '#770000') ~ '
     /*' }} */
     ;
 }
@@ -102,6 +102,10 @@ img.trackart {
 .artist,
 .title {
     color: var(--highlight);
+}
+
+.title {
+    margin-right: 1em;
 }
 
 h1,
