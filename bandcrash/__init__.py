@@ -15,8 +15,6 @@ import shutil
 import subprocess
 import typing
 
-import jinja2
-
 from . import images, util
 
 try:
@@ -225,8 +223,11 @@ def make_web_preview(input_dir, output_dir, album, protections, futures):
     wait_futures(futures)
     LOGGER.info("Preview: Building player in %s", output_dir)
 
+    from .players import blamscamp
+    player = blamscamp.Player()
+
     @functools.lru_cache()
-    def gen_art_preview(in_path: str) -> typing.Tuple[str, str]:
+    def gen_art_preview(in_path: str) -> typing.Dict[str, str]:
         """ Generate web preview art for the given file
 
         :param str in_path: Input path of the source file
@@ -235,35 +236,25 @@ def make_web_preview(input_dir, output_dir, album, protections, futures):
         :returns: tuple of the 1x and 2x renditions of the artwork
         """
         LOGGER.debug("generating preview art for %s", in_path)
-        return (images.generate_rendition(in_path, output_dir, 150),
-                images.generate_rendition(in_path, output_dir, 300))
+        return {spec: images.generate_rendition(in_path, output_dir, size)
+                for spec, size in player.art_rendition_sizes.items()}
 
     if 'artwork' in album:
         LOGGER.debug("album art")
         album['artwork_preview'] = gen_art_preview(
             os.path.join(input_dir, album['artwork']))
-        protections |= set(album['artwork_preview'])
+        protections |= set(album['artwork_preview'].values())
         LOGGER.debug("added preview protections %s", album['artwork_preview'])
 
     for track in album['tracks']:
         if 'artwork' in track:
             track['artwork_preview'] = gen_art_preview(
                 os.path.join(input_dir, track['artwork']))
-            protections.add(track['artwork_preview'])
+            protections.add(track['artwork_preview'].values())
             LOGGER.debug("added preview protections %s",
                          track['artwork_preview'])
 
-    env = jinja2.Environment(
-        loader=jinja2.FileSystemLoader(os.path.join(
-            os.path.dirname(__file__), 'jinja_templates')))
-
-    for tmpl in ('index.html', 'player.js', 'player.css'):
-        template = env.get_template(tmpl)
-        with open(os.path.join(output_dir, tmpl), 'w', encoding='utf8') as outfile:
-            LOGGER.debug("generating %s", tmpl)
-            outfile.write(template.render(
-                album=album, __version__=__version__))
-            protections.add(tmpl)
+    player.convert(album, output_dir, protections, version=__version__)
 
     LOGGER.info("Preview: Finished generating web preview at %s; protections=%s",
                 output_dir, protections)
