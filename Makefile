@@ -80,7 +80,7 @@ upload-mac: preflight app doc
 upload-win: preflight app doc
 	rm -rf dist/win
 	mkdir -p dist/win
-	cp dist/Bandcrash.exe dist/win
+	cp dist/bandcrash-gui.exe dist/win/Bandcrash.exe
 	cp -a docs/_build dist/win/docs
 	butler push dist/win fluffy/bandcrash:win \
 		--userversion=$(shell ./get-version.sh) \
@@ -90,7 +90,6 @@ upload-win: preflight app doc
 upload-linux: preflight app doc
 	rm -rf dist/linux
 	mkdir -p dist/linux
-	# for some reason pyInstaller wants a different exe name on Linux
 	cp dist/bandcrash-gui dist/linux/bandcrash
 	cp -a docs/_build dist/linux/docs
 	butler push dist/linux fluffy/bandcrash:linux \
