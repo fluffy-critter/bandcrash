@@ -7,7 +7,7 @@ a = Analysis(
     ['bandcrash-gui.py'],
     pathex=[],
     binaries=[],
-    datas=[('bandcrash/jinja_templates/*', 'bandcrash/jinja_templates')],
+    datas=[('bandcrash/players/blamscamp/*', 'bandcrash/players/blamscamp')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
