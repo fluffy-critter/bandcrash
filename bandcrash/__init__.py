@@ -5,6 +5,7 @@ import argparse
 import base64
 import collections
 import concurrent.futures
+import copy
 import functools
 import itertools
 import json
@@ -432,7 +433,7 @@ def process(config, album, pool, futures):
 
     # Make a copy of the dict, since some pipeline steps mutate it and we want
     # to be nice to the caller
-    album = album.copy()
+    album = copy.deepcopy(album)
 
     # Coerce album configuration to app configuration if it hasn't been specified
     for attrname, default in (
