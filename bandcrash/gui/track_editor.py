@@ -373,6 +373,18 @@ class TrackListEditor(QSplitter):
         LOGGER.debug("TrackListEditor.delete_track")
         self.track_listing.takeItem(self.track_listing.currentRow())
 
+    def select_previous(self):
+        """ Select the previous track """
+        current_row = self.track_listing.currentRow()
+        if current_row > 0:
+            self.track_listing.setCurrentRow(current_row - 1)
+
+    def select_next(self):
+        """ Select the next track """
+        current_row = self.track_listing.currentRow()
+        if current_row + 1 < self.track_listing.count():
+            self.track_listing.setCurrentRow(current_row + 1)
+
     def move_up(self):
         """ Move the currently-selected track up in the track listing """
         LOGGER.debug("TrackListEditor.move_up")
