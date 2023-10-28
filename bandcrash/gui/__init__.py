@@ -223,20 +223,26 @@ class AlbumEditor(QMainWindow):
 
         file_menu = menubar.addMenu("&File")
 
-        add_menu_item(file_menu, "&New", self.file_new, "Ctrl+N")
-        add_menu_item(file_menu, "&Open...", self.file_open, "Ctrl+O")
-        add_menu_item(file_menu, "&Save", self.save, "Ctrl+S")
-        add_menu_item(file_menu, "Save &As...", self.save_as, "Ctrl+Shift+S")
-        add_menu_item(file_menu, "&Revert", self.revert, "Ctrl+Shift+R")
-        add_menu_item(file_menu, "&Close", self.close, "Ctrl+W")
+        standard_key = QtGui.QKeySequence.StandardKey
+
+        add_menu_item(file_menu, "&New", self.file_new, standard_key.New)
+        add_menu_item(file_menu, "&Open...", self.file_open, standard_key.Open)
+        add_menu_item(file_menu, "&Save", self.save, standard_key.Save)
+        add_menu_item(file_menu, "Save &As...",
+                      self.save_as, standard_key.SaveAs)
+        add_menu_item(file_menu, "&Revert", self.revert, standard_key.Refresh)
+        add_menu_item(file_menu, "&Close", self.close, standard_key.Close)
 
         album_menu = menubar.addMenu("&Album")
 
         add_menu_item(album_menu, "&Encode", self.encode_album, "Ctrl+Enter")
 
         edit_menu = menubar.addMenu("&Edit")
-        add_menu_item(edit_menu, "&Preferences", PreferencesWindow.show_preferences, "Ctrl+,",
+        add_menu_item(edit_menu, "&Preferences", PreferencesWindow.show_preferences,
+                      standard_key.Preferences,
                       QtGui.QAction.MenuRole.PreferencesRole)
+
+        track_menu = menubar.addMenu("&Track")
 
         help_menu = menubar.addMenu("&Help")
         add_menu_item(help_menu, "&About...", self.show_about_box, None,
@@ -275,6 +281,19 @@ class AlbumEditor(QMainWindow):
         self.track_listing = TrackListEditor(self)
         layout.addRow("Audio Tracks", QWidget(self))
         layout.addRow(self.track_listing)
+
+        add_menu_item(track_menu, "&Add...",
+                      self.track_listing.add_track_button, "Ctrl+Shift+A")
+        add_menu_item(track_menu, "&Delete",
+                      self.track_listing.delete_track, "Ctrl+Del")
+        add_menu_item(track_menu, "&Previous",
+                      self.track_listing.select_previous, "PgUp")
+        add_menu_item(track_menu, "&Next",
+                      self.track_listing.select_next, "PgDown")
+        add_menu_item(track_menu, "Move &up",
+                      self.track_listing.move_up, "Alt+Up")
+        add_menu_item(track_menu, "Move &down",
+                      self.track_listing.move_down, "Alt+Down")
 
         checkboxes = widgets.FlowLayout()
         self.do_preview = QCheckBox("Web preview")
