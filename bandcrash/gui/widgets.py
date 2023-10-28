@@ -5,9 +5,10 @@ import os
 import os.path
 
 from PySide6.QtCore import QMargins, QPoint, QRect, QSize, Qt
-from PySide6.QtWidgets import (QFileDialog, QFormLayout, QHBoxLayout, QLayout,
-                               QLineEdit, QProgressBar, QPushButton,
-                               QSizePolicy, QWidget)
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import (QColorDialog, QFileDialog, QFormLayout,
+                               QHBoxLayout, QLayout, QLineEdit, QProgressBar,
+                               QPushButton, QSizePolicy, QWidget)
 
 from .. import util
 from .file_utils import FileRole
@@ -214,3 +215,51 @@ class FlowLayout(QLayout):
             line_height = max(line_height, item.sizeHint().height())
 
         return y + line_height - rect.y()
+
+
+class ColorPicker(QWidget):
+    """ A color picker button """
+
+    def __init__(self, parent=None, label=""):
+        super().__init__(parent)
+
+        self.label = label
+
+        self._value = QColor.fromString('#000000')
+        self._button = QPushButton()
+        self._button.setAutoFillBackground(True)
+
+        self.setName('#000000')
+
+        self._button.clicked.connect(self.pickColor)
+
+        hbox = QHBoxLayout()
+        hbox.addWidget(self._button)
+        self.setLayout(hbox)
+
+    def pickColor(self):  # pylint:disable=invalid-name
+        """ Pick a color """
+        color = QColorDialog.getColor(self._value)
+        if color.isValid():
+            self.setValue(color)
+
+    def value(self):
+        """ Get the color as a Qt color object """
+        return self._value
+
+    def name(self):
+        """ Get the color as a hex string """
+        return self._value.name()
+
+    def setValue(self, color):  # pylint:disable=invalid-name
+        """ Set the color value by Qt color """
+        self._value = color
+        fg_color = 'white' if self._value.valueF() < 0.5 else 'black'
+        self._button.setText(
+            f'{self.label}: {color.name()}' if self.label else color.name())
+        self._button.setStyleSheet(
+            f'background-color: {color.name()}; color: {fg_color};')
+
+    def setName(self, name):  # pylint:disable=invalid-name
+        """ Set the color value by hex string """
+        self.setValue(QColor.fromString(name))

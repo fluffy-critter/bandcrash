@@ -8,7 +8,9 @@ window.addEventListener("load", () => {
     const slider = document.querySelector(".slider");
     const play_buttons = document.querySelectorAll(".song_list .play");
     const big_button = document.querySelector(".player .play");
-    const player_title = document.querySelector(".player p");
+    const player_title = document.querySelector(".player .title");
+    const player_time = document.querySelector(".player time.current");
+    const player_duration = document.querySelector(".player time.duration");
     let last_played = -1;
     let slider_locked = false;
 
@@ -32,6 +34,10 @@ window.addEventListener("load", () => {
     function reset_player() {
         last_played = -1;
         player_title.textContent = play_buttons[0].parentElement.querySelector(".title").textContent;
+        player_duration.textContent = play_buttons[0].parentElement.querySelector("time").textContent;
+        player_duration.datetime = play_buttons[0].parentElement.querySelector("time").datetime;
+        player_time.datetime = '0s';
+        player_time.textContent = '0:00'
         audio.src = play_buttons[0].dataset.song;
         cover_art.src = album_art.src;
         cover_art.srcset = album_art.srcset;
@@ -45,7 +51,7 @@ window.addEventListener("load", () => {
         audio.pause();
     };
     slider.onchange = (event) => {
-        let time = slider.value / 1000 * audio.duration;
+        let time = slider.value*0.001;
         audio.play();
         audio.currentTime = time;
         slider_locked = false;
@@ -78,7 +84,21 @@ window.addEventListener("load", () => {
     };
     audio.ontimeupdate = (event) => {
         if (slider_locked == false) {
-            slider.value = (audio.currentTime / audio.duration) * 1000;
+            slider.max = audio.duration*1000;
+            slider.value = audio.currentTime*1000;
+
+            var seconds = Math.floor(audio.currentTime);
+            var minutes = Math.floor(seconds/60);
+            seconds -= minutes*60;
+            var hours = Math.floor(minutes/60);
+            minutes -= hours*60;
+
+            player_time.datetime = `${hours?hours + 'h ':''}${minutes?minutes + 'm ':''}${seconds}s`;
+
+            if (seconds < 10) { seconds = '0' + seconds; }
+            if (hours > 0 && minutes < 10) { minutes = '0' + minutes; }
+            if (hours > 0) { hours = hours + ':'; } else { hours = ''; }
+            player_time.textContent = hours + minutes + ':' + seconds;
         }
     };
 
@@ -106,6 +126,8 @@ window.addEventListener("load", () => {
             last_played = idx;
             audio.src = e.dataset.song;
             player_title.textContent = e.parentElement.querySelector(".title").textContent;
+            player_duration.textContent = e.parentElement.querySelector("time").textContent;
+            player_duration.datetime = e.parentElement.querySelector("time").datetime;
             audio.onloadeddata = (event) => {
                 audio.play();
                 audio.onloadeddata = null;

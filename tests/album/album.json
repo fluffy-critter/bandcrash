@@ -2,7 +2,11 @@
    "artist": "Test artist",
    "year": 2022,
    "title": "Test album",
-   "highlight_color": "#770077",
+   "blamscamp": {
+      "highlight": "#00ff77",
+      "background": "#330000",
+      "foreground": "#770077"
+   },
    "artwork": "album_cover.png",
    "genre": "blipcore",
    "tracks": [
