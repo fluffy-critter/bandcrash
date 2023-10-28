@@ -7,6 +7,15 @@
    "genre": "blipcore",
    "tracks": [
       {
+         "filename": "test track.wav",
+         "title": "This has a title"
+      },
+      {
+         "filename": "test track.wav",
+         "preview": false,
+         "title": "This has no preview blah blah blah"
+      },
+      {
          "artwork": "../../art/bclogo.png",
          "filename": "test track.wav",
          "genre": "lo-fi jazzcore",
@@ -14,19 +23,15 @@
          "lyrics": "lyric-file.txt"
       },
       {
-         "filename": "test track.wav",
-         "title": "Test Track"
-      },
-      {
-         "filename": "test track.wav",
-         "title": "2 This has a title"
-      },
-      {
          "artist": "Sluggy Puppernutters",
          "filename": "test track.wav",
          "group": "Meows I Have Known",
          "lyrics": "lyrics-iso8859.txt",
-         "title": "1 A different artist"
+         "title": "A different artist"
+      },
+      {
+         "filename": "test track.wav",
+         "title": "Test Track"
       },
       {
          "filename": "test track.wav",
@@ -39,11 +44,6 @@
             "How you doing, now?!"
          ],
          "title": "asdfasdf"
-      },
-      {
-         "filename": "test track.wav",
-         "preview": false,
-         "title": "3 This has no preview blah blah blah"
       },
       {
          "artwork": "hidden_track.png",
