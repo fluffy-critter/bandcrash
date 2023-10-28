@@ -144,11 +144,13 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
     tags.save(out_path, v2_version=3)
     LOGGER.info("Finished writing %s", out_path)
 
+
 def track_tag_title(track):
     """ Get the tag title for a track """
     title = track.get('title', 'Unknown Track')
     if track.get('explicit'):
         title += ' [explicit]'
+
 
 def tag_vorbis(tags, idx, album, track):
     """ Add a vorbis comment section to an ogg/flac file """
