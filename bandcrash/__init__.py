@@ -452,6 +452,7 @@ def process(config, album, pool, futures):
         ('do_flac', True),
         ('do_zip', True),
         ('do_butler', bool(album.get('butler_target'))),
+        ('do_cleanup', True),
         ('butler_target', ''),
         ('butler_prefix', '')
     ):
