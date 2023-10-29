@@ -50,7 +50,12 @@
          "filename": "test track.wav",
          "title": "This track is hidden",
          "preview": false,
-         "hidden": true
+         "hidden": true,
+         "about": [
+            "This track is hidden, so nobody can ever see it.",
+            "",
+            "And that's sad. :( :( :("
+         ]
       },
       {
          "filename": "test track.wav",
@@ -60,8 +65,27 @@
       },
       {
          "filename": "test track.wav",
+         "lyrics": [
+            "Heckin' explicit track",
+            "with no title"
+         ],
+         "explicit": true
+      },
+      {
+         "filename": "test track.wav",
          "explicit": true,
-         "comment": "No title but it's explicit"
+         "title": "1. Adagio",
+         "group": "A multi-movement work"
+      },
+      {
+         "filename": "test track.wav",
+         "title": "2. Rinfrescante",
+         "group": "A multi-movement work"
+      },
+      {
+         "filename": "test track.wav",
+         "title": "3. Solave",
+         "group": "A multi-movement work"
       }
    ],
    "_gui": {

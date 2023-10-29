@@ -52,6 +52,7 @@ class TrackEditor(QWidget):
         self.artwork = FileSelector(FileRole.IMAGE, album_editor)
         self.lyrics = QPlainTextEdit()
         self.comment = QLineEdit()
+        self.about = QPlainTextEdit()
 
         layout.addRow("Audio file", self.filename)
         layout.addRow("Title", self.title)
@@ -75,14 +76,16 @@ class TrackEditor(QWidget):
         self.explicit = QCheckBox("Explicit")
         player_options.addWidget(self.explicit)
 
+        layout.addRow("Genre", self.genre)
+        layout.addRow("Grouping", self.group)
+
         layout.addRow("Track artist", self.artist)
         layout.addRow("Composer", self.composer)
         layout.addRow("Cover of", self.cover_of)
         layout.addRow("Artwork", self.artwork)
         layout.addRow("Lyrics", self.lyrics)
-        layout.addRow("Genre", self.genre)
-        layout.addRow("Grouping", self.group)
         layout.addRow("Track comment", self.comment)
+        layout.addRow("Track details", self.about)
 
     def reset(self, data: datatypes.TrackData):
         """ Reset to the specified backing data """
@@ -102,11 +105,8 @@ class TrackEditor(QWidget):
         ):
             widget.setText(self.data.get(key, ''))
 
-        lyrics = self.data.get('lyrics', '')
-        if isinstance(lyrics, str):
-            self.lyrics.document().setPlainText(lyrics)
-        else:
-            self.lyrics.document().setPlainText('\n'.join(lyrics))
+        self.lyrics.document().setPlainText(util.text_to_lines(self.data.get('lyrics', '')))
+        self.about.document().setPlainText(util.text_to_lines(self.data.get('about', '')))
 
         hidden = self.data.get('hidden', False)
         preview = self.data.get('preview', True) and not hidden
@@ -146,15 +146,19 @@ class TrackEditor(QWidget):
             ('comment', self.comment),
         ))
 
-        def split_lyrics(text):
+        def split_lines(text):
             lines = text.split('\n')
             return lines if len(lines) != 1 else text
 
-        lyrics = split_lyrics(self.lyrics.document().toPlainText())
-        if lyrics:
-            self.data['lyrics'] = lyrics
-        elif 'lyrics' in self.data:
-            del self.data['lyrics']
+        for key, widget in (
+            ('lyrics', self.lyrics),
+            ('about', self.about),
+            ):
+            lines = split_lines(widget.document().toPlainText())
+            if lines:
+                self.data[key] = lines
+            elif key in self.data:
+                del self.data[key]
 
         datatypes.apply_radio_fields(self.data, (
             ('preview', self.preview, True),
