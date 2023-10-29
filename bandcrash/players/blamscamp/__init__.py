@@ -18,7 +18,7 @@ try:
         def __init__(self):
             super().__init__()
 
-            LOGGER.debug("bandcrash.AlbumEditor.__init__")
+            LOGGER.debug("blamscamp.AlbumEditor.__init__")
 
             layout = widgets.FlowLayout(self)
             layout.setSpacing(0)
@@ -45,7 +45,7 @@ try:
 
         def reset(self, album):
             """ Reset the values from the album's storage """
-            LOGGER.debug("bandcrash.AlbumEditor.reset")
+            LOGGER.debug("blamscamp.AlbumEditor.reset")
 
             self.album = album
             self.data = self.album.get("blamscamp", {})
@@ -55,7 +55,7 @@ try:
 
         def apply(self):
             """ Apply the values to the album """
-            LOGGER.debug("bandcrash.AlbumEditor.apply")
+            LOGGER.debug("blamscamp.AlbumEditor.apply")
 
             for widget, key, dfl in self.mapping:
                 if widget.name() != dfl:
@@ -73,6 +73,17 @@ except ImportError:
 
 
 class Player:
+    """ A player based on a fork of `Blamscamp <https://suricrasia.online/blamscamp/>`_.
+
+    This keeps its configuration inside a top-level dict named ``"blamscamp"``.
+    Its configuration parameters are:
+
+    * ``foreground``: Foreground text color
+    * ``background``: Background color
+    * ``highlight``: Highlight text color
+
+    """
+
     @property
     def name(self):
         """ Get the player's name """
@@ -82,15 +93,6 @@ class Player:
     def art_rendition_sizes(self):
         """ Gets the rendition sizes needed for artworks """
         return {"1x": 150, "2x": 300}
-
-    @property
-    def album_gui(self):
-        """ Gets the album GUI layout """
-        return (
-            ('foreground', 'color', '#000000'),
-            ('background', 'color', '#ffffff'),
-            ('highlight', 'color', '#7f0000'),
-        )
 
     @property
     def track_gui(self):

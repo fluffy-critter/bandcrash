@@ -7,16 +7,16 @@ import typing
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QAbstractItemView, QAbstractScrollArea,
-                               QButtonGroup, QFileDialog, QFormLayout,
-                               QHBoxLayout, QLineEdit, QListWidget,
-                               QListWidgetItem, QPlainTextEdit, QPushButton,
-                               QRadioButton, QScrollArea, QSizePolicy,
-                               QSplitter, QVBoxLayout, QWidget)
+                               QButtonGroup, QCheckBox, QFileDialog,
+                               QFormLayout, QHBoxLayout, QLineEdit,
+                               QListWidget, QListWidgetItem, QPlainTextEdit,
+                               QPushButton, QRadioButton, QScrollArea,
+                               QSizePolicy, QSplitter, QVBoxLayout, QWidget)
 
 from .. import util
 from . import datatypes, file_utils
 from .file_utils import FileRole
-from .widgets import FileSelector, wrap_layout
+from .widgets import FileSelector, FlowLayout, wrap_layout
 
 LOGGER = logging.getLogger(__name__)
 
@@ -52,6 +52,7 @@ class TrackEditor(QWidget):
         self.artwork = FileSelector(FileRole.IMAGE, album_editor)
         self.lyrics = QPlainTextEdit()
         self.comment = QLineEdit()
+        self.about = QPlainTextEdit()
 
         layout.addRow("Audio file", self.filename)
         layout.addRow("Title", self.title)
@@ -65,21 +66,26 @@ class TrackEditor(QWidget):
         self.track_type.addButton(self.listed)
         self.track_type.addButton(self.hidden)
 
-        player_options = QHBoxLayout()
+        player_options = FlowLayout()
         player_options.setContentsMargins(0, 0, 0, 0)
         player_options.addWidget(self.preview)
         player_options.addWidget(self.listed)
         player_options.addWidget(self.hidden)
-        layout.addRow("Player options", player_options)
+        layout.addRow("Track type", player_options)
+
+        self.explicit = QCheckBox("Explicit")
+        player_options.addWidget(self.explicit)
+
+        layout.addRow("Genre", self.genre)
+        layout.addRow("Grouping", self.group)
 
         layout.addRow("Track artist", self.artist)
         layout.addRow("Composer", self.composer)
         layout.addRow("Cover of", self.cover_of)
         layout.addRow("Artwork", self.artwork)
         layout.addRow("Lyrics", self.lyrics)
-        layout.addRow("Genre", self.genre)
-        layout.addRow("Grouping", self.group)
         layout.addRow("Track comment", self.comment)
+        layout.addRow("Track details", self.about)
 
     def reset(self, data: datatypes.TrackData):
         """ Reset to the specified backing data """
@@ -99,11 +105,8 @@ class TrackEditor(QWidget):
         ):
             widget.setText(self.data.get(key, ''))
 
-        lyrics = self.data.get('lyrics', '')
-        if isinstance(lyrics, str):
-            self.lyrics.document().setPlainText(lyrics)
-        else:
-            self.lyrics.document().setPlainText('\n'.join(lyrics))
+        self.lyrics.document().setPlainText(util.text_to_lines(self.data.get('lyrics', '')))
+        self.about.document().setPlainText(util.text_to_lines(self.data.get('about', '')))
 
         hidden = self.data.get('hidden', False)
         preview = self.data.get('preview', True) and not hidden
@@ -112,6 +115,9 @@ class TrackEditor(QWidget):
         self.hidden.setChecked(hidden)
         self.preview.setChecked(preview)
         self.listed.setChecked(listed)
+
+        self.explicit.setCheckState(
+            datatypes.to_checkstate(self.data.get('explicit', False)))
 
     def apply(self):
         """ Apply our data to the backing data """
@@ -140,19 +146,27 @@ class TrackEditor(QWidget):
             ('comment', self.comment),
         ))
 
-        def split_lyrics(text):
+        def split_lines(text):
             lines = text.split('\n')
             return lines if len(lines) != 1 else text
 
-        lyrics = split_lyrics(self.lyrics.document().toPlainText())
-        if lyrics:
-            self.data['lyrics'] = lyrics
-        elif 'lyrics' in self.data:
-            del self.data['lyrics']
+        for key, widget in (
+            ('lyrics', self.lyrics),
+            ('about', self.about),
+            ):
+            lines = split_lines(widget.document().toPlainText())
+            if lines:
+                self.data[key] = lines
+            elif key in self.data:
+                del self.data[key]
 
         datatypes.apply_radio_fields(self.data, (
             ('preview', self.preview, True),
             ('hidden', self.hidden, False),
+        ))
+
+        datatypes.apply_checkbox_fields(self.data, (
+            ('explicit', self.explicit, False),
         ))
 
         LOGGER.debug("applied: %s", self.data)
@@ -165,19 +179,26 @@ class TrackListEditor(QSplitter):
     class TrackItem(QListWidgetItem):
         """ an item in the track listing """
 
-        def __init__(self, track: datatypes.TrackData):
+        def __init__(self, track_num: int, track: datatypes.TrackData):
             super().__init__()
+            self.track_number = track_num
             self.track_data = track
-            self.setText(self.display_name)
+            self.update_name()
 
-        def reset(self, data: datatypes.TrackData):
+        def set_track_num(self, track_num: int):
+            """ Update the track number for this one """
+            self.track_number = track_num
+            self.update_name()
+
+        def reset(self, track_num: int, data: datatypes.TrackData):
             """ Reset the track listing from a new tracklist
 
             :param list data: album['data']
             """
             LOGGER.debug("TrackItem.reset %s", self.display_name)
+            self.track_number = track_num
             self.track_data = data
-            self.setText(self.display_name)
+            self.update_name()
 
         def apply(self):
             """ Apply the GUI values to the backing store """
@@ -193,17 +214,20 @@ class TrackListEditor(QSplitter):
             """ Get the display name of this track """
             info = self.track_data
             if info and 'title' in info:
-                return info['title']
-            if info and 'filename' in info:
-                return f"({os.path.basename(info['filename'])})"
-            return "(unknown)"
+                title = info['title']
+            elif info and 'filename' in info:
+                title = f"({os.path.basename(info['filename'])})"
+            else:
+                title = "(unknown)"
+
+            return f"{self.track_number + 1}. {title}"
 
     class TrackList(QListWidget):
         """ The actual track listing panel """
 
         def __init__(self, parent):
             super().__init__(parent)
-            self.album = parent
+            self.track_editor = parent
             self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
             self.setAcceptDrops(True)
 
@@ -221,12 +245,13 @@ class TrackListEditor(QSplitter):
             if event.proposedAction() == Qt.DropAction.CopyAction and event.mimeData().hasUrls():
                 if files := file_utils.filter_audio_urls(event.mimeData().urls()):
                     LOGGER.debug("adding files: %s", files)
-                    self.album.add_files(files)
+                    self.track_editor.add_files(files)
                     event.acceptProposedAction()
-            else:
+            elif event.proposedAction() == Qt.DropAction.MoveAction:
+                self.track_editor.album_editor.record_undo()
                 super().dropEvent(event)
 
-            self.album.apply()
+            self.track_editor.apply()
 
     def __init__(self, album_editor):
         super().__init__()
@@ -296,10 +321,10 @@ class TrackListEditor(QSplitter):
             item = typing.cast(TrackListEditor.TrackItem,
                                self.track_listing.item(idx))
             if item:
-                item.reset(track)
+                item.reset(idx, track)
             else:
                 self.track_listing.addItem(
-                    TrackListEditor.TrackItem(track))
+                    TrackListEditor.TrackItem(idx, track))
 
         while self.track_listing.count() > len(data):
             self.track_listing.takeItem(self.track_listing.count() - 1)
@@ -320,6 +345,7 @@ class TrackListEditor(QSplitter):
         for row in range(self.track_listing.count()):
             item = typing.cast(TrackListEditor.TrackItem,
                                self.track_listing.item(row))
+            item.set_track_num(row)
             item.apply()
             LOGGER.debug("  -- append %s", item.display_name)
             self.data.append(item.track_data)
@@ -358,24 +384,49 @@ class TrackListEditor(QSplitter):
 
         self.add_files(filenames)
 
+    @property
+    def current_row(self):
+        """ The current selected row """
+        return self.track_listing.currentRow()
+
+    @current_row.setter
+    def current_row(self, idx):
+        """ Change the current row """
+        self.track_listing.setCurrentRow(idx)
+
     def add_files(self, filenames):
         """ Accepts files into the track listing """
         LOGGER.debug("TrackListEditor.add_files")
+        self.album_editor.record_undo()
         for filename in filenames:
             _, title = util.guess_track_title(filename)
             track = {'filename': filename, 'title': title}
-            self.data.append(track)
             self.track_listing.addItem(
-                TrackListEditor.TrackItem(track))
+                TrackListEditor.TrackItem(len(self.data), track))
+            self.data.append(track)
 
     def delete_track(self):
         """ Remove a track """
         LOGGER.debug("TrackListEditor.delete_track")
+        self.album_editor.record_undo()
         self.track_listing.takeItem(self.track_listing.currentRow())
+
+    def select_previous(self):
+        """ Select the previous track """
+        current_row = self.track_listing.currentRow()
+        if current_row > 0:
+            self.track_listing.setCurrentRow(current_row - 1)
+
+    def select_next(self):
+        """ Select the next track """
+        current_row = self.track_listing.currentRow()
+        if current_row + 1 < self.track_listing.count():
+            self.track_listing.setCurrentRow(current_row + 1)
 
     def move_up(self):
         """ Move the currently-selected track up in the track listing """
         LOGGER.debug("TrackListEditor.move_up")
+        self.album_editor.record_undo()
         row = self.track_listing.currentRow()
         if row > 0:
             dest = row - 1
@@ -386,6 +437,7 @@ class TrackListEditor(QSplitter):
     def move_down(self):
         """ Move the currently-selected track up in the track listing """
         LOGGER.debug("TrackListEditor.move_down")
+        self.album_editor.record_undo()
         row = self.track_listing.currentRow()
         if row < self.track_listing.count() - 1:
             dest = row + 1
