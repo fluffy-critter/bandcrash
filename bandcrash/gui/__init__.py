@@ -4,6 +4,7 @@
 import argparse
 import collections
 import concurrent.futures
+import copy
 import itertools
 import json
 import logging
@@ -219,24 +220,40 @@ class AlbumEditor(QMainWindow):
         self.output_dir: typing.Optional[str] = None
         self.last_directory: dict[str, str] = {}
 
+        self.undo_history: list[tuple[int, dict[str, typing.Any]]] = []
+        self.redo_history: list[tuple[int, dict[str, typing.Any]]] = []
+
         menubar = self.menuBar()
 
         file_menu = menubar.addMenu("&File")
 
-        add_menu_item(file_menu, "&New", self.file_new, "Ctrl+N")
-        add_menu_item(file_menu, "&Open...", self.file_open, "Ctrl+O")
-        add_menu_item(file_menu, "&Save", self.save, "Ctrl+S")
-        add_menu_item(file_menu, "Save &As...", self.save_as, "Ctrl+Shift+S")
-        add_menu_item(file_menu, "&Revert", self.revert, "Ctrl+Shift+R")
-        add_menu_item(file_menu, "&Close", self.close, "Ctrl+W")
+        standard_key = QtGui.QKeySequence.StandardKey
+
+        add_menu_item(file_menu, "&New", self.file_new, standard_key.New)
+        add_menu_item(file_menu, "&Open...", self.file_open, standard_key.Open)
+        add_menu_item(file_menu, "&Save", self.save, standard_key.Save)
+        add_menu_item(file_menu, "Save &As...",
+                      self.save_as, standard_key.SaveAs)
+        add_menu_item(file_menu, "&Revert", self.revert, standard_key.Refresh)
+        add_menu_item(file_menu, "&Close", self.close, standard_key.Close)
 
         album_menu = menubar.addMenu("&Album")
 
-        add_menu_item(album_menu, "&Encode", self.encode_album, "Ctrl+Enter")
+        add_menu_item(album_menu, "&Encode", self.encode_album, "Ctrl+Shift+E")
 
         edit_menu = menubar.addMenu("&Edit")
-        add_menu_item(edit_menu, "&Preferences", PreferencesWindow.show_preferences, "Ctrl+,",
+        self.undo_menu = add_menu_item(
+            edit_menu, "&Undo", self.undo_step, standard_key.Undo)
+        self.redo_menu = add_menu_item(
+            edit_menu, "&Redo", self.redo_step, standard_key.Redo)
+        add_menu_item(edit_menu, "&Preferences", PreferencesWindow.show_preferences,
+                      standard_key.Preferences,
                       QtGui.QAction.MenuRole.PreferencesRole)
+
+        self.undo_menu.setEnabled(False)
+        self.redo_menu.setEnabled(False)
+
+        track_menu = menubar.addMenu("&Track")
 
         help_menu = menubar.addMenu("&Help")
         add_menu_item(help_menu, "&About...", self.show_about_box, None,
@@ -275,6 +292,19 @@ class AlbumEditor(QMainWindow):
         self.track_listing = TrackListEditor(self)
         layout.addRow("Audio Tracks", QWidget(self))
         layout.addRow(self.track_listing)
+
+        add_menu_item(track_menu, "&Add...",
+                      self.track_listing.add_track_button, "Ctrl+Shift+A")
+        add_menu_item(track_menu, "&Delete",
+                      self.track_listing.delete_track, "Ctrl+Del")
+        add_menu_item(track_menu, "&Previous",
+                      self.track_listing.select_previous, "PgUp")
+        add_menu_item(track_menu, "&Next",
+                      self.track_listing.select_next, "PgDown")
+        add_menu_item(track_menu, "Move &up",
+                      self.track_listing.move_up, "Alt+Up")
+        add_menu_item(track_menu, "Move &down",
+                      self.track_listing.move_down, "Alt+Down")
 
         checkboxes = widgets.FlowLayout()
         self.do_preview = QCheckBox("Web preview")
@@ -407,9 +437,61 @@ class AlbumEditor(QMainWindow):
 
         self.last_directory = self.data.get('_gui', {}).get('lastdir', {})
 
+    @property
+    def history_state(self):
+        """ Get the current edit history state """
+        return self.track_listing.current_row, copy.deepcopy(self.data)
+
+    @history_state.setter
+    def history_state(self, state):
+        """ Apply an edit history state """
+        row, data = state
+        self.data = data
+        self.reset()
+        self.track_listing.current_row = row
+
+    def undo_step(self):
+        """ Undo one action """
+        if self.undo_history:
+            LOGGER.debug("Undoing a step")
+            self.redo_history.append(self.history_state)
+            self.redo_menu.setEnabled(True)
+
+            self.history_state = self.undo_history.pop()
+
+            self.undo_menu.setEnabled(bool(self.undo_history))
+            LOGGER.debug("history size = %d/%d",
+                         len(self.undo_history), len(self.redo_history))
+
+    def redo_step(self):
+        """ Redo an undone action """
+        if self.redo_history:
+            LOGGER.debug("Redoing a step")
+            self.undo_history.append(self.history_state)
+            self.undo_menu.setEnabled(True)
+
+            self.history_state = self.redo_history.pop()
+
+            self.redo_menu.setEnabled(bool(self.redo_history))
+            LOGGER.debug("history size = %d/%d",
+                         len(self.undo_history), len(self.redo_history))
+
+    def record_undo(self):
+        """ Record an undo step """
+        LOGGER.debug("Recording undo step")
+        self.undo_history.append(self.history_state)
+        self.undo_menu.setEnabled(True)
+        self.redo_history.clear()
+        self.redo_menu.setEnabled(False)
+        LOGGER.debug("history size = %d/%d",
+                     len(self.undo_history), len(self.redo_history))
+
     def apply(self):
         """ Apply edits to the saved data """
         LOGGER.debug("AlbumEditor.apply")
+
+        self.record_undo()
+
         relpath = util.make_relative_path(self.filename)
 
         datatypes.apply_text_fields(self.data,

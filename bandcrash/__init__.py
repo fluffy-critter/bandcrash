@@ -5,6 +5,7 @@ import argparse
 import base64
 import collections
 import concurrent.futures
+import copy
 import functools
 import itertools
 import json
@@ -120,11 +121,11 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
 
         id3.TRCK: str(idx),
         id3.TIT1: track.get('group'),
-        id3.TIT2: track.get('title'),
+        id3.TIT2: track_tag_title(track),
 
         id3.TCON: track.get('genre', album.get('genre')),
         id3.TCOM: track.get('composer', album.get('composer')),
-        id3.USLT: '\n'.join(track['lyrics']) if 'lyrics' in track else None,
+        id3.USLT: util.text_to_lines(track.get('lyrics')),
 
         id3.COMM: track.get('comment'),
     }
@@ -144,15 +145,26 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
     LOGGER.info("Finished writing %s", out_path)
 
 
+def track_tag_title(track):
+    """ Get the tag title for a track """
+    title = track.get('title', None)
+    if track.get('explicit'):
+        if title is None:
+            title = '[explicit]'
+        else:
+            title += ' [explicit]'
+    return title
+
+
 def tag_vorbis(tags, idx, album, track):
     """ Add a vorbis comment section to an ogg/flac file """
     frames = {
         'ARTIST': track.get('artist', album.get('artist')),
         'ALBUM': album.get('title'),
-        'TITLE': track.get('title'),
+        'TITLE': track_tag_title(track),
         'TRACKNUMBER': str(idx),
         'GENRE': track.get('genre', album.get('genre')),
-        'LYRICS': '\n'.join(track['lyrics']) if 'lyrics' in track else None,
+        'LYRICS': util.text_to_lines(track.get('lyrics')),
         'DESCRIPTION': track.get('comment'),
     }
     if track.get('cover_of', album.get('cover_of')):
@@ -324,13 +336,10 @@ def encode_tracks(config, album, protections, pool, futures):
     """ run the track encode process """
 
     for idx, track in enumerate(album['tracks'], start=1):
-        title = track.get('title', f'track {idx}')
-        track['title'] = title
-
         base_filename = f'{idx:02d} '
         if 'artist' in track:
             base_filename += f"{track['artist']} - "
-        base_filename += title
+        base_filename += track.get('title', '')
         base_filename = util.slugify_filename(base_filename)
 
         def out_path(fmt, ext=None):
@@ -345,8 +354,9 @@ def encode_tracks(config, album, protections, pool, futures):
                 config.input_dir, track['artwork'])
 
         if 'lyrics' in track and isinstance(track['lyrics'], str):
-            track['lyrics'] = util.read_lines(
-                os.path.join(config.input_dir, track['lyrics']))
+            lyricfile = os.path.join(config.input_dir, track['lyrics'])
+            if os.path.isfile(lyricfile):
+                track['lyrics'] = util.read_lines(lyricfile)
 
         duration = util.get_audio_duration(input_filename)
         track['duration'] = seconds_to_timestamp(duration)
@@ -432,7 +442,7 @@ def process(config, album, pool, futures):
 
     # Make a copy of the dict, since some pipeline steps mutate it and we want
     # to be nice to the caller
-    album = album.copy()
+    album = copy.deepcopy(album)
 
     # Coerce album configuration to app configuration if it hasn't been specified
     for attrname, default in (
@@ -442,6 +452,7 @@ def process(config, album, pool, futures):
         ('do_flac', True),
         ('do_zip', True),
         ('do_butler', bool(album.get('butler_target'))),
+        ('do_cleanup', True),
         ('butler_target', ''),
         ('butler_prefix', '')
     ):

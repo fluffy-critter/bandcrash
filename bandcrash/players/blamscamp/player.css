@@ -104,8 +104,8 @@ img.trackart {
     color: var(--highlight);
 }
 
-.title {
-    margin-right: 1em;
+li .duration, time.current {
+    padding-left: 2em;
 }
 
 h1,
@@ -129,6 +129,15 @@ h3,
 
 .slider:hover {
     opacity: 1;
+}
+
+.explicit {
+    display: inline-block;
+    font-size: x-small;
+    background: #ccc;
+    color: white;
+    border-radius: 3px;
+    padding: 3px;
 }
 
 .slider::-webkit-slider-thumb {

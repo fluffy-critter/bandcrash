@@ -2,14 +2,37 @@
    "artist": "Test artist",
    "year": 2022,
    "title": "Test album",
-   "blamscamp": {
-      "highlight": "#00ff77",
-      "background": "#330000",
-      "foreground": "#770077"
-   },
+   "highlight_color": "#770077",
    "artwork": "album_cover.png",
    "genre": "blipcore",
    "tracks": [
+      {
+         "filename": "test track.wav",
+         "title": "This has a title"
+      },
+      {
+         "filename": "test track.wav",
+         "preview": false,
+         "title": "This has no preview blah blah blah"
+      },
+      {
+         "artwork": "../../art/bclogo.png",
+         "filename": "test track.wav",
+         "genre": "lo-fi jazzcore",
+         "group": "Meows I Have Known",
+         "lyrics": "lyric-file.txt"
+      },
+      {
+         "artist": "Sluggy Puppernutters",
+         "filename": "test track.wav",
+         "group": "Meows I Have Known",
+         "lyrics": "lyrics-iso8859.txt",
+         "title": "A different artist"
+      },
+      {
+         "filename": "test track.wav",
+         "title": "Test Track"
+      },
       {
          "filename": "test track.wav",
          "lyrics": [
@@ -19,45 +42,59 @@
             "Something borrowed time",
             "",
             "How you doing, now?!"
+         ],
+         "title": "asdfasdf"
+      },
+      {
+         "artwork": "hidden_track.png",
+         "filename": "test track.wav",
+         "title": "This track is hidden",
+         "preview": false,
+         "hidden": true,
+         "about": [
+            "This track is hidden, so nobody can ever see it.",
+            "",
+            "And that's sad. :( :( :("
          ]
       },
       {
          "filename": "test track.wav",
-         "title": "This has a title"
+         "title": "Test Track with profanity",
+         "lyrics": "Heck!!!!",
+         "explicit": true
       },
       {
          "filename": "test track.wav",
-         "title": "This has no preview",
-         "preview": false
+         "lyrics": [
+            "Heckin' explicit track",
+            "with no title"
+         ],
+         "explicit": true
       },
       {
          "filename": "test track.wav",
-         "title": "This track is hidden",
-         "artwork": "hidden_track.png",
-         "hidden": true
+         "explicit": true,
+         "title": "1. Adagio",
+         "group": "A multi-movement work"
       },
       {
          "filename": "test track.wav",
-         "artwork": "single_track.png",
-         "lyrics": "lyric-file.txt",
-         "genre": "lo-fi jazzcore",
-         "group": "Meows I Have Known"
+         "title": "2. Rinfrescante",
+         "group": "A multi-movement work"
       },
       {
          "filename": "test track.wav",
-         "title": "A different artist",
-         "artist": "Sluggy Puppernutters",
-         "lyrics": "lyrics-iso8859.txt",
-         "group": "Meows I Have Known"
+         "title": "3. Solave",
+         "group": "A multi-movement work"
       }
    ],
    "_gui": {
-      "geom": [
-         -1599,
-         493,
-         1171,
-         710
-      ],
-      "lastdir": {}
+      "lastdir": {
+         "AUDIO": ".",
+         "IMAGE": "../art"
+      }
+   },
+   "blamscamp": {
+      "highlight": "#7c0a87"
    }
 }
