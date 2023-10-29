@@ -57,6 +57,11 @@
          "title": "Test Track with profanity",
          "lyrics": "Heck!!!!",
          "explicit": true
+      },
+      {
+         "filename": "test track.wav",
+         "explicit": true,
+         "comment": "No title but it's explicit"
       }
    ],
    "_gui": {
