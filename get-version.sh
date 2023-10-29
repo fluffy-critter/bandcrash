@@ -7,7 +7,7 @@ version=$(poetry version -s)
 if (git status --porcelain | grep -q .) ; then
     # Unchecked-in changes, so there's local edits
     tag=local
-elif [ "$(git rev-parse HEAD)" == "$(git rev-parse v$version)" ] ; then
+elif [ "$(git rev-parse HEAD)" = "$(git rev-parse v$version)" ] ; then
     # It matches the release tag exactly, so that's what we call it
     tag=release
 else
