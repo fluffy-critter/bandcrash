@@ -209,3 +209,10 @@ def get_audio_duration(path):
                 total = total*60 + float(chunk)
             return total
     return 0
+
+
+def text_to_lines(text):
+    """ Convert a string or a list of strings into a single string, newline-separated """
+    if isinstance(text, list):
+        return '\n'.join(text)
+    return text
