@@ -7,27 +7,35 @@ assignees: ''
 
 ---
 
-**Describe the bug**
+### Describe the bug
+
 A clear and concise description of what the bug is.
 
-**To Reproduce**
+
+### Reproduction steps
+
 Steps to reproduce the behavior:
+
 1. Go to '...'
 2. Click on '....'
 3. Scroll down to '....'
 4. See error
 
-**Expected behavior**
+### Expected behavior
+
 A clear and concise description of what you expected to happen.
 
-**Screenshots**
+### Screenshots
+
 If applicable, add screenshots to help explain your problem.
 
-**Platform:**
- - OS: [e.g. macOS, Linux, Windows]
- - Platform: [CLI, GUI]
- - Source: [itch, pypi, ran from source]
- - Version or commit hash: [0.4.2, 48edcb, etc.]
+### Platform
 
-**Additional context**
+* OS: (macOS, Linux, Windows, etc.)
+* Usage: (CLI, GUI, library)
+* Download source: (itch, pypi, git commit hash, etc.)
+* Version or commit hash: (0.4.2-release, 48edcb, etc.)
+
+### Additional context
+
 Add any other context about the problem here.

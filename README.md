@@ -1,6 +1,6 @@
 # Bandcrash
 
-Bandcrash is a standalone program that automatically encodes an album of songs into a bunch of different formats for distribution on various platforms, such as [itch.io](https://itch.io/), or for hosting on your own website. The embedded player is originally based on the one from [blamscamp](https://github.com/blackle/blamscamp) by [@blackle](https://github.com/blackle), although it has been pretty thoroughly modified at this point.
+Bandcrash is a standalone program that automatically encodes an album of songs into a bunch of different formats for distribution on various platforms, such as [itch.io](https://itch.io/), or for hosting on your own website.
 
 [See it in action](https://fluffy.itch.io/novembeat-2021)!
 
@@ -18,10 +18,6 @@ Bandcrash is a standalone program that automatically encodes an album of songs i
 Please see [the online documentation](https://bandcrash.readthedocs.io) for installation and usage instructions.
 
 ## Contributing
-
-Pull requests are welcome! But please note the following:
-
-The generated web player must not receive any added dependencies. The generator must stay as a single, self-contained file that is as small as reasonably possible. The point is for the generated file to be lightweight. Stick to Vanilla JS.
 
 ### Development environment notes
 
@@ -41,13 +37,25 @@ See the [github issues](https://github.com/fluffy-critter/bandcrash/issues) for 
 
 ### How is this different from blamscamp, scritch, etc.?
 
-[Blamscamp](https://suricrasia.online/blamscamp/) and [scritch](https://torcado.itch.io/scritch-editor) are both great programs for publishing album previews on itch.io and other websites! However, their functionality is only to bundle already-encoded audio files into a web-based player. They don't do the difficult work of encoding and tagging your files, which can be an extremely tedious and error-prone process. Bandcrash's intention is to make the process of encoding and uploading your albums easier to as many stores as possible.
+[Blamscamp](https://suricrasia.online/blamscamp/) and [scritch](https://torcado.itch.io/scritch-editor) are both great programs for publishing previews of already-encoded on itch.io and other websites! However, their functionality is only to bundle prepared audio files into a web-based player, and they don't presently handle encoding or tagging, two things that are historically tedious and difficult to do well.
 
-### Why was it renamed?
+Bandcrash is a full end-to-end system for preparing an album for both sale and preview online in a variety of formats.
 
-Back when this project started, it was named pyBlamscamp as the intention was to be basically a Python version of the blamscamp GUI which would also handle encoding steps for you, but it very quickly drifted away from that and became something else. Unfortunately, the similarity of the names was incredibly confusing.
+### What about Faircamp?
 
-Currently the only connection between Bandcrash and blamscamp is that Bandcrash uses a highly-modified version of blamscamp's web player. They serve different goals.
+[Faircamp](https://simonrepp.com/faircamp/) does handle the end-to-end encoding and processing and builds a quite beautiful static website! If you just want to build a site to host your music and handle your own payments, it's totally usable for that.
+
+Bandcrash is for people who want to be able to host their downloads and web-based preview on existing marketplaces such as [itch.io](https://itch.io/), [gumroad](https://gumroad.com/), [ko-fi](https://ko-fi.com/), etc., or who want to be able to embed their preview on their website under their own terms, rather than being beholden to a specific static site template.
+
+### What player does Bandcrash use?
+
+At present, it defaults to using [Camptown](https://github.com/fluffy-critter/camptown), a player built specifically for Bandcrash. However, I do plan on eventually making it possible to choose from a variety of player engines, including Blamscamp and Scritch.
+
+### What happened to pyBlamscamp?
+
+Back when this project started, it was named pyBlamscamp as the intention was to be basically a Python version of the blamscamp GUI which would also handle encoding steps for you, but it very quickly drifted away from that and became something else.
+
+For a while, Bandcrash used a fork of the blamscamp player, but at this point that has been entirely removed.
 
 ### Why make a local GUI instead instead of a web app?
 
@@ -57,7 +65,7 @@ Basically, it's easier for everyone.
 
 Sometimes local apps are just Better™.
 
-That said, Bandcrash is also embeddable as a library, so someone could conceivably build a web-based system that uses it for encoding and tagging files. If they do so, I hope they avoid it becoming yet another walled garden.
+That said, Bandcrash is also embeddable as a library, so someone could conceivably build a web-based system that uses it for encoding and tagging files.
 
 ## Credits
 
