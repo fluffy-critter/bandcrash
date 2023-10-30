@@ -37,7 +37,7 @@ For the sake of clarity, here is a JSON file that represents a simple album.
              "explicit": true
           }
        ],
-       "blamscamp": {
+       "theme": {
           "foreground": "#7f7f7f",
           "background": "#ff00ff",
           "highlight": "#000000"
@@ -71,6 +71,7 @@ Album data
 * **do_butler**: Whether to upload the builds to itch.io
 * **butler_target**: The itch.io Butler target (e.g. ``"fluffy/songs-of-substance"``)
 * **butler_prefix**: Any prefix to add to the Butler channel name (e.g. ``"bonus-"`` will upload the MP3 album as ``"fluffy/songs-of-substance:bonus-mp3"``)
+* **theme**: Player theme configuration
 
 Track data
 ----------
@@ -94,11 +95,20 @@ Each track can include the following metadata values:
 Player configuration
 --------------------
 
-Players can be configured via additional metadata added to the top-level album dict and, if supported, to track data. By convention, the player will keep its data sequestered in a dict of its own name; for example, the Blamscamp player keeps its data inside a ``"blamscamp"`` dict on the top-level object.
+The visual configuration for the player lives in the ``"theme"`` property directory. The following properties are currently supported:
 
-The configuration for players is shown below.
+* **foreground**: The foreground/text color
+* **background**: The background color
+* **highlight**: The highlight color
+* **user_css**: An additional CSS file to provide extra styling to the player (for advanced users)
 
-Blamscamp
-^^^^^^^^^
+Individual players may have additional configuration options.
 
-.. autoclass:: bandcrash.players.blamscamp.Player
+Camptown
+^^^^^^^^
+
+`Camptown <https://github.com/fluffy-critter/camptown>`_ is the default player used by Bandcrash. It provides the following additional theme parameters:
+
+* **show_footer**: Whether to show or hide the "made with" footer on the player
+
+For more information, see the `Camptown metadata specification <https://camptown.readthedocs.io/en/latest/metadata.html#theme>`_.
