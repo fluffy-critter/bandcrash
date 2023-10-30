@@ -278,7 +278,8 @@ def make_web_preview(input_dir, output_dir, album, protections, futures):
             LOGGER.debug("added preview protections %s",
                          track['artwork_preview'])
 
-    player.convert(input_dir, output_dir, album, protections, version=__version__)
+    player.convert(input_dir, output_dir, album,
+                   protections, version=__version__)
 
     LOGGER.info("Preview: Finished generating web preview at %s; protections=%s",
                 output_dir, protections)

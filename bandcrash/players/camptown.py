@@ -1,10 +1,10 @@
 """ Player engine for Camptown """
 
-import shutil
+import copy
 import logging
 import os.path
+import shutil
 import typing
-import copy
 
 import camptown
 
@@ -60,13 +60,11 @@ class Player:
 
         if 'user_css' in theme:
             shutil.copy(os.path.join(input_dir, info['theme']['user_css']),
-                os.path.join(output_dir, 'user.css'))
+                        os.path.join(output_dir, 'user.css'))
             info['theme']['user_css'] = 'user.css'
             protections.add('user.css')
-
 
         files = camptown.process(info, output_dir,
                                  footer_urls=[('https://fluffy.itch.io/bandcrash', 'Bandcrash')])
 
         protections |= set(files)
-
