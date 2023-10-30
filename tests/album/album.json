@@ -94,7 +94,8 @@
          "IMAGE": "../art"
       }
    },
-   "blamscamp": {
-      "highlight": "#7c0a87"
+   "theme": {
+      "highlight": "#7c0a87",
+      "user_css": "poiu-fojar.css"
    }
 }

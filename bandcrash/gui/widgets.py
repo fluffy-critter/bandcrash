@@ -16,9 +16,9 @@ from .file_utils import FileRole
 LOGGER = logging.getLogger(__name__)
 
 
-def wrap_layout(parent: QWidget, layout: QLayout):
+def wrap_layout(layout: QLayout):
     """ Wrap a layout in a QWidget, which is for some reason not a standard Qt function """
-    widget = QWidget(parent)
+    widget = QWidget()
     widget.setLayout(layout)
     return widget
 
@@ -234,6 +234,8 @@ class ColorPicker(QWidget):
         self._button.clicked.connect(self.pickColor)
 
         hbox = QHBoxLayout()
+        hbox.setContentsMargins(0,0,0,0)
+        hbox.setSpacing(0)
         hbox.addWidget(self._button)
         self.setLayout(hbox)
 
