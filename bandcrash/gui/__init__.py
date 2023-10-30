@@ -472,7 +472,7 @@ class AlbumEditor(QMainWindow):
         self.do_butler.setCheckState(
             datatypes.to_checkstate(self.data.get('do_butler', True)))
 
-        theme = self.data.get('theme', {})
+        theme = self.data.get('theme', self.data.get('blamscamp', {}))
         for color, key, dfl in self.theme_colors:
             color.setName(theme.get(key, dfl))
         self.hide_footer.setCheckState(
