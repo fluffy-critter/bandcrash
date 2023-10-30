@@ -1,4 +1,8 @@
 # -*- mode: python ; coding: utf-8 -*-
+from PyInstaller.utils.hooks import collect_data_files
+
+datas = []
+datas += collect_data_files('camptown')
 
 import bandcrash.__version__
 import sys
@@ -7,7 +11,7 @@ a = Analysis(
     ['bandcrash-gui.py'],
     pathex=[],
     binaries=[],
-    datas=[('bandcrash/players/blamscamp/*', 'bandcrash/players/blamscamp')],
+    datas=datas,
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

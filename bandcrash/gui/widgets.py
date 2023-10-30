@@ -234,7 +234,7 @@ class ColorPicker(QWidget):
         self._button.clicked.connect(self.pickColor)
 
         hbox = QHBoxLayout()
-        hbox.setContentsMargins(0,0,0,0)
+        hbox.setContentsMargins(0, 0, 0, 0)
         hbox.setSpacing(0)
         hbox.addWidget(self._button)
         self.setLayout(hbox)
