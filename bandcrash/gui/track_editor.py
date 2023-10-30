@@ -105,7 +105,8 @@ class TrackEditor(QWidget):
         ):
             widget.setText(self.data.get(key, ''))
 
-        self.lyrics.document().setPlainText(util.text_to_lines(self.data.get('lyrics', '')))
+        self.lyrics.document().setPlainText(
+            util.text_to_lines(self.data.get('lyrics', '')))
         self.about.document().setPlainText(util.text_to_lines(self.data.get('about', '')))
 
         hidden = self.data.get('hidden', False)
@@ -153,7 +154,7 @@ class TrackEditor(QWidget):
         for key, widget in (
             ('lyrics', self.lyrics),
             ('about', self.about),
-            ):
+        ):
             lines = split_lines(widget.document().toPlainText())
             if lines:
                 self.data[key] = lines
@@ -263,7 +264,7 @@ class TrackListEditor(QSplitter):
         left_panel = QVBoxLayout(self)
         left_panel.setSpacing(0)
         left_panel.setContentsMargins(0, 0, 0, 0)
-        self.addWidget(wrap_layout(self, left_panel))
+        self.addWidget(wrap_layout(left_panel))
 
         self.track_listing = TrackListEditor.TrackList(self)
         left_panel.addWidget(self.track_listing)
@@ -285,7 +286,7 @@ class TrackListEditor(QSplitter):
         buttons.addStretch(1000)
         buttons.addWidget(self.button_move_up)
         buttons.addWidget(self.button_move_down)
-        left_panel.addWidget(wrap_layout(self, buttons))
+        left_panel.addWidget(wrap_layout(buttons))
 
         self.track_editor = TrackEditor(album_editor)
         self.track_editor.setEnabled(False)
