@@ -235,11 +235,11 @@ def make_web_preview(input_dir, output_dir, album, protections, futures):
     wait_futures(futures)
     LOGGER.info("Preview: Building player in %s", output_dir)
 
-    from .players import blamscamp
-    player = blamscamp.Player()
+    from .players import camptown
+    player = camptown.Player(art_size=200)
 
     @functools.lru_cache()
-    def gen_art_preview(in_path: str) -> typing.Dict[str, str]:
+    def gen_art_preview(in_path: str) -> typing.Dict[str, typing.Union[str, int]]:
         """ Generate web preview art for the given file
 
         :param str in_path: Input path of the source file
@@ -248,25 +248,37 @@ def make_web_preview(input_dir, output_dir, album, protections, futures):
         :returns: tuple of the 1x and 2x renditions of the artwork
         """
         LOGGER.debug("generating preview art for %s", in_path)
-        return {spec: images.generate_rendition(in_path, output_dir, size)
-                for spec, size in player.art_rendition_sizes.items()}
+        renditions = [(spec, *images.generate_rendition(in_path, output_dir, size))
+                      for spec, size in player.art_rendition_sizes]
+
+        _, _, width, height = renditions[0]
+        return {
+            "width": width,
+            "height": height,
+
+            **{size: path for size, path, _, _ in renditions}
+        }
+
+    def extract_protections(art_spec):
+        """ given an artwork spec, extract the file protections """
+        return set(art_spec[size] for size, _ in player.art_rendition_sizes)
 
     if 'artwork' in album:
         LOGGER.debug("album art")
         album['artwork_preview'] = gen_art_preview(
             os.path.join(input_dir, album['artwork']))
-        protections |= set(album['artwork_preview'].values())
+        protections |= extract_protections(album['artwork_preview'])
         LOGGER.debug("added preview protections %s", album['artwork_preview'])
 
     for track in album['tracks']:
         if 'artwork' in track:
             track['artwork_preview'] = gen_art_preview(
                 os.path.join(input_dir, track['artwork']))
-            protections.add(track['artwork_preview'].values())
+            protections |= extract_protections(track['artwork_preview'])
             LOGGER.debug("added preview protections %s",
                          track['artwork_preview'])
 
-    player.convert(album, output_dir, protections, version=__version__)
+    player.convert(input_dir, output_dir, album, protections, version=__version__)
 
     LOGGER.info("Preview: Finished generating web preview at %s; protections=%s",
                 output_dir, protections)
@@ -359,7 +371,8 @@ def encode_tracks(config, album, protections, pool, futures):
                 track['lyrics'] = util.read_lines(lyricfile)
 
         duration = util.get_audio_duration(input_filename)
-        track['duration'] = seconds_to_timestamp(duration)
+        track['duration'] = duration
+        track['duration_timestamp'] = seconds_to_timestamp(duration)
         track['duration_datetime'] = seconds_to_datetime(duration)
 
         # generate preview track, if desired
