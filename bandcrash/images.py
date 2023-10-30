@@ -36,23 +36,31 @@ def generate_image(in_path: str, size: int) -> PIL.Image:
     return image.resize(size=(out_w, out_h), resample=PIL.Image.Resampling.LANCZOS)
 
 
-def generate_rendition(in_path: str, out_dir: str, size: int) -> str:
+def generate_rendition(in_path: str, out_dir: str, size: int) -> tuple[str, int, int]:
     """ Given an image path and a size, save a rendition to disk
 
     :param str in_path: Path to the file
     :param str out_dir: Directory to store the file in
     :param int size: Rendition size:
 
-    :returns: a file path
+    :returns: a tuple of file path, width, height
     """
 
     image = generate_image(in_path, size)
     basename, _ = os.path.splitext(os.path.basename(in_path))
-    out_file = slugify_filename(f'{basename}.{size}.jpg')
-    image.convert('RGB').save(os.path.join(out_dir, out_file))
+
+    if image.mode in ('RGBA', 'LA', 'P'):
+        ext = 'png'
+        mode = 'RGBA'
+    else:
+        ext = 'jpg'
+        mode = 'RGB'
+
+    out_file = slugify_filename(f'{basename}.{size}.{ext}')
+    image.convert(mode).save(os.path.join(out_dir, out_file))
     LOGGER.info("Wrote image %s", out_file)
 
-    return out_file
+    return out_file, image.width, image.height
 
 
 @functools.lru_cache()

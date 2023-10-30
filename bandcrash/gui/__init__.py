@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QDialog, QErrorMessage,
                                QProgressDialog, QPushButton, QSpinBox, QWidget)
 
 from .. import __version__, process, util
-from ..players import blamscamp
+from ..players import camptown
 from . import datatypes, widgets
 from .file_utils import FileRole
 from .track_editor import TrackListEditor
@@ -205,14 +205,14 @@ class PreferencesWindow(QDialog):
 
 class AlbumEditor(QMainWindow):
     """ An album editor window """
-    # pylint:disable=too-many-instance-attributes
+    # pylint:disable=too-many-instance-attributes,too-many-public-methods
 
     def __init__(self, path: str):
         """ edit an album file
 
         :param str path: The path to the JSON file
         """
-        # pylint:disable=too-many-statements
+        # pylint:disable=too-many-statements,too-many-locals
         super().__init__()
 
         self.setMinimumSize(600, 0)
@@ -268,7 +268,7 @@ class AlbumEditor(QMainWindow):
         layout = QFormLayout()
         layout.setFieldGrowthPolicy(
             QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
-        self.setCentralWidget(widgets.wrap_layout(self, layout))
+        self.setCentralWidget(widgets.wrap_layout(layout))
 
         self.artist = QLineEdit()
         self.title = QLineEdit()
@@ -281,13 +281,40 @@ class AlbumEditor(QMainWindow):
 
         layout.addRow("Artist", self.artist)
         layout.addRow("Title", self.title)
+
+        hbox = widgets.QHBoxLayout()
+        hbox.setContentsMargins(0, 0, 0, 0)
+        hbox.setSpacing(0)
+        hbox.addWidget(QLabel("Artist"))
+        self.artist_url = QLineEdit()
+        self.artist_url.setPlaceholderText("https://my-cool-band.com/")
+        hbox.addWidget(self.artist_url)
+        hbox.addWidget(QLabel("Album"))
+        self.album_url = QLineEdit()
+        self.album_url.setPlaceholderText(
+            "https://my-cool-band.com/my-cool-album")
+        hbox.addWidget(self.album_url)
+        layout.addRow("URLs", hbox)
+
+        theme_settings = widgets.FlowLayout()
+        self.theme_foreground = widgets.ColorPicker(self, "Foreground")
+        self.theme_background = widgets.ColorPicker(self, "Background")
+        self.theme_highlight = widgets.ColorPicker(self, "Highlight")
+        self.hide_footer = QCheckBox("Hide footer")
+        theme_settings.addWidget(self.theme_foreground)
+        theme_settings.addWidget(self.theme_background)
+        theme_settings.addWidget(self.theme_highlight)
+        theme_settings.addWidget(self.hide_footer)
+        layout.addRow("Theme settings", theme_settings)
+
+        self.user_css = widgets.FileSelector(FileRole.IMAGE, self)
+        layout.addRow("User CSS", self.user_css)
+
         layout.addRow("Composer", self.composer)
         layout.addRow("Year", self.year)
         layout.addRow("Genre", self.genre)
-        layout.addRow("Artwork", self.artwork)
 
-        self.player_editor = blamscamp.AlbumEditor()
-        layout.addRow("Blamscamp", self.player_editor)
+        layout.addRow("Artwork", self.artwork)
 
         self.track_listing = TrackListEditor(self)
         layout.addRow("Audio Tracks", QWidget(self))
@@ -398,25 +425,35 @@ class AlbumEditor(QMainWindow):
                 self.filename = ''
                 self.data = {'tracks': []}
 
+    @property
+    def theme_colors(self) -> typing.Iterable[tuple[widgets.ColorPicker, str, str]]:
+        """ mapping for theme items to color values """
+        return (
+            (self.theme_foreground, 'foreground', '#000000'),
+            (self.theme_background, 'background', '#ffffff'),
+            (self.theme_highlight, 'highlight', '#7f0000'),
+        )
+
     def reset(self):
         """ Reset to the saved values """
         LOGGER.debug("AlbumEditor.reset")
 
-        for key, widget in (
+        for key, text_field in (
             ('artist', self.artist),
             ('title', self.title),
+            ('artist_url', self.artist_url),
+            ('album_url', self.album_url),
             ('genre', self.genre),
             ('artwork', self.artwork.file_path),
             ('composer', self.composer),
             ('butler_target', self.butler_target),
             ('butler_prefix', self.butler_prefix),
+            ('user_css', self.user_css.file_path),
         ):
-            widget.setText(self.data.get(key, ''))
+            text_field.setText(self.data.get(key, ''))
 
         if 'year' in self.data:
             self.year.setText(str(self.data['year']))
-
-        self.player_editor.reset(self.data)
 
         self.track_listing.reset(self.data['tracks'])
 
@@ -435,7 +472,72 @@ class AlbumEditor(QMainWindow):
         self.do_butler.setCheckState(
             datatypes.to_checkstate(self.data.get('do_butler', True)))
 
+        theme = self.data.get('theme', self.data.get('blamscamp', {}))
+        for color, key, dfl in self.theme_colors:
+            color.setName(theme.get(key, dfl))
+        self.hide_footer.setCheckState(
+            datatypes.to_checkstate(theme.get('hide_footer', False)))
+
         self.last_directory = self.data.get('_gui', {}).get('lastdir', {})
+
+    def apply(self):
+        """ Apply edits to the saved data """
+        LOGGER.debug("AlbumEditor.apply")
+
+        self.record_undo()
+
+        relpath = util.make_relative_path(self.filename)
+
+        datatypes.apply_text_fields(self.data, (
+            ('title', self.title),
+            ('genre', self.genre),
+            ('album_url', self.album_url),
+            ('artist_url', self.artist_url),
+            ('artist', self.artist),
+            ('composer', self.composer),
+            ('butler_target', self.butler_target),
+            ('butler_prefix', self.butler_prefix),
+        ))
+
+        datatypes.apply_text_fields(self.data, (
+                                    ('artwork', self.artwork.file_path),
+                                    ('user_css', self.user_css.file_path),
+                                    ),
+                                    relpath)
+
+        datatypes.apply_text_fields(self.data, (
+            ('year', self.year),
+        ),
+            int)
+
+        datatypes.apply_checkbox_fields(self.data, (
+            ('do_preview', self.do_preview, True),
+            ('do_mp3', self.do_mp3, True),
+            ('do_ogg', self.do_ogg, True),
+            ('do_flac', self.do_flac, True),
+            ('do_zip', self.do_zip, True),
+            ('do_cleanup', self.do_cleanup, True),
+            ('do_butler', self.do_butler, True),
+        ))
+        self.track_listing.apply()
+
+        theme = self.data.setdefault('theme', {})
+        datatypes.apply_checkbox_fields(theme, (
+            ('hide_footer', self.hide_footer, False),
+        ))
+        for widget, key, dfl in self.theme_colors:
+            if widget.name() != dfl:
+                theme[key] = widget.name()
+            elif key in theme:
+                del theme[key]
+
+        datatypes.apply_checkbox_fields(theme, (
+            ('hide_footer', self.hide_footer, False),
+        ))
+
+        self.data['_gui'] = {
+            'lastdir': self.last_directory
+        }
 
     @property
     def history_state(self):
@@ -485,48 +587,6 @@ class AlbumEditor(QMainWindow):
         self.redo_menu.setEnabled(False)
         LOGGER.debug("history size = %d/%d",
                      len(self.undo_history), len(self.redo_history))
-
-    def apply(self):
-        """ Apply edits to the saved data """
-        LOGGER.debug("AlbumEditor.apply")
-
-        self.record_undo()
-
-        relpath = util.make_relative_path(self.filename)
-
-        datatypes.apply_text_fields(self.data,
-                                    (
-                                        ('title', self.title),
-                                        ('genre', self.genre),
-                                        ('artist', self.artist),
-                                        ('composer', self.composer),
-                                        ('butler_target', self.butler_target),
-                                        ('butler_prefix', self.butler_prefix),
-                                    ))
-
-        datatypes.apply_text_fields(self.data,
-                                    (('artwork', self.artwork.file_path),),
-                                    relpath)
-
-        datatypes.apply_text_fields(self.data,
-                                    (('year', self.year),),
-                                    int)
-
-        datatypes.apply_checkbox_fields(self.data, (
-            ('do_preview', self.do_preview, True),
-            ('do_mp3', self.do_mp3, True),
-            ('do_ogg', self.do_ogg, True),
-            ('do_flac', self.do_flac, True),
-            ('do_zip', self.do_zip, True),
-            ('do_cleanup', self.do_cleanup, True),
-            ('do_butler', self.do_butler, True),
-        ))
-        self.track_listing.apply()
-        self.player_editor.apply()
-
-        self.data['_gui'] = {
-            'lastdir': self.last_directory
-        }
 
     def save(self):
         """ Save the file to disk """
