@@ -13,13 +13,13 @@ If you're using the :doc:`itch.io uploader <itch>`, they provide a `player embed
 
 .. code-block:: html
 
-    <iframe frameborder="0" src="https://itch.io/embed-upload/8976401?color=333333" allowfullscreen="" width="720" height="620"><a href="https://fluffy.itch.io/novembeat-2017">Play Novembeat 2017 on itch.io</a></iframe>
+    <iframe frameborder="0" src="https://itch.io/embed-upload/8976401?color=333333" allowfullscreen="" width="100%" height="620"><a href="https://fluffy.itch.io/novembeat-2017">Play Novembeat 2017 on itch.io</a></iframe>
 
 renders as:
 
 .. raw:: html
 
-    <iframe frameborder="0" src="https://itch.io/embed-upload/8976401?color=333333" allowfullscreen="" width="720" height="620"><a href="https://fluffy.itch.io/novembeat-2017">Play Novembeat 2017 on itch.io</a></iframe>
+    <iframe frameborder="0" src="https://itch.io/embed-upload/8976401?color=333333" allowfullscreen="" width="100%" height="620"><a href="https://fluffy.itch.io/novembeat-2017">Play Novembeat 2017 on itch.io</a></iframe>
 
 Due to Bandcrash's existing integration with the itch.io uploader (as well as itch.io's pre-existing payments platform), this is likely the easiest approach for most users.
 
@@ -38,7 +38,7 @@ For example:
 
 .. code-block:: html
 
-   <iframe frameborder="0" src="https://cdn.sockpuppet.us/novembeat-2021/" width=640 height=480 seamless>
+   <iframe frameborder="0" src="https://cdn.sockpuppet.us/novembeat-2021/" width="100%" height="480" seamless>
    <a href="https://cdn.sockpuppet.us/novembeat-2021/">Lo-Fi Beats to Grind Coffee To</a>
    </iframe>
 
@@ -46,7 +46,7 @@ will look like:
 
 .. raw:: html
 
-   <iframe frameborder="0" src="https://cdn.sockpuppet.us/novembeat-2021/" width=640 height=480 seamless>
+   <iframe frameborder="0" src="https://cdn.sockpuppet.us/novembeat-2021/" width="100%" height="480" seamless>
    <a href="https://cdn.sockpuppet.us/novembeat-2021/">Lo-Fi Beats to Grind Coffee To</a>
    </iframe>
 
