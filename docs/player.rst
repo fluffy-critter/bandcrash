@@ -31,7 +31,7 @@ If you have your own HTTP server space, you can upload the directory to your web
 .. code-block:: html
 
    <iframe src="https://example.com/my-album/" width=640 height=480 seamless>
-   <a href="my-album/">Listen to my album</a>
+   <a href="https://example.com/my-album/">Listen to my album</a>
    </iframe>
 
 For example:
