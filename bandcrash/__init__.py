@@ -238,6 +238,11 @@ def make_web_preview(input_dir, output_dir, album, protections, futures):
     from .players import camptown
     player = camptown.Player(art_size=200)
 
+    # filter out all hidden tracks
+    album = copy.deepcopy(album)
+    album['tracks'] = [track for track in album['tracks']
+                       if not track.get('hidden')]
+
     @functools.lru_cache()
     def gen_art_preview(in_path: str) -> typing.Dict[str, typing.Union[str, int]]:
         """ Generate web preview art for the given file
