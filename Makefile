@@ -1,5 +1,5 @@
 # Don't allow homebrew dependencies to sneak into Python
-export PATH := $(shell echo ${PATH} | sed 's,/opt/homebrew[^:]*:,,g')
+export PATH := $(shell echo $$PATH | sed 's,[^:]*/homebrew[^:]*:,,g')
 
 all: setup format mypy pylint
 
