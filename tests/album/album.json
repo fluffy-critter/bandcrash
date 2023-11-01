@@ -8,7 +8,10 @@
    "tracks": [
       {
          "filename": "test track.wav",
-         "title": "This has a title"
+         "title": "This has a title",
+         "about": ["This album was made with Bandcrash.",
+            "",
+            "![](../../art/bclogo.png)"]
       },
       {
          "filename": "test track.wav",

@@ -53,6 +53,8 @@ class Player:
             ):
                 if key in track:
                     out[tgt] = track[key]
+            if track.get('group'):
+                out['title'] = f"{track['group']}: {track.get('title', '(no title)')}"
             info['tracks'].append(out)
 
         theme = album.get('theme', {})
@@ -65,6 +67,7 @@ class Player:
             protections.add('user.css')
 
         files = camptown.process(info, output_dir,
-                                 footer_urls=[('https://fluffy.itch.io/bandcrash', 'Bandcrash')])
+                                 footer_urls=[('https://fluffy.itch.io/bandcrash', 'Bandcrash')],
+                                 file_callback=lambda path: os.path.join(input_dir,path))
 
-        protections |= set(files)
+        protections |= files
