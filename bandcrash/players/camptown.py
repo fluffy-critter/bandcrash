@@ -67,7 +67,8 @@ class Player:
             protections.add('user.css')
 
         files = camptown.process(info, output_dir,
-                                 footer_urls=[('https://fluffy.itch.io/bandcrash', 'Bandcrash')],
-                                 file_callback=lambda path: os.path.join(input_dir,path))
+                                 footer_urls=[
+                                     ('https://fluffy.itch.io/bandcrash', 'Bandcrash')],
+                                 file_callback=lambda path: os.path.join(input_dir, path))
 
         protections |= files
