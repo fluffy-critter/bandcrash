@@ -113,16 +113,17 @@ pefile = "*"
 
 [[package]]
 name = "camptown"
-version = "0.2.3"
+version = "0.3.0"
 description = "Semantic-HTML player engine"
 optional = false
 python-versions = ">=3.9,<4.0"
 files = [
-    {file = "camptown-0.2.3-py3-none-any.whl", hash = "sha256:3f25343b01f80939c0c254045810b7870c99f325cfc8f5d56c04a03d0556911e"},
-    {file = "camptown-0.2.3.tar.gz", hash = "sha256:09dd20e991685f329960550d75a11081968a1f4b4a0bd5c73cd48c241297aa61"},
+    {file = "camptown-0.3.0-py3-none-any.whl", hash = "sha256:f39ee4ed63fd0ccba7a4e3a5d6d7b53854bc1986c3a9498b1e850f7997589b9b"},
+    {file = "camptown-0.3.0.tar.gz", hash = "sha256:545fa67c301f1d9bc9a10ef4562695906132bb8532e2aac3ec7259dc8afcec5f"},
 ]
 
 [package.dependencies]
+awesome-slugify = ">=1.6.5,<2.0.0"
 Jinja2 = ">=3.1.2,<4.0.0"
 markupsafe = ">=2.1.3,<3.0.0"
 mistune = ">=3.0.2,<4.0.0"
@@ -1333,4 +1334,4 @@ gui = ["pyside6"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "51c720a51125411a277a3b8d23a49a435e1f72cbc44f5ee22c1be67276d48d01"
+content-hash = "2e39d6414cb3cb4f463052e23160ef38b0e5cdc8e2eaaf5ebc680ace83cdce56"
