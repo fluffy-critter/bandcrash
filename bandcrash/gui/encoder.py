@@ -51,12 +51,9 @@ class _Encoder(QDialog):
         for future in list(itertools.chain(*self.futures.values())):
             future.add_done_callback(self.signal.emit)
 
-        if self.errors:
-            # An error occurred causing pre-rejection
-            # Simply aborting execution here seems to mess up Qt, though, so
-            # instead we just generate a fake update in the future
-            LOGGER.debug("Errors already found, scheduling prejection")
-            QTimer.singleShot(250, self.reject)
+        # If everything finishes before the dialog presents itself, the thing
+        # just stalls. So this is a little hack.
+        QTimer.singleShot(250, self.check_finished)
 
         LOGGER.debug("parent exec")
         return super().exec_()
@@ -66,6 +63,17 @@ class _Encoder(QDialog):
         LOGGER.warning("Stopping encode")
         self.pool.shutdown(cancel_futures=True)
         self.reject()
+
+    def check_finished(self):
+        """ Watchdog to make sure we aren't waiting on an already-complete futures queue """
+        for task in list(itertools.chain(*self.futures.values())):
+            if not task.done():
+                return
+
+        if self.errors:
+            self.reject()
+        else:
+            self.accept()
 
     def update(self, future):
         """ Update the progress """
@@ -100,19 +108,20 @@ class _Encoder(QDialog):
 def encode(parent, config, album):
     """ Start the album encode and bring up a progress indicator dialog """
     settings = QSettings()
-    pool = concurrent.futures.ThreadPoolExecutor(
+    with concurrent.futures.ThreadPoolExecutor(
         max_workers=typing.cast(int, settings.value("num_threads",
-                                                    os.cpu_count() or 4)))
+                                                    os.cpu_count() or 4))) as pool:
 
-    futures: dict[str, list[concurrent.futures.Future]
-                  ] = collections.defaultdict(list)
+        futures: dict[str, list[concurrent.futures.Future]
+                      ] = collections.defaultdict(list)
 
-    LOGGER.debug("processing %s", config)
-    process(config, album, pool, futures)
+        LOGGER.debug("processing %s", config)
+        process(config, album, pool, futures)
 
-    LOGGER.debug("opening dialog")
-    dialog = _Encoder(parent, pool, futures)
-    LOGGER.debug("waiting for dialog")
-    result = dialog.exec_()
-    LOGGER.debug("got result %d (%d errors)", result, len(dialog.errors))
+        LOGGER.debug("opening dialog")
+        dialog = _Encoder(parent, pool, futures)
+        LOGGER.debug("waiting for dialog")
+        result = dialog.exec_()
+        LOGGER.debug("got result %d (%d errors)", result, len(dialog.errors))
+
     return result, dialog.errors
