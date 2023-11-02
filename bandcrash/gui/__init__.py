@@ -207,6 +207,57 @@ class AlbumEditor(QMainWindow):
     """ An album editor window """
     # pylint:disable=too-many-instance-attributes,too-many-public-methods
 
+    class PathDelegate:
+        """ Storage for the album editor's file information """
+
+        def __init__(self, filename):
+            self.filename = filename
+            self.last_directory = {}
+
+        def get_last_directory(self, role: FileRole, file_path: typing.Optional[str] = None):
+            """ Get the last directory used for a file of a particular type
+
+            :param role: The role
+            :param str file_path: The current path to use as a reference
+            """
+            LOGGER.debug("get_last_directory %s %s", role, file_path)
+            LOGGER.debug("   %s", self.last_directory)
+
+            if file_path:
+                if os.path.isabs(file_path):
+                    # We can just use the existing file's directory
+                    return os.path.dirname(file_path)
+
+                if self.filename:
+                    # Just make it absolute to our directory
+                    return os.path.dirname(util.make_absolute_path(self.filename)(file_path))
+
+            if self.filename:
+                # We know where we are
+                if role.name in self.last_directory:
+                    # And we know where the last file of this type was put
+                    return util.make_absolute_path(self.filename)(self.last_directory[role.name])
+                # just assume the album's directory
+                return os.path.dirname(self.filename)
+
+            # We're not mapped to the filesystem, so just use the system default
+            return role.default_directory
+
+        def set_last_directory(self, role: FileRole, dir_path: str):
+            """ Set the last directory for this role relative to our album file
+
+            :param role: The role
+            :param str dir_path: The directory to use as the reference
+            """
+            LOGGER.debug("set_last_directory %s %s", role, dir_path)
+            if self.filename:
+                self.last_directory[role.name] = util.make_relative_path(
+                    self.filename)(dir_path)
+            else:
+                # We aren't mapped to the filesystem so let's just stash it as absolute
+                self.last_directory[role.name] = dir_path
+            LOGGER.debug("   -> %s", self.last_directory[role.name])
+
     def __init__(self, path: str):
         """ edit an album file
 
@@ -218,7 +269,6 @@ class AlbumEditor(QMainWindow):
         self.setMinimumSize(600, 0)
 
         self.output_dir: typing.Optional[str] = None
-        self.last_directory: dict[str, str] = {}
 
         self.undo_history: list[tuple[int, dict[str, typing.Any]]] = []
         self.redo_history: list[tuple[int, dict[str, typing.Any]]] = []
@@ -229,8 +279,10 @@ class AlbumEditor(QMainWindow):
 
         standard_key = QtGui.QKeySequence.StandardKey
 
-        add_menu_item(file_menu, "&New", self.file_new, standard_key.New)
-        add_menu_item(file_menu, "&Open...", self.file_open, standard_key.Open)
+        add_menu_item(file_menu, "&New",
+                      BandcrashApplication.file_new, standard_key.New)
+        add_menu_item(file_menu, "&Open...",
+                      BandcrashApplication.file_open, standard_key.Open)
         add_menu_item(file_menu, "&Save", self.save, standard_key.Save)
         add_menu_item(file_menu, "Save &As...",
                       self.save_as, standard_key.SaveAs)
@@ -259,7 +311,7 @@ class AlbumEditor(QMainWindow):
         add_menu_item(help_menu, "&About...", self.show_about_box, None,
                       QtGui.QAction.MenuRole.AboutRole)
 
-        self.filename = path
+        self.path_delegate = AlbumEditor.PathDelegate(path)
         self.save_hash = 0
         self.data: dict[str, typing.Any] = {'tracks': []}
         if path:
@@ -374,6 +426,15 @@ class AlbumEditor(QMainWindow):
         self.apply()
         self.update_hash()
 
+    @property
+    def filename(self):
+        """ The current filename of the album """
+        return self.path_delegate.filename
+
+    @filename.setter
+    def filename(self, path):
+        self.path_delegate.filename = path
+
     def update_hash(self):
         """ Update the fingerprint hash """
         old_hash = self.save_hash
@@ -385,31 +446,6 @@ class AlbumEditor(QMainWindow):
         current_hash = hash(repr(self.data))
         LOGGER.debug("save_hash=%d cur_hash=%d", self.save_hash, current_hash)
         return self.save_hash != current_hash
-
-    @staticmethod
-    def file_new():
-        """ Create a new album file """
-        AlbumEditor('').show()
-
-    @staticmethod
-    def file_open(or_new: bool = False):
-        """ Dialog box to open an existing file
-
-        :param bool or_new: Fallback to a new document if
-         """
-        role = FileRole.ALBUM
-        path, _ = QFileDialog.getOpenFileName(None,
-                                              "Open album",
-                                              role.default_directory,
-                                              role.file_filter)
-        if path or or_new:
-            if path:
-                role.default_directory = os.path.dirname(path)
-            editor = AlbumEditor(path)
-            editor.show()
-            return editor
-
-        return None
 
     def reload(self, path):
         """ Load from the backing storage """
@@ -478,7 +514,8 @@ class AlbumEditor(QMainWindow):
         self.hide_footer.setCheckState(
             datatypes.to_checkstate(theme.get('hide_footer', False)))
 
-        self.last_directory = self.data.get('_gui', {}).get('lastdir', {})
+        self.path_delegate.last_directory = self.data.get(
+            '_gui', {}).get('lastdir', {})
 
     def apply(self):
         """ Apply edits to the saved data """
@@ -536,7 +573,7 @@ class AlbumEditor(QMainWindow):
         ))
 
         self.data['_gui'] = {
-            'lastdir': self.last_directory
+            'lastdir': self.path_delegate.last_directory
         }
 
     @property
@@ -614,7 +651,7 @@ class AlbumEditor(QMainWindow):
         )
         if path:
             self.renormalize_paths(self.filename, path)
-            self.filename = path
+            self.path_delegate.filename = path
             self.setWindowTitle(self.filename)
             self.reset()
             self.save()
@@ -740,57 +777,14 @@ class AlbumEditor(QMainWindow):
                     track[key] = renorm(track[key])
 
         # last_directory is aliased into data instead of being copied
-        LOGGER.debug("last_directory before %s", self.last_directory)
-        self.last_directory.update({
+        LOGGER.debug("last_directory before %s",
+                     self.path_delegate.last_directory)
+        self.path_delegate.last_directory.update({
             key: renorm(value)
             for key, value
-            in self.last_directory.items()
+            in self.path_delegate.last_directory.items()
         })
-        LOGGER.debug("after %s", self.last_directory)
-
-    def get_last_directory(self, role: FileRole, file_path: typing.Optional[str] = None):
-        """ Get the last directory used for a file of a particular type
-
-        :param role: The role
-        :param str file_path: The current path to use as a reference
-        """
-        LOGGER.debug("get_last_directory %s %s", role, file_path)
-        LOGGER.debug("   %s", self.last_directory)
-
-        if file_path:
-            if os.path.isabs(file_path):
-                # We can just use the existing file's directory
-                return os.path.dirname(file_path)
-
-            if self.filename:
-                # Just make it absolute to our directory
-                return os.path.dirname(util.make_absolute_path(self.filename)(file_path))
-
-        if self.filename:
-            # We know where we are
-            if role.name in self.last_directory:
-                # And we know where the last file of this type was put
-                return util.make_absolute_path(self.filename)(self.last_directory[role.name])
-            # just assume the album's directory
-            return os.path.dirname(self.filename)
-
-        # We're not mapped to the filesystem, so just use the system default
-        return role.default_directory
-
-    def set_last_directory(self, role: FileRole, dir_path: str):
-        """ Set the last directory for this role relative to our album file
-
-        :param role: The role
-        :param str dir_path: The directory to use as the reference
-        """
-        LOGGER.debug("set_last_directory %s %s", role, dir_path)
-        if self.filename:
-            self.last_directory[role.name] = util.make_relative_path(
-                self.filename)(dir_path)
-        else:
-            # We aren't mapped to the filesystem so let's just stash it as absolute
-            self.last_directory[role.name] = dir_path
-        LOGGER.debug("   -> %s", self.last_directory[role.name])
+        LOGGER.debug("after %s", self.path_delegate.last_directory)
 
     def show_about_box(self):
         """ Show the about box for the app """
@@ -813,14 +807,10 @@ class AlbumEditor(QMainWindow):
             elif answer == QMessageBox.StandardButton.Close:
                 do_close = True
 
-        if not do_close:
+        if do_close:
+            BandcrashApplication.instance().release_editor(self)
+        else:
             event.ignore()
-
-
-def open_file(path):
-    """ Open a file for editing """
-    editor = AlbumEditor(path)
-    editor.show()
 
 
 class BandcrashApplication(QApplication):
@@ -829,26 +819,60 @@ class BandcrashApplication(QApplication):
     def __init__(self, open_files):
         super().__init__()
 
-        self.opened = False
+        self.windows: set[AlbumEditor] = set()
 
         for path in open_files:
-            open_file(os.path.abspath(path))
-            self.opened = True
+            self.open_file(os.path.abspath(path))
 
         QtCore.QTimer.singleShot(50, self.open_on_startup)
 
+    @staticmethod
+    def instance():
+        """ Get the current app instance """
+        return typing.cast(BandcrashApplication, QApplication.instance())
+
+    @staticmethod
+    def file_new():
+        """ Create a new album file """
+        BandcrashApplication.instance().open_file('')
+
+    @staticmethod
+    def file_open(or_new: bool = False):
+        """ Dialog box to open an existing file
+
+        :param bool or_new: Fallback to a new document if the user cancels
+        """
+        role = FileRole.ALBUM
+        path, _ = QFileDialog.getOpenFileName(None,
+                                              "Open album",
+                                              role.default_directory,
+                                              role.file_filter)
+        if path or or_new:
+            if path:
+                role.default_directory = os.path.dirname(path)
+            BandcrashApplication.instance().open_file(path)
+
+    def open_file(self, path):
+        """ Open a file into a new window """
+        editor = AlbumEditor(path)
+        editor.show()
+        self.windows.add(editor)
+
+    def release_editor(self, editor):
+        """ Release a previously-opened editor """
+        self.windows.remove(editor)
+
     def open_on_startup(self):
         """ Hacky way to open the file dialog on startup. there must be a better way... """
-        if not self.opened:
-            AlbumEditor.file_open(or_new=True)
+        if not self.windows:
+            self.file_open(or_new=True)
 
     def event(self, evt):
         """ Handle an application-level event """
         LOGGER.debug("Event: %s", evt)
         if evt.type() == QtCore.QEvent.Type.FileOpen:
             LOGGER.debug("Got file open event: %s", evt.file())
-            open_file(evt.file())
-            self.opened = True
+            self.open_file(evt.file())
             return True
 
         return super().event(evt)
