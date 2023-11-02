@@ -706,6 +706,7 @@ class AlbumEditor(QMainWindow):
             progress.setMaximum(len(all_tasks))
 
             for task in concurrent.futures.as_completed(all_tasks):
+                QApplication.processEvents()
                 pending = [t for t in all_tasks if not t.done()]
                 LOGGER.debug("%d pending tasks", len(pending))
 
