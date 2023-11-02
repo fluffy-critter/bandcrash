@@ -9,9 +9,11 @@
       {
          "filename": "test track.wav",
          "title": "This has a title",
-         "about": ["This album was made with Bandcrash.",
+         "about": [
+            "This album was made with Bandcrash.",
             "",
-            "![](../../art/bclogo.png)"]
+            "![](../../art/bclogo.png)"
+         ]
       },
       {
          "filename": "test track.wav",
@@ -89,6 +91,10 @@
          "filename": "test track.wav",
          "title": "3. Solave",
          "group": "A multi-movement work"
+      },
+      {
+         "filename": "test track.wav",
+         "title": "Test Track"
       }
    ],
    "_gui": {
