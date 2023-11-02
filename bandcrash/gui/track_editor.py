@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QAbstractScrollArea,
                                QFormLayout, QHBoxLayout, QLineEdit,
                                QListWidget, QListWidgetItem, QPlainTextEdit,
                                QPushButton, QRadioButton, QScrollArea,
-                               QSizePolicy, QSplitter, QVBoxLayout, QWidget)
+                               QSizePolicy, QSplitter, QVBoxLayout)
 
 from .. import util
 from . import datatypes, file_utils
@@ -21,11 +21,11 @@ from .widgets import FileSelector, FlowLayout, wrap_layout
 LOGGER = logging.getLogger(__name__)
 
 
-class TrackEditor(QWidget):
+class TrackEditor(QScrollArea):
     """ A track editor pane """
     # pylint:disable=too-many-instance-attributes
 
-    def __init__(self, album_editor):
+    def __init__(self, path_delegate):
         """ edit an individual track
 
         :param dict data: The metadata blob
@@ -33,23 +33,28 @@ class TrackEditor(QWidget):
         super().__init__()
         self.setMinimumSize(400, 0)
 
-        self.album_editor = album_editor
+        self.path_delegate = path_delegate
         self.data: typing.Optional[datatypes.TrackData] = None
         self.setEnabled(False)
+
+        self.setMinimumSize(450, 0)
+        self.setWidgetResizable(True)
+        self.setSizeAdjustPolicy(
+            QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
 
         layout = QFormLayout()
         layout.setFieldGrowthPolicy(
             QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
-        self.setLayout(layout)
+        self.setWidget(wrap_layout(layout))
 
-        self.filename = FileSelector(FileRole.AUDIO, album_editor)
+        self.filename = FileSelector(FileRole.AUDIO, path_delegate)
         self.group = QLineEdit()
         self.title = QLineEdit()
         self.genre = QLineEdit()
         self.artist = QLineEdit()
         self.composer = QLineEdit()
         self.cover_of = QLineEdit()
-        self.artwork = FileSelector(FileRole.IMAGE, album_editor)
+        self.artwork = FileSelector(FileRole.IMAGE, path_delegate)
         self.lyrics = QPlainTextEdit()
         self.comment = QLineEdit()
         self.about = QPlainTextEdit()
@@ -130,7 +135,7 @@ class TrackEditor(QWidget):
 
         LOGGER.debug("TrackEditor.apply %s", self.data.get('filename'))
 
-        relpath = util.make_relative_path(self.album_editor.filename)
+        relpath = util.make_relative_path(self.path_delegate.filename)
 
         datatypes.apply_text_fields(self.data, (
             ('filename', self.filename.file_path),
@@ -228,9 +233,13 @@ class TrackListEditor(QSplitter):
 
         def __init__(self, parent):
             super().__init__(parent)
-            self.track_editor = parent
             self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
             self.setAcceptDrops(True)
+
+        @property
+        def track_editor(self):
+            """ get the track editor """
+            return typing.cast(TrackListEditor, self.parent())
 
         def dragEnterEvent(self, event):
             LOGGER.debug("dragEnterEvent %s %s", event, event.proposedAction())
@@ -254,12 +263,13 @@ class TrackListEditor(QSplitter):
 
             self.track_editor.apply()
 
-    def __init__(self, album_editor):
-        super().__init__()
-        LOGGER.debug("TrackListEditor.__init__")
+    def __init__(self, parent):
+        super().__init__(parent)
+        LOGGER.debug("TrackListEditor.__init__ %s", parent)
 
         self.data: datatypes.TrackList = []
-        self.album_editor = album_editor
+        self.path_delegate = parent.path_delegate
+        self.album_editor = parent
 
         left_panel = QVBoxLayout(self)
         left_panel.setSpacing(0)
@@ -288,16 +298,9 @@ class TrackListEditor(QSplitter):
         buttons.addWidget(self.button_move_down)
         left_panel.addWidget(wrap_layout(buttons))
 
-        self.track_editor = TrackEditor(album_editor)
+        self.track_editor = TrackEditor(parent.path_delegate)
         self.track_editor.setEnabled(False)
-
-        self.editpanel = QScrollArea()
-        self.editpanel.setMinimumSize(450, 0)
-        self.editpanel.setWidgetResizable(True)
-        self.editpanel.setSizeAdjustPolicy(
-            QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
-        self.editpanel.setWidget(self.track_editor)
-        self.addWidget(self.editpanel)
+        self.addWidget(self.track_editor)
 
         self.track_listing.currentRowChanged.connect(self.set_item)
 
@@ -372,7 +375,7 @@ class TrackListEditor(QSplitter):
         filenames, _ = QFileDialog.getOpenFileNames(
             self,
             "Select audio files",
-            dir=self.album_editor.get_last_directory(role),
+            dir=self.path_delegate.get_last_directory(role),
             filter=role.file_filter)
 
         if filenames:
@@ -380,7 +383,7 @@ class TrackListEditor(QSplitter):
             ref_file = filenames[0]
             LOGGER.debug("Audio role: using filename %s", ref_file)
             role.default_directory = os.path.dirname(ref_file)
-            self.album_editor.set_last_directory(
+            self.path_delegate.set_last_directory(
                 role, os.path.dirname(ref_file))
 
         self.add_files(filenames)
@@ -405,12 +408,14 @@ class TrackListEditor(QSplitter):
             self.track_listing.addItem(
                 TrackListEditor.TrackItem(len(self.data), track))
             self.data.append(track)
+        self.apply()
 
     def delete_track(self):
         """ Remove a track """
         LOGGER.debug("TrackListEditor.delete_track")
         self.album_editor.record_undo()
         self.track_listing.takeItem(self.track_listing.currentRow())
+        self.apply()
 
     def select_previous(self):
         """ Select the previous track """
