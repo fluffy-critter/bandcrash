@@ -21,9 +21,9 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QDialog, QErrorMessage,
                                QLabel, QLineEdit, QMainWindow, QMessageBox,
                                QProgressDialog, QPushButton, QSpinBox, QWidget)
 
-from .. import __version__, process, util
+from .. import __version__, util
 from ..players import camptown
-from . import datatypes, widgets
+from . import datatypes, encoder, widgets
 from .file_utils import FileRole
 from .track_editor import TrackListEditor
 
@@ -653,7 +653,6 @@ class AlbumEditor(QMainWindow):
         config.input_dir = os.path.dirname(self.filename)
 
         # find a good default directory to stash the output in
-        settings = QtCore.QSettings()
         role = FileRole.OUTPUT
         if not self.output_dir:
             self.output_dir = role.default_directory
@@ -684,66 +683,14 @@ class AlbumEditor(QMainWindow):
         LOGGER.info("Album data: %s", self.data)
         LOGGER.info("Config options: %s", config)
 
-        threadpool = concurrent.futures.ThreadPoolExecutor(
-            max_workers=typing.cast(int, settings.value("num_threads",
-                                                        os.cpu_count() or 4)))
-        futures: dict[str, list[concurrent.futures.Future]
-                      ] = collections.defaultdict(list)
+        result, errors = encoder.encode(self, config, self.data)
 
-        # Eventually I want to use FuturesProgress to show structured info
-        # and not block the UI thread but for now this'll do
-
-        errors = []
-        progress = QProgressDialog(
-            "Encoding album...", "Abort", 0, 1, self)
-        progress.setWindowModality(Qt.WindowModality.WindowModal)
-
-        all_tasks = []
-        try:
-            process(config, self.data, threadpool, futures)
-
-            all_tasks = list(itertools.chain(*futures.values()))
-            progress.setMaximum(len(all_tasks))
-
-            for task in concurrent.futures.as_completed(all_tasks):
-                QApplication.processEvents()
-                pending = [t for t in all_tasks if not t.done()]
-                LOGGER.debug("%d pending tasks", len(pending))
-
-                progress.setValue(len(all_tasks) - len(pending))
-                if progress.wasCanceled():
-                    threadpool.shutdown(cancel_futures=True)
-
-                task.result()
-        except Exception as e:  # pylint:disable=broad-exception-caught
-            LOGGER.exception("Got exception, canceling pending tasks")
-            threadpool.shutdown(cancel_futures=True)
-            errors.append(e)
-
-        progress.reset()
-
-        for task in all_tasks:
-            try:
-                task.result()
-            except Exception as e:  # pylint:disable=broad-exception-caught
-                errors.append(e)
+        LOGGER.debug("Finished: %d %s", result, errors)
 
         if errors:
-            LOGGER.debug("errors: %d %s", len(errors), errors)
-            msgbox = QMessageBox(
-                QMessageBox.Icon.Critical, "Error", "An error occurred")
-            msgbox.setParent(self)
-            text = f"An error occurred: {str(errors[0])}"
-            if len(errors) > 1:
-                # For some reason mypy isn't seeing setOption or the Option flag type
-                msgbox.setOption(  # type:ignore[attr-defined]
-                    QMessageBox.Option.DontUseNativeDialog)  # type:ignore[attr-defined]
-                text += f", plus {len(errors)-1} more."
-                msgbox.setDetailedText('\n\n'.join(
-                    str(e) for e in errors))
-            msgbox.setText(text)
-            msgbox.exec()
-        elif not progress.wasCanceled() and all_tasks:
+            dlg = widgets.ErrorMessage(self, errors)
+            dlg.exec_()
+        elif result:
             task_names = "Encode"
             if config.do_butler:
                 task_names += " and upload"
