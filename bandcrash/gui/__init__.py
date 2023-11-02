@@ -683,7 +683,10 @@ class AlbumEditor(QMainWindow):
         LOGGER.info("Album data: %s", self.data)
         LOGGER.info("Config options: %s", config)
 
-        result, errors = encoder.encode(self, config, self.data)
+        try:
+            result, errors = encoder.encode(self, config, self.data)
+        except RuntimeError as error:
+            QMessageBox.warning(self, "An error occurred", str(error))
 
         LOGGER.debug("Finished: %d %s", result, errors)
 
