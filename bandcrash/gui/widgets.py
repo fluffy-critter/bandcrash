@@ -6,9 +6,9 @@ import os.path
 
 from PySide6.QtCore import QMargins, QPoint, QRect, QSize, Qt
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import (QColorDialog, QFileDialog, QFormLayout,
-                               QHBoxLayout, QLayout, QLineEdit, QProgressBar,
-                               QPushButton, QSizePolicy, QWidget)
+from PySide6.QtWidgets import (QColorDialog, QDialog, QFileDialog, QHBoxLayout,
+                               QLabel, QLayout, QLineEdit, QPlainTextEdit,
+                               QPushButton, QSizePolicy, QVBoxLayout, QWidget)
 
 from .. import util
 from .file_utils import FileRole
@@ -84,37 +84,6 @@ class FileSelector(QWidget):
         """ Set the value """
         # pylint:disable=invalid-name
         return self.file_path.setText(text)
-
-
-class FuturesProgress(QWidget):
-    """ A stack of progress indicators """
-
-    def __init__(self, futures):
-        super().__init__()
-
-        self.futures = futures
-        self.mapping = {}
-
-        self.form = QFormLayout(self)
-        for key, tasks in futures.items():
-            progress_bar = QProgressBar(self)
-            progress_bar.setMinimum(0)
-            progress_bar.setMaximum(len(tasks))
-            self.mapping[key] = progress_bar
-            self.form.addRow(key, progress_bar)
-
-        self.setLayout(self.form)
-
-    def update(self):
-        """ Update the progress indicators; returns True if everything's done """
-        for key, tasks in self.futures.items():
-            if key in self.mapping:
-                if len([task for task in tasks if task.done()]) == len(tasks):
-                    # This task set is finished, so we can remove the progress bar
-                    self.form.removeRow(self.mapping[key])
-                    del self.mapping[key]
-
-        return bool(self.mapping)
 
 
 class FlowLayout(QLayout):
@@ -265,3 +234,30 @@ class ColorPicker(QWidget):
     def setName(self, name):  # pylint:disable=invalid-name
         """ Set the color value by hex string """
         self.setValue(QColor.fromString(name))
+
+
+class ErrorMessage(QDialog):
+    """ An error box with details; the builtin QMessageBox behaves strangely """
+
+    def __init__(self, parent, errors):
+        super().__init__(parent)
+        self.setWindowTitle("Error")
+        self.setWindowModality(Qt.WindowModality.WindowModal)
+
+        layout = QVBoxLayout()
+
+        if len(errors) == 1:
+            layout.addWidget(QLabel("An error occurred:"))
+        else:
+            layout.addWidget(QLabel(f"{len(errors)} errors occurred:"))
+
+        text = QPlainTextEdit()
+        text.setPlainText('\n\n'.join(str(e) for e in errors))
+        text.setReadOnly(True)
+        layout.addWidget(text)
+
+        button = QPushButton("Okay")
+        button.clicked.connect(self.accept)
+        layout.addWidget(button)
+
+        self.setLayout(layout)
