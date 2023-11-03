@@ -511,7 +511,7 @@ class AlbumEditor(QMainWindow):
         theme = self.data.get('theme', self.data.get('blamscamp', {}))
         for color, key, dfl in self.theme_colors:
             color.setName(theme.get(key, dfl))
-        theme['user_css'] = theme.get('user_css', '')
+        self.user_css.setText(theme.get('user_css', ''))
         self.hide_footer.setCheckState(
             datatypes.to_checkstate(theme.get('hide_footer', False)))
 
