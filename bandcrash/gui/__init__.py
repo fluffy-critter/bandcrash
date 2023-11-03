@@ -328,7 +328,7 @@ class AlbumEditor(QMainWindow):
         self.year.setValidator(QtGui.QIntValidator(0, 99999))
         self.year.setMaxLength(5)
         self.genre = QLineEdit()
-        self.artwork = widgets.FileSelector(FileRole.IMAGE, self)
+        self.artwork = widgets.FileSelector(FileRole.IMAGE, self.path_delegate)
         self.composer = QLineEdit()
 
         layout.addRow("Artist", self.artist)
@@ -359,7 +359,8 @@ class AlbumEditor(QMainWindow):
         theme_settings.addWidget(self.hide_footer)
         layout.addRow("Theme settings", theme_settings)
 
-        self.user_css = widgets.FileSelector(FileRole.IMAGE, self)
+        self.user_css = widgets.FileSelector(
+            FileRole.STYLESHEET, self.path_delegate)
         layout.addRow("User CSS", self.user_css)
 
         layout.addRow("Composer", self.composer)
@@ -484,7 +485,6 @@ class AlbumEditor(QMainWindow):
             ('composer', self.composer),
             ('butler_target', self.butler_target),
             ('butler_prefix', self.butler_prefix),
-            ('user_css', self.user_css.file_path),
         ):
             text_field.setText(self.data.get(key, ''))
 
@@ -511,6 +511,7 @@ class AlbumEditor(QMainWindow):
         theme = self.data.get('theme', self.data.get('blamscamp', {}))
         for color, key, dfl in self.theme_colors:
             color.setName(theme.get(key, dfl))
+        theme['user_css'] = theme.get('user_css', '')
         self.hide_footer.setCheckState(
             datatypes.to_checkstate(theme.get('hide_footer', False)))
 
@@ -538,7 +539,6 @@ class AlbumEditor(QMainWindow):
 
         datatypes.apply_text_fields(self.data, (
                                     ('artwork', self.artwork.file_path),
-                                    ('user_css', self.user_css.file_path),
                                     ),
                                     relpath)
 
@@ -559,6 +559,9 @@ class AlbumEditor(QMainWindow):
         self.track_listing.apply()
 
         theme = self.data.setdefault('theme', {})
+        datatypes.apply_text_fields(theme, (
+            ('user_css', self.user_css.file_path),
+        ), relpath)
         datatypes.apply_checkbox_fields(theme, (
             ('hide_footer', self.hide_footer, False),
         ))
