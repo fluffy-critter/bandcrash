@@ -25,6 +25,7 @@ class FileRole(enum.Enum):
         "track", f"Audio files ({' '.join(f'*{ext}' for ext in ACCEPT_AUDIO_EXTS)})")
     IMAGE = (
         "image", f"Image files ({' '.join(f'*{ext}' for ext in images.known_extensions())})")
+    STYLESHEET = ("stylesheet", "Stylesheets (*.css)")
     OUTPUT = ("output", '')
     BINARY = ("binary", '')
 
