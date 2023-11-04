@@ -2,9 +2,6 @@ all: setup format mypy pylint
 
 .PHONY: setup
 setup:
-	@echo $$PATH | grep -q homebrew \
-		&& echo "Homebrew detected on path" 1>&2 \
-		&& exit 1 || exit 0
 	@echo "Current version: $(shell ./get-version.sh)"
 	poetry install -E gui
 
@@ -67,17 +64,12 @@ doc:
 
 .PHONY: app
 app: setup format pylint mypy
-	poetry run pyinstaller Bandcrash.spec -y
-
-.PHONY: verify-mac
-verify-mac: app
-	# make sure the binaries are all fat (https://github.com/pyinstaller/pyinstaller/issues/8068)
-	find dist/Bandcrash.app -name '*so' | xargs file \
-		| grep arm64 | grep -v 'for architecture' | grep -v '2 architectures' \
-		&& echo "Found a non-fat library in the bundle" 1>&2 || exit 0
+	# --clean is dependent on https://github.com/pyinstaller/pyinstaller/issues/8068
+	# and can be removed when that bug is fixed
+	poetry run pyinstaller Bandcrash.spec -y --clean
 
 .PHONY: upload-mac
-upload-mac: preflight app verify-mac doc
+upload-mac: preflight app doc
 	rm -rf dist/macos
 	mkdir -p dist/macos
 	cp -a dist/Bandcrash.app dist/macos
