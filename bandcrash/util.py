@@ -9,7 +9,6 @@ import subprocess
 import typing
 
 import chardet
-from slugify import Slugify  # type:ignore
 
 LOGGER = logging.getLogger(__name__)
 
@@ -23,11 +22,7 @@ def is_newer(src: str, dest: str) -> bool:
 
 def slugify_filename(fname: str) -> str:
     """ Generate a safe filename """
-    fier = Slugify()
-    fier.separator = '-'
-    fier.safe_chars = ' ._'
-    fier.max_length = 64
-    return fier(fname)
+    return re.sub(r'[^0-9a-zA-Z._ ]+', '-', fname)
 
 
 def guess_track_title(fname: str) -> typing.Tuple[int, str]:
