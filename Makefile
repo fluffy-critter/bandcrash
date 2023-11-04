@@ -69,8 +69,15 @@ doc:
 app: setup format pylint mypy
 	poetry run pyinstaller Bandcrash.spec -y
 
+.PHONY: verify-mac
+verify-mac: app
+	# make sure the binaries are all fat (https://github.com/pyinstaller/pyinstaller/issues/8068)
+	find dist/Bandcrash.app -name '*so' | xargs file \
+		| grep arm64 | grep -v 'for architecture' | grep -v '2 architectures' \
+		&& echo "Found a non-fat library in the bundle" 1>&2 || exit 0
+
 .PHONY: upload-mac
-upload-mac: preflight app doc
+upload-mac: preflight app verify-mac doc
 	rm -rf dist/macos
 	mkdir -p dist/macos
 	cp -a dist/Bandcrash.app dist/macos
