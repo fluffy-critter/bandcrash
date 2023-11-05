@@ -80,7 +80,7 @@ This is the embeddable URL for the album. On your website, point an ``<iframe>``
 .. code-block:: html
 
   <iframe frameborder="0" src="https://f000.backblazeb2.com/file/sockpuppet-cdn/refactor/index.html"
-    width="100%" height="480">
+    width="100%" height="560">
     <a href="https://f000.backblazeb2.com/file/sockpuppet-cdn/refactor/index.html">Refactor by Sockpuppet</a>
   </iframe>
 
@@ -89,7 +89,7 @@ will embed as:
 .. raw:: html
 
   <iframe frameborder="0" src="https://f000.backblazeb2.com/file/sockpuppet-cdn/refactor/index.html"
-    width="100%" height="480">
+    width="100%" height="560">
     <a href="https://f000.backblazeb2.com/file/sockpuppet-cdn/refactor/index.html">Refactor by Sockpuppet</a>
   </iframe>
 
