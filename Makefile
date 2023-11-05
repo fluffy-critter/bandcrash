@@ -2,6 +2,9 @@ all: setup format mypy pylint
 
 .PHONY: setup
 setup:
+	@echo $$PATH | grep -q homebrew \
+		&& echo "Homebrew detected on path" 1>&2 \
+		&& exit 1 || exit 0
 	@echo "Current version: $(shell ./get-version.sh)"
 	poetry install -E gui
 
