@@ -93,10 +93,10 @@ will embed as:
     <a href="https://f000.backblazeb2.com/file/sockpuppet-cdn/refactor/index.html">Refactor by Sockpuppet</a>
   </iframe>
 
-Backblaze would prefer that you use a fronting CDN to serve up these files. This adds extra expense and setup complexity, but they've provided some guides for some common CDNs; the two most worth considering are:
+However, you should use a fronting CDN to serve up these files. This adds extra expense and setup complexity, but it prevents you from getting a large, unexpected bill if your site is hit by a deluge of bots or trolls. Backblaze has provided some guides for some common CDNs; the two most worth considering are:
 
 * `Bunny <https://www.backblaze.com/docs/cloud-storage-integrate-bunnynet-with-backblaze-b2>`_ (starts at $1/month, and is well-regarded)
-* `Cloudflare <https://www.backblaze.com/docs/cloud-storage-deliver-private-backblaze-b2-content-through-cloudflare-cdn>`_ (essentially free for this use case, but there are political reasons to avoid them)
+* `Cloudflare <https://www.backblaze.com/docs/cloud-storage-deliver-public-backblaze-b2-content-through-cloudflare-cdn>`_ (essentially free for this use case, but there are political reasons to avoid them)
 
 This list is non-exhaustive, and there are other CDNs out there with a different mix of performance, expense, and features.
 
