@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bandcrash"
-version = "0.7.2"
+version = "0.7.3"
 description = "Tools for publishing albums to the web and digital stores"
 authors = ["fluffy <fluffy@beesbuzz.biz>"]
 license = "MIT"
