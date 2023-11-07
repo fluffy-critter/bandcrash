@@ -1,5 +1,6 @@
 """ Track editing widgets """
 
+import collections
 import logging
 import os
 import os.path
@@ -231,15 +232,11 @@ class TrackListEditor(QSplitter):
     class TrackList(QListWidget):
         """ The actual track listing panel """
 
-        def __init__(self, parent):
+        def __init__(self, parent, delegate):
             super().__init__(parent)
             self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
             self.setAcceptDrops(True)
-
-        @property
-        def track_editor(self):
-            """ get the track editor """
-            return typing.cast(TrackListEditor, self.parent())
+            self.delegate = delegate
 
         def dragEnterEvent(self, event):
             LOGGER.debug("dragEnterEvent %s %s", event, event.proposedAction())
@@ -255,13 +252,20 @@ class TrackListEditor(QSplitter):
             if event.proposedAction() == Qt.DropAction.CopyAction and event.mimeData().hasUrls():
                 if files := file_utils.filter_audio_urls(event.mimeData().urls()):
                     LOGGER.debug("adding files: %s", files)
-                    self.track_editor.add_files(files)
+                    self.delegate.add_tracks(files)
                     event.acceptProposedAction()
             elif event.proposedAction() == Qt.DropAction.MoveAction:
-                self.track_editor.album_editor.record_undo()
+                self.delegate.record_undo()
                 super().dropEvent(event)
 
-            self.track_editor.apply()
+            self.delegate.apply_changes()
+
+    ActionDelegate = collections.namedtuple(
+        'ActionDelegate', (
+            'add_tracks',
+            'apply_changes',
+            'record_undo',)
+    )
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -276,7 +280,10 @@ class TrackListEditor(QSplitter):
         left_panel.setContentsMargins(0, 0, 0, 0)
         self.addWidget(wrap_layout(left_panel))
 
-        self.track_listing = TrackListEditor.TrackList(self)
+        self.track_listing = TrackListEditor.TrackList(
+            self, TrackListEditor.ActionDelegate(add_tracks=self.add_files,
+                                                 apply_changes=self.apply,
+                                                 record_undo=parent.record_undo))
         left_panel.addWidget(self.track_listing)
 
         self.button_add = QPushButton("+")
