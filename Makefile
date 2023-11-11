@@ -67,8 +67,6 @@ doc:
 
 .PHONY: app
 app: setup format pylint mypy
-	# --clean is dependent on https://github.com/pyinstaller/pyinstaller/issues/8068
-	# and can be removed when that bug is fixed
 	poetry run pyinstaller Bandcrash.spec -y --clean
 
 .PHONY: upload-mac
