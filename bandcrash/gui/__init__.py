@@ -310,6 +310,7 @@ class AlbumEditor(QMainWindow):
         help_menu = menubar.addMenu("&Help")
         add_menu_item(help_menu, "&About...", self.show_about_box, None,
                       QtGui.QAction.MenuRole.AboutRole)
+        add_menu_item(help_menu, "&Manual", self.open_manual, None)
 
         self.path_delegate = AlbumEditor.PathDelegate(path)
         self.save_hash = 0
@@ -814,6 +815,12 @@ class AlbumEditor(QMainWindow):
             BandcrashApplication.instance().release_editor(self)
         else:
             event.ignore()
+
+    @staticmethod
+    def open_manual():
+        """ Opens the online documentation """
+        QtGui.QDesktopServices.openUrl(QtCore.QUrl(
+            'https://bandcrash.readthedocs.io'))
 
 
 class BandcrashApplication(QApplication):
