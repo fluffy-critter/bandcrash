@@ -309,6 +309,21 @@ def clean_subdir(path: str, allowed: typing.Set[str], futures):
 def submit_butler(config, target, futures):
     """ Submit the directory to itch.io via butler """
     channel = f'{config.butler_target}:{config.butler_prefix}{target}'
+
+    if target == 'preview':
+        # check to see if there's already a channel called 'preview',
+        # otherwise call it 'html'
+        preview_check = subprocess.run([config.butler_path, 'status',
+            *config.butler_args, channel],
+            capture_output=True,
+            check=False,
+            creationflags=getattr(
+                           subprocess, 'CREATE_NO_WINDOW', 0),
+            )
+        if preview_check.stdout.startswith(b'No channel '):
+            LOGGER.info("Existing 'preview' target not found, uploading as 'html' instead")
+            channel = f'{config.butler_target}:{config.butler_prefix}html'
+
     output_dir = os.path.join(config.output_dir, target)
 
     LOGGER.info("Butler: Waiting for %s (%d tasks)", output_dir, len(futures))
