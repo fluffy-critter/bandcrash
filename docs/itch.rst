@@ -17,9 +17,9 @@ If you want to publish an album to `itch.io <https://itch.io/>`_, you need to cr
 
 #. Have Bandcrash do an encode and upload (or manually upload the .zip files if you haven't setup Butler)
 
-#. Wait a few minutes, then reload the project page. You should now see some existing uploads, named (for example) ``my-album-preview.zip``, ``my-album-mp3.zip``, and so on.
+#. Wait a few minutes, then reload the project page. You should now see some existing uploads, named (for example) ``my-album-html.zip``, ``my-album-mp3.zip``, and so on.
 
-#. Set the ``preview`` version with "This file will be played in the browser." Set the other versions to be of type "Soundtrack."
+#. Set the ``html`` version with "This file will be played in the browser." Set the other versions to be of type "Soundtrack."
 
 #. Set your embed options:
 
