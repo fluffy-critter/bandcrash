@@ -203,7 +203,7 @@ class PreferencesWindow(QDialog):
         prefs_window.setModal(True)
         prefs_window.exec()
 
-        for window in QApplication.instance().windows:
+        for window in BandcrashApplication.instance().windows:
             window.apply()
 
 
@@ -586,7 +586,8 @@ class AlbumEditor(QMainWindow):
 
         # update whether the itch.io checkbox is enabled
         butler_path = get_encode_options().butler_path
-        self.do_butler.setEnabled(bool(butler_path and shutil.which(butler_path)))
+        self.do_butler.setEnabled(
+            bool(butler_path and shutil.which(butler_path)))
 
     @property
     def history_state(self):
