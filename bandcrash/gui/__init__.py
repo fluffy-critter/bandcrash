@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import os.path
+import shutil
 import subprocess
 import threading
 import typing
@@ -201,6 +202,9 @@ class PreferencesWindow(QDialog):
         prefs_window = PreferencesWindow()
         prefs_window.setModal(True)
         prefs_window.exec()
+
+        for window in QApplication.instance().windows:
+            window.apply()
 
 
 class AlbumEditor(QMainWindow):
@@ -579,6 +583,10 @@ class AlbumEditor(QMainWindow):
         self.data['_gui'] = {
             'lastdir': self.path_delegate.last_directory
         }
+
+        # update whether the itch.io checkbox is enabled
+        butler_path = get_encode_options().butler_path
+        self.do_butler.setEnabled(bool(butler_path and shutil.which(butler_path)))
 
     @property
     def history_state(self):
