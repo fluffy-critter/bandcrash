@@ -314,14 +314,15 @@ def submit_butler(config, target, futures):
         # check to see if there's already a channel called 'preview',
         # otherwise call it 'html'
         preview_check = subprocess.run([config.butler_path, 'status',
-            *config.butler_args, channel],
-            capture_output=True,
-            check=False,
-            creationflags=getattr(
-                           subprocess, 'CREATE_NO_WINDOW', 0),
-            )
+                                        *config.butler_args, channel],
+                                       capture_output=True,
+                                       check=False,
+                                       creationflags=getattr(
+            subprocess, 'CREATE_NO_WINDOW', 0),
+        )
         if preview_check.stdout.startswith(b'No channel '):
-            LOGGER.info("Existing 'preview' target not found, uploading as 'html' instead")
+            LOGGER.info(
+                "Existing 'preview' target not found, uploading as 'html' instead")
             channel = f'{config.butler_target}:{config.butler_prefix}html'
 
     output_dir = os.path.join(config.output_dir, target)
