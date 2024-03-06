@@ -119,7 +119,7 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
         id3.TPE2: album.get('artist'),
         id3.TOPE: track.get('cover_of', album.get('cover_of')),
 
-        id3.TRCK: str(idx),
+        id3.TRCK: str(idx) if idx is not None else None,
         id3.TIT1: track.get('group'),
         id3.TIT2: track_tag_title(track),
 
@@ -417,7 +417,7 @@ def encode_tracks(config, album, protections, pool, futures):
                     encode_mp3,
                     input_filename,
                     out_path('preview', 'mp3', preview_fname),
-                    idx, album, track, config.preview_encoder_args)
+                    None, album, {}, config.preview_encoder_args)
 
         if config.do_mp3:
             enqueue('mp3',
