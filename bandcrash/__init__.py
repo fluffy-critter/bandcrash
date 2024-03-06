@@ -369,6 +369,8 @@ def seconds_to_datetime(duration):
 def encode_tracks(config, album, protections, pool, futures):
     """ run the track encode process """
 
+    encode_files = set()
+
     for idx, track in enumerate(album['tracks'], start=1):
         base_filename = f'{idx:02d} '
         if 'artist' in track:
@@ -376,10 +378,11 @@ def encode_tracks(config, album, protections, pool, futures):
         base_filename += track.get('title', '')
         base_filename = util.slugify_filename(base_filename)
 
-        def out_path(fmt, ext=None):
+        def out_path(fmt, ext=None, fname=None):
             # pylint:disable=cell-var-from-loop
-            protections[fmt].add(f'{base_filename}.{ext or fmt}')
-            return os.path.join(config.output_dir, fmt, f'{base_filename}.{ext or fmt}')
+            out_file = f'{fname or base_filename}.{ext or fmt}'
+            protections[fmt].add(out_file)
+            return os.path.join(config.output_dir, fmt, out_file)
 
         input_filename = os.path.join(config.input_dir, track['filename'])
 
@@ -397,36 +400,45 @@ def encode_tracks(config, album, protections, pool, futures):
         track['duration_timestamp'] = seconds_to_timestamp(duration)
         track['duration_datetime'] = seconds_to_datetime(duration)
 
+        def enqueue(target, encode_func, input_filename, outfile, *args, **kwargs):
+            if outfile not in encode_files:
+                futures[f'encode-{target}'].append(pool.submit(
+                    encode_func,
+                    input_filename,
+                    outfile,
+                    *args, **kwargs))
+                encode_files.add(outfile)
+
         # generate preview track, if desired
         if config.do_preview and not track.get('hidden') and track.get('preview', True):
-            track['preview_mp3'] = f'{base_filename}.mp3'
-            futures['encode-preview'].append(pool.submit(
-                encode_mp3,
-                input_filename,
-                out_path('preview', 'mp3'),
-                idx, album, track, config.preview_encoder_args,
-                cover_art=300))
+            preview_fname = util.file_md5(input_filename)
+            track['preview_mp3'] = f'{preview_fname}.mp3'
+            enqueue('preview',
+                    encode_mp3,
+                    input_filename,
+                    out_path('preview', 'mp3', preview_fname),
+                    idx, album, track, config.preview_encoder_args)
 
         if config.do_mp3:
-            futures['encode-mp3'].append(pool.submit(
-                encode_mp3,
-                input_filename,
-                out_path('mp3'),
-                idx, album, track, config.mp3_encoder_args, cover_art=1500))
+            enqueue('mp3',
+                    encode_mp3,
+                    input_filename,
+                    out_path('mp3'),
+                    idx, album, track, config.mp3_encoder_args, cover_art=1500)
 
         if config.do_ogg:
-            futures['encode-ogg'].append(pool.submit(
-                encode_ogg,
-                input_filename,
-                out_path('ogg'),
-                idx, album, track, config.ogg_encoder_args, cover_art=1500))
+            enqueue('ogg',
+                    encode_ogg,
+                    input_filename,
+                    out_path('ogg'),
+                    idx, album, track, config.ogg_encoder_args, cover_art=1500)
 
         if config.do_flac:
-            futures['encode-flac'].append(pool.submit(
-                encode_flac,
-                input_filename,
-                out_path('flac'),
-                idx, album, track, config.flac_encoder_args, cover_art=1500))
+            enqueue('flac',
+                    encode_flac,
+                    input_filename,
+                    out_path('flac'),
+                    idx, album, track, config.flac_encoder_args, cover_art=1500)
 
 
 def make_zipfile(input_dir, output_file, futures):
