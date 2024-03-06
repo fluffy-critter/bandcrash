@@ -1,5 +1,6 @@
 """ Common functions """
 import functools
+import hashlib
 import logging
 import os
 import os.path
@@ -211,3 +212,12 @@ def text_to_lines(text):
     if isinstance(text, list):
         return '\n'.join(text)
     return text
+
+
+def file_md5(fname):
+    """ Get the md5sum of a file """
+    md5 = hashlib.md5()
+    with open(fname, 'rb') as f:
+        for chunk in iter(lambda: f.read(4096), b''):
+            md5.update(chunk)
+    return md5.hexdigest()
