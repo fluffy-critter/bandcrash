@@ -77,7 +77,7 @@ class PreferencesWindow(QDialog):
         self.setWindowTitle("Bandcrash Preferences")
         self.setMinimumSize(500, 0)
 
-        self.settings = QtCore.QSettings()
+        defaults = get_encode_options()
 
         def separator():
             frame = QFrame()
@@ -92,15 +92,10 @@ class PreferencesWindow(QDialog):
         self.num_threads = QSpinBox(self)
         self.num_threads.setMinimum(1)
         self.num_threads.setMaximum(128)
-        self.num_threads.setValue(
-            typing.cast(int,
-                        self.settings.value("num_threads",
-                                            os.cpu_count())))
-        layout.addRow("Number of Threads", self.num_threads)
+        self.num_threads.setValue(defaults.num_threads)
+        layout.addRow("Number of threads", self.num_threads)
 
         layout.addRow(separator())
-
-        defaults = get_encode_options()
 
         self.preview_encoder_args = QLineEdit()
         self.preview_encoder_args.setText(
@@ -145,6 +140,7 @@ class PreferencesWindow(QDialog):
 
     def apply(self):
         """ Save the settings out """
+        settings = QtCore.QSettings()
         for key, value in (
             ('num_threads', self.num_threads.value()),
 
@@ -155,9 +151,7 @@ class PreferencesWindow(QDialog):
 
             ('butler_path', self.butler_path.text()),
         ):
-            self.settings.setValue(key, value)
-
-        self.settings.sync()
+            settings.setValue(key, value)
 
     def reset_defaults(self):
         """ Reset to defaults """
@@ -166,7 +160,7 @@ class PreferencesWindow(QDialog):
 
         LOGGER.debug("foo 1")
 
-        self.num_threads.setValue(os.cpu_count() or 4)
+        self.num_threads.setValue(defaults.num_threads)
         self.preview_encoder_args.setText(
             ' '.join(defaults.preview_encoder_args))
         self.mp3_encoder_args.setText(' '.join(defaults.mp3_encoder_args))
