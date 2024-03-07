@@ -3,10 +3,8 @@ import collections
 import concurrent.futures
 import itertools
 import logging
-import os
-import typing
 
-from PySide6.QtCore import QSettings, Qt, QTimer, Signal
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import QDialog, QFormLayout, QProgressBar, QPushButton
 
 from .. import process
@@ -107,10 +105,7 @@ class _Encoder(QDialog):
 
 def encode(parent, config, album):
     """ Start the album encode and bring up a progress indicator dialog """
-    settings = QSettings()
-    with concurrent.futures.ThreadPoolExecutor(
-        max_workers=typing.cast(int, settings.value("num_threads",
-                                                    os.cpu_count() or 4))) as pool:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=config.num_threads) as pool:
 
         futures: dict[str, list[concurrent.futures.Future]
                       ] = collections.defaultdict(list)

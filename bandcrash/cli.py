@@ -35,7 +35,7 @@ def parse_args():
     parser.add_argument('--num-threads', '-t', type=int,
                         dest='num_threads',
                         help="Maximum number of concurrent threads",
-                        default=os.cpu_count())
+                        default=defaults.num_threads)
 
     parser.add_argument('--json', '-j', type=str, dest='json_file',
                         default='album.json',
@@ -148,7 +148,7 @@ def main():
         return
 
     pool = concurrent.futures.ThreadPoolExecutor(
-        max_workers=args.num_threads)
+        max_workers=config.num_threads)
 
     futures: typing.Dict[str,
                          typing.List[concurrent.futures.Future]] = collections.defaultdict(list)

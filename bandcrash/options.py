@@ -1,6 +1,7 @@
 """ Encoder options """
 
 import dataclasses
+import os
 import shutil
 import typing
 
@@ -59,6 +60,8 @@ class Options:
     # pylint:disable=too-many-instance-attributes
     input_dir: typing.Optional[str] = None  # Base directory for all inputs
     output_dir: typing.Optional[str] = None  # Base directory for all outputs
+
+    num_threads: int = os.cpu_count() or 4  # Number of threads to use for encoding
 
     preview_encoder_args: list[str] = dataclasses.field(
         default_factory="-q:a 5".split().copy)
