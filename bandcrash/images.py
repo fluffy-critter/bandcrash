@@ -19,7 +19,6 @@ def load_image(in_path: str) -> PIL.Image:
     return PIL.Image.open(in_path)
 
 
-@functools.lru_cache()
 def generate_image(in_path: str, size: int) -> PIL.Image:
     """ Given an image path, generate a rendition that fits within the size constraint
 
@@ -63,7 +62,6 @@ def generate_rendition(in_path: str, out_dir: str, size: int) -> tuple[str, int,
     return out_file, image.width, image.height
 
 
-@functools.lru_cache()
 def generate_blob(in_path: str, size: int, ext: str = "jpeg") -> bytes:
     """ Generate a data blob for a compressed image
 
