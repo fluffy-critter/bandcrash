@@ -423,6 +423,15 @@ class AlbumEditor(QMainWindow):
         self.setWindowTitle(self.filename or 'New Album')
 
         self.reset()
+
+        for widget in (
+            self.artist,
+            self.title,
+            self.genre,
+            self.composer
+            ):
+            widget.textChanged.connect(self.apply)
+
         self.apply()
         self.update_hash()
 
@@ -582,6 +591,8 @@ class AlbumEditor(QMainWindow):
         butler_path = get_encode_options().butler_path
         self.do_butler.setEnabled(
             bool(butler_path and shutil.which(butler_path)))
+
+        self.track_listing.track_editor.update_placeholders(self.data)
 
     @property
     def history_state(self):

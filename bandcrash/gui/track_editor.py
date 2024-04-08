@@ -178,6 +178,17 @@ class TrackEditor(QScrollArea):
 
         LOGGER.debug("applied: %s", self.data)
 
+    def update_placeholders(self, album_data):
+        """ Update the placeholder text in the track editor widgets """
+        if album_data:
+            for field, widget in (
+                ('genre', self.genre),
+                ('artist', self.artist),
+                ('composer', self.composer),
+            ):
+                LOGGER.debug("updated placeholder for %s", field)
+                widget.setPlaceholderText(album_data.get(field, 'If different than album'))
+
 
 class TrackListEditor(QSplitter):
     """ The track listing panel and editor """
