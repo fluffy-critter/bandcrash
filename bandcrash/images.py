@@ -12,14 +12,14 @@ from .util import slugify_filename
 LOGGER = logging.getLogger(__name__)
 
 
-def load_image(in_path: str) -> PIL.Image:
+def load_image(in_path: str) -> PIL.Image.Image:
     """ Load an image into memory, pooling it """
     if not os.path.isfile(in_path):
         raise FileNotFoundError(f"Couldn't find image {in_path}")
     return PIL.Image.open(in_path)
 
 
-def generate_image(in_path: str, size: int) -> PIL.Image:
+def generate_image(in_path: str, size: int) -> PIL.Image.Image:
     """ Given an image path, generate a rendition that fits within the size constraint
 
     :param str in_path: Path to the file
@@ -76,7 +76,7 @@ def generate_blob(in_path: str, size: int, ext: str = "jpeg") -> bytes:
     return buffer.getvalue()
 
 
-def fix_orientation(image: PIL.Image) -> PIL.Image:
+def fix_orientation(image: PIL.Image) -> PIL.Image.Image:
     """ adapted from https://stackoverflow.com/a/30462851/318857
 
         Apply Image.transpose to ensure 0th row of pixels is at the visual
