@@ -386,18 +386,18 @@ class AlbumEditor(QMainWindow):
                       self.track_listing.move_down, "Alt+Down")
 
         checkboxes = widgets.FlowLayout()
-        self.do_preview = QCheckBox("Web preview")
+        self.do_preview = QCheckBox("Web player")
         self.do_mp3 = QCheckBox("MP3")
         self.do_ogg = QCheckBox("Ogg Vorbis")
         self.do_flac = QCheckBox("FLAC")
-        self.do_zip = QCheckBox("Build .zip files")
         self.do_cleanup = QCheckBox("Clean extra files")
+        self.do_zip = QCheckBox("Build .zip files")
         checkboxes.addWidget(self.do_preview)
         checkboxes.addWidget(self.do_mp3)
         checkboxes.addWidget(self.do_ogg)
         checkboxes.addWidget(self.do_flac)
-        checkboxes.addWidget(self.do_zip)
         checkboxes.addWidget(self.do_cleanup)
+        checkboxes.addWidget(self.do_zip)
         layout.addRow("Build options", checkboxes)
 
         butler_opts = QHBoxLayout()
@@ -409,7 +409,7 @@ class AlbumEditor(QMainWindow):
         butler_opts.addWidget(self.do_butler)
         butler_opts.addWidget(self.butler_target, 50)
         butler_opts.addWidget(self.butler_prefix, 10)
-        layout.addRow("itch.io", butler_opts)
+        layout.addRow("itch.io butler", butler_opts)
 
         buttons = QHBoxLayout()
 
