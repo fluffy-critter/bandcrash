@@ -76,7 +76,7 @@ def generate_blob(in_path: str, size: int, ext: str = "jpeg") -> bytes:
     return buffer.getvalue()
 
 
-def fix_orientation(image: PIL.Image) -> PIL.Image.Image:
+def fix_orientation(image: PIL.Image.Image) -> PIL.Image.Image:
     """ adapted from https://stackoverflow.com/a/30462851/318857
 
         Apply Image.transpose to ensure 0th row of pixels is at the visual
@@ -102,7 +102,7 @@ def fix_orientation(image: PIL.Image) -> PIL.Image.Image:
 
     try:
         # pylint:disable=protected-access
-        orientation = image._getexif()[exif_orientation_tag]
+        orientation = image.getexif()[exif_orientation_tag]
         sequence = exif_transpose_sequences[orientation]
         return functools.reduce(type(image).transpose, sequence, image)
     except (TypeError, AttributeError, KeyError):
