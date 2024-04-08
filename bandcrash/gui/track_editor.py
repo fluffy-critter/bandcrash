@@ -187,7 +187,8 @@ class TrackEditor(QScrollArea):
                 ('composer', self.composer),
             ):
                 LOGGER.debug("updated placeholder for %s", field)
-                widget.setPlaceholderText(album_data.get(field, 'If different than album'))
+                widget.setPlaceholderText(album_data.get(
+                    field, 'If different than album'))
 
 
 class TrackListEditor(QSplitter):

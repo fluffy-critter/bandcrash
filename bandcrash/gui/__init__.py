@@ -429,7 +429,7 @@ class AlbumEditor(QMainWindow):
             self.title,
             self.genre,
             self.composer
-            ):
+        ):
             widget.textChanged.connect(self.apply)
 
         self.apply()
