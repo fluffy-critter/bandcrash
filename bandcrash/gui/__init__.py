@@ -387,11 +387,17 @@ class AlbumEditor(QMainWindow):
 
         checkboxes = widgets.FlowLayout()
         self.do_preview = QCheckBox("Web player")
+        self.do_preview.setToolTip("Build a web-based preview player")
         self.do_mp3 = QCheckBox("MP3")
+        self.do_mp3.setToolTip("Generate an album in MP3 format")
         self.do_ogg = QCheckBox("Ogg Vorbis")
+        self.do_ogg.setToolTip("Generate an album in Ogg Vorbis format")
         self.do_flac = QCheckBox("FLAC")
-        self.do_cleanup = QCheckBox("Clean extra files")
+        self.do_flac.setToolTip("Generate an album in FLAC lossless format")
+        self.do_cleanup = QCheckBox("Clean up files")
+        self.do_cleanup.setToolTip("Remove extraneous/left over files")
         self.do_zip = QCheckBox("Build .zip files")
+        self.do_zip.setToolTip("Make a .zip file for each output")
         checkboxes.addWidget(self.do_preview)
         checkboxes.addWidget(self.do_mp3)
         checkboxes.addWidget(self.do_ogg)
@@ -404,6 +410,7 @@ class AlbumEditor(QMainWindow):
         self.do_butler = QCheckBox()
         self.butler_target = QLineEdit()
         self.butler_target.setPlaceholderText("username/my-album-name")
+        self.do_butler.setToolTip("Automate uploads to itch.io via the butler tool")
         self.butler_prefix = QLineEdit()
         self.butler_prefix.setPlaceholderText("prefix")
         butler_opts.addWidget(self.do_butler)
@@ -589,8 +596,13 @@ class AlbumEditor(QMainWindow):
 
         # update whether the itch.io checkbox is enabled
         butler_path = get_encode_options().butler_path
-        self.do_butler.setEnabled(
-            bool(butler_path and shutil.which(butler_path)))
+        if bool(butler_path and shutil.which(butler_path)):
+            self.do_butler.setEnabled(True)
+            self.butler_target.setPlaceholderText("username/my-album-name")
+        else:
+            self.do_butler.setEnabled(False)
+            self.butler_target.setPlaceholderText("Configure butler in the application preferences")
+
 
         self.track_listing.track_editor.update_placeholders(self.data)
 
