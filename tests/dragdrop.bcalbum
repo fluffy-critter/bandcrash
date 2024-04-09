@@ -7,7 +7,7 @@
    "genre": "blipcore",
    "tracks": [
       {
-         "artwork": "../../art/bclogo.png",
+         "artwork": "../art/bclogo.png",
          "filename": "album/test track.wav",
          "genre": "lo-fi jazzcore",
          "group": "Meows I Have Known",
@@ -46,7 +46,7 @@
          "title": "3 This has no preview blah blah blah"
       },
       {
-         "artwork": "hidden_track.png",
+         "artwork": "album/hidden_track.png",
          "filename": "album/test track.wav",
          "title": "This track is hidden",
          "preview": false,
@@ -60,7 +60,8 @@
    "_gui": {
       "lastdir": {
          "AUDIO": "derived",
-         "IMAGE": "../art"
+         "IMAGE": "album"
       }
-   }
+   },
+   "theme": {}
 }
