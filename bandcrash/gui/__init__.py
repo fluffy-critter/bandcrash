@@ -410,7 +410,8 @@ class AlbumEditor(QMainWindow):
         self.do_butler = QCheckBox()
         self.butler_target = QLineEdit()
         self.butler_target.setPlaceholderText("username/my-album-name")
-        self.do_butler.setToolTip("Automate uploads to itch.io via the butler tool")
+        self.do_butler.setToolTip(
+            "Automate uploads to itch.io via the butler tool")
         self.butler_prefix = QLineEdit()
         self.butler_prefix.setPlaceholderText("prefix")
         butler_opts.addWidget(self.do_butler)
@@ -601,8 +602,8 @@ class AlbumEditor(QMainWindow):
             self.butler_target.setPlaceholderText("username/my-album-name")
         else:
             self.do_butler.setEnabled(False)
-            self.butler_target.setPlaceholderText("Configure butler in the application preferences")
-
+            self.butler_target.setPlaceholderText(
+                "Configure butler in the application preferences")
 
         self.track_listing.track_editor.update_placeholders(self.data)
 
