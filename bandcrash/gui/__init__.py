@@ -861,7 +861,7 @@ class BandcrashApplication(QApplication):
         for path in open_files:
             self.open_file(os.path.abspath(path))
 
-        QtCore.QTimer.singleShot(50, self.open_on_startup)
+        QtCore.QTimer.singleShot(100, self.open_on_startup)
 
     @staticmethod
     def instance():
