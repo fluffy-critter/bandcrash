@@ -680,25 +680,6 @@ files = [
 
 [[package]]
 name = "pillow"
-version = "10.1.0"
-description = "Python Imaging Library (Fork)"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "Pillow-10.1.0-cp311-cp311-macosx_11_0_universal2.whl", hash = "sha256:f05c4c7516b17ddbb5521f8084ba62e4962031ede3e359c677e44045c62650fd"},
-]
-
-[package.extras]
-docs = ["furo", "olefile", "sphinx (>=2.4)", "sphinx-copybutton", "sphinx-inline-tabs", "sphinx-removed-in", "sphinxext-opengraph"]
-tests = ["check-manifest", "coverage", "defusedxml", "markdown2", "olefile", "packaging", "pyroma", "pytest", "pytest-cov", "pytest-timeout"]
-
-[package.source]
-type = "legacy"
-url = "https://m.devpi.net/fluffy/prod/+simple"
-reference = "devpi-fluffy"
-
-[[package]]
-name = "pillow"
 version = "10.3.0"
 description = "Python Imaging Library (Fork)"
 optional = false
@@ -782,6 +763,29 @@ mic = ["olefile"]
 tests = ["check-manifest", "coverage", "defusedxml", "markdown2", "olefile", "packaging", "pyroma", "pytest", "pytest-cov", "pytest-timeout"]
 typing = ["typing-extensions"]
 xmp = ["defusedxml"]
+
+[[package]]
+name = "pillow"
+version = "10.3.0"
+description = "Python Imaging Library (Fork)"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pillow-10.3.0-cp311-cp311-macosx_11_0_universal2.whl", hash = "sha256:d85831ed42915620f23fa7d929a2c779d462e2bfcf40f671dc70cd37af8aa0b4"},
+]
+
+[package.extras]
+docs = ["furo", "olefile", "sphinx (>=2.4)", "sphinx-copybutton", "sphinx-inline-tabs", "sphinx-removed-in", "sphinxext-opengraph"]
+fpx = ["olefile"]
+mic = ["olefile"]
+tests = ["check-manifest", "coverage", "defusedxml", "markdown2", "olefile", "packaging", "pyroma", "pytest", "pytest-cov", "pytest-timeout"]
+typing = ["typing-extensions"]
+xmp = ["defusedxml"]
+
+[package.source]
+type = "legacy"
+url = "https://m.devpi.net/fluffy/prod/+simple"
+reference = "devpi-fluffy"
 
 [[package]]
 name = "pkginfo"
