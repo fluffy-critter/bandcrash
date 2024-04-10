@@ -34,7 +34,7 @@ if sys.platform == 'darwin':
         upx=True,
         console=False,
         disable_windowed_traceback=False,
-        argv_emulation=True,
+        argv_emulation=False,
         target_arch='universal2',
         codesign_identity=None,
         entitlements_file=None,
