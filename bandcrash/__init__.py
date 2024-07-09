@@ -99,12 +99,12 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
     :param str idx: Track number
     :param dict album: Album metadata
     :param dict track: Track metadata
-    :param str encode_args: Arguments to pass along to LAME
+    :param str encode_args: Arguments to pass along to FFmpeg
     :param str cover_art: Artwork rendition size
     """
     from mutagen import id3
 
-    run_encoder(in_path, out_path, encode_args)
+    run_encoder(in_path, out_path, encode_args + ['-c:a', 'libmp3lame'])
 
     try:
         tags = id3.ID3(out_path)
