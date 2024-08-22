@@ -5,7 +5,7 @@ import os
 import os.path
 
 from PySide6.QtCore import QMargins, QPoint, QRect, QSize, Qt
-from PySide6.QtGui import QColor
+from PySide6.QtGui import QColor, QFontMetricsF
 from PySide6.QtWidgets import (QColorDialog, QDialog, QFileDialog, QHBoxLayout,
                                QLabel, QLayout, QLineEdit, QPlainTextEdit,
                                QPushButton, QSizePolicy, QVBoxLayout, QWidget)
@@ -261,3 +261,22 @@ class ErrorMessage(QDialog):
         layout.addWidget(button)
 
         self.setLayout(layout)
+
+class ResizeTextEdit(QPlainTextEdit):
+    """ A QPlainTextEdit that resizes with its contents """
+
+    def __init__(self):
+        super().__init__()
+
+        self.textChanged.connect(self.onTextChanged)
+
+        metrics = QFontMetricsF(self.font())
+        self.line_height = metrics.lineSpacing()
+
+        margins = self.contentsMargins()
+        self.margin = margins.top() + margins.bottom()
+
+
+    def onTextChanged(self):
+        size = self.document().size().toSize()
+        self.setFixedHeight(self.line_height*(size.height() + 1) + self.margin)

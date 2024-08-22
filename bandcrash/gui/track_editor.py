@@ -10,14 +10,14 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QAbstractItemView, QAbstractScrollArea,
                                QButtonGroup, QCheckBox, QFileDialog,
                                QFormLayout, QHBoxLayout, QLineEdit,
-                               QListWidget, QListWidgetItem, QPlainTextEdit,
+                               QListWidget, QListWidgetItem,
                                QPushButton, QRadioButton, QScrollArea,
                                QSizePolicy, QSplitter, QVBoxLayout)
 
 from .. import util
 from . import datatypes, file_utils
 from .file_utils import FileRole
-from .widgets import FileSelector, FlowLayout, wrap_layout
+from .widgets import FileSelector, FlowLayout, wrap_layout, ResizeTextEdit
 
 LOGGER = logging.getLogger(__name__)
 
@@ -56,9 +56,9 @@ class TrackEditor(QScrollArea):
         self.composer = QLineEdit()
         self.cover_of = QLineEdit()
         self.artwork = FileSelector(FileRole.IMAGE, path_delegate)
-        self.lyrics = QPlainTextEdit()
+        self.lyrics = ResizeTextEdit()
         self.comment = QLineEdit()
-        self.about = QPlainTextEdit()
+        self.about = ResizeTextEdit()
 
         layout.addRow("Audio file", self.filename)
         layout.addRow("Title", self.title)
