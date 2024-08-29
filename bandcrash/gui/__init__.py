@@ -728,12 +728,18 @@ class AlbumEditor(QMainWindow):
         LOGGER.debug("self.output_dir = %s", self.output_dir)
 
         # prompt for the actual output directory
-        base_dir = QFileDialog.getExistingDirectory(
-            self,
-            "Choose an output directory",
-            self.output_dir or '')
-        if not base_dir:
+        dialog = QFileDialog(self, "Choose an output directory", self.output_dir or '')
+        dialog.setFileMode(QFileDialog.FileMode.Directory)
+        dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptOpen)
+        dialog.setLabelText(QFileDialog.DialogLabel.Accept, "Encode")
+        if not dialog.exec():
             return
+
+        result = dialog.selectedFiles()
+        if not result or not result[0]:
+            return
+
+        base_dir = result[0]
 
         # store our output directory for later
         self.output_dir = base_dir or ''
