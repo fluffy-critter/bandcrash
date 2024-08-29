@@ -728,7 +728,8 @@ class AlbumEditor(QMainWindow):
         LOGGER.debug("self.output_dir = %s", self.output_dir)
 
         # prompt for the actual output directory
-        dialog = QFileDialog(self, "Choose an output directory", self.output_dir or '')
+        dialog = QFileDialog(
+            self, "Choose an output directory", self.output_dir or '')
         dialog.setFileMode(QFileDialog.FileMode.Directory)
         dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptOpen)
         dialog.setLabelText(QFileDialog.DialogLabel.Accept, "Encode")
@@ -775,9 +776,8 @@ class AlbumEditor(QMainWindow):
                 self,
                 "Encode complete",
                 f"{task_names} completed successfully",
-                QMessageBox.StandardButton.Open |
-                QMessageBox.StandardButton.Ok,
-                QMessageBox.StandardButton.Open)
+                QMessageBox.StandardButton.Open | QMessageBox.StandardButton.Ok,
+                QMessageBox.StandardButton.Open) #type:ignore
             if result == QMessageBox.StandardButton.Open:
                 QtGui.QDesktopServices.openUrl(
                     QtCore.QUrl.fromLocalFile(config.output_dir))
