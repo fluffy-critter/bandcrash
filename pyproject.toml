@@ -21,7 +21,7 @@ pillow = [
     { platform = "darwin", version = "^10.1.0", source = "devpi-fluffy" },
     { markers = "sys_platform != 'darwin'", version = "^10.1.0", source = "pypi"}
 ]
-camptown = "^0.3.3"
+camptown = "^0.3.7"
 
 
 [tool.poetry.group.dev.dependencies]
