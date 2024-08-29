@@ -40,7 +40,7 @@ class _Encoder(QDialog):
 
         self.errors = []
 
-        self.signal.connect(self.update)
+        self.signal.connect(self.update_progress)
 
         self.setLayout(layout)
 
@@ -73,7 +73,7 @@ class _Encoder(QDialog):
         else:
             self.accept()
 
-    def update(self, future):
+    def update_progress(self, future):
         """ Update the progress """
         LOGGER.debug("Got update for future %s", future)
         done = True
