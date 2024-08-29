@@ -777,7 +777,7 @@ class AlbumEditor(QMainWindow):
                 "Encode complete",
                 f"{task_names} completed successfully",
                 QMessageBox.StandardButton.Open | QMessageBox.StandardButton.Ok,
-                QMessageBox.StandardButton.Open) #type:ignore
+                QMessageBox.StandardButton.Open)  # type:ignore
             if result == QMessageBox.StandardButton.Open:
                 QtGui.QDesktopServices.openUrl(
                     QtCore.QUrl.fromLocalFile(config.output_dir))
