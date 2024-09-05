@@ -14,8 +14,9 @@ LOGGER = logging.getLogger(__name__)
 class Player:
     """ A player using `Camptown <https://github.com/fluffy-critter/camptown>`_. """
 
-    def __init__(self, art_size=200):
+    def __init__(self, art_size=200, fullsize_art_size=1200):
         self.art_size = art_size
+        self.fullsize_art_size = fullsize_art_size
 
     @property
     def name(self):
@@ -23,7 +24,11 @@ class Player:
 
     @property
     def art_rendition_sizes(self):
-        return (("1x", self.art_size), ("2x", self.art_size*2))
+        return (
+            ("1x", self.art_size),
+            ("2x", self.art_size*2),
+            ("fullsize", self.fullsize_art_size)
+            )
 
     def convert(self, input_dir, output_dir, album, protections, **vars):
         """ Convert a Bandcrash album spec to a Camptown player """
