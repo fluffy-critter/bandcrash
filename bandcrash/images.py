@@ -29,8 +29,7 @@ def generate_image(in_path: str, size: int) -> PIL.Image.Image:
     out_w = int(min(image.width*size/image.height, size))
     out_h = int(min(image.height*size/image.width, size))
     if out_w > image.width or out_h > image.height:
-        out_w = image.width
-        out_h = image.height
+        return image
 
     return image.resize(size=(out_w, out_h), resample=PIL.Image.Resampling.LANCZOS)
 
@@ -55,7 +54,7 @@ def generate_rendition(in_path: str, out_dir: str, size: int) -> tuple[str, int,
         ext = 'jpg'
         mode = 'RGB'
 
-    out_file = slugify_filename(f'{basename}.{size}.{ext}')
+    out_file = slugify_filename(f'{basename}.{image.height}.{ext}')
     image.convert(mode).save(os.path.join(out_dir, out_file))
     LOGGER.info("Wrote image %s", out_file)
 
