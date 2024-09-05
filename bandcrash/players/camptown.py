@@ -14,7 +14,7 @@ LOGGER = logging.getLogger(__name__)
 class Player:
     """ A player using `Camptown <https://github.com/fluffy-critter/camptown>`_. """
 
-    def __init__(self, art_size=200, fullsize_art_size=1200):
+    def __init__(self, art_size=200, fullsize_art_size=65536):
         self.art_size = art_size
         self.fullsize_art_size = fullsize_art_size
 
