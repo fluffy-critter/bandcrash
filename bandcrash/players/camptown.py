@@ -28,7 +28,7 @@ class Player:
             ("1x", self.art_size),
             ("2x", self.art_size*2),
             ("fullsize", self.fullsize_art_size)
-            )
+        )
 
     def convert(self, input_dir, output_dir, album, protections, **vars):
         """ Convert a Bandcrash album spec to a Camptown player """
