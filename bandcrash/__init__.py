@@ -1,5 +1,5 @@
 """ Generate preview and sale versions of albums for itchio et al """
-# pylint:disable=too-many-arguments,import-outside-toplevel
+# pylint:disable=too-many-arguments,import-outside-toplevel,too-many-positional-arguments
 
 import argparse
 import base64
