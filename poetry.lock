@@ -702,29 +702,6 @@ files = [
 
 [[package]]
 name = "pillow"
-version = "10.3.0"
-description = "Python Imaging Library (Fork)"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "pillow-10.3.0-cp311-cp311-macosx_11_0_universal2.whl", hash = "sha256:d85831ed42915620f23fa7d929a2c779d462e2bfcf40f671dc70cd37af8aa0b4"},
-]
-
-[package.extras]
-docs = ["furo", "olefile", "sphinx (>=2.4)", "sphinx-copybutton", "sphinx-inline-tabs", "sphinx-removed-in", "sphinxext-opengraph"]
-fpx = ["olefile"]
-mic = ["olefile"]
-tests = ["check-manifest", "coverage", "defusedxml", "markdown2", "olefile", "packaging", "pyroma", "pytest", "pytest-cov", "pytest-timeout"]
-typing = ["typing-extensions"]
-xmp = ["defusedxml"]
-
-[package.source]
-type = "legacy"
-url = "https://m.devpi.net/fluffy/prod/+simple"
-reference = "devpi-fluffy"
-
-[[package]]
-name = "pillow"
 version = "10.4.0"
 description = "Python Imaging Library (Fork)"
 optional = false
@@ -819,6 +796,29 @@ mic = ["olefile"]
 tests = ["check-manifest", "coverage", "defusedxml", "markdown2", "olefile", "packaging", "pyroma", "pytest", "pytest-cov", "pytest-timeout"]
 typing = ["typing-extensions"]
 xmp = ["defusedxml"]
+
+[[package]]
+name = "pillow"
+version = "10.4.0"
+description = "Python Imaging Library (Fork)"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pillow-10.4.0-cp311-cp311-macosx_11_0_universal2.whl", hash = "sha256:0c9c2b95c954ec0386f411b474d8f7cef79cc05e120da977fe805af250d5cf9a"},
+]
+
+[package.extras]
+docs = ["furo", "olefile", "sphinx (>=7.3)", "sphinx-copybutton", "sphinx-inline-tabs", "sphinxext-opengraph"]
+fpx = ["olefile"]
+mic = ["olefile"]
+tests = ["check-manifest", "coverage", "defusedxml", "markdown2", "olefile", "packaging", "pyroma", "pytest", "pytest-cov", "pytest-timeout"]
+typing = ["typing-extensions"]
+xmp = ["defusedxml"]
+
+[package.source]
+type = "legacy"
+url = "https://m.devpi.net/fluffy/prod/+simple"
+reference = "devpi-fluffy"
 
 [[package]]
 name = "pkginfo"
@@ -1409,4 +1409,4 @@ gui = ["pyside6"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "6a30669bf42bc0bc927f595f0c8086cd96173a8615b7e165521cd416e8625c49"
+content-hash = "bb940f3f49f4dd5bbacb66d3a39488736e7845edeff75aac434f35cddc6f9267"
