@@ -384,7 +384,10 @@ def encode_tracks(config, album, protections, pool, futures):
             protections[fmt].add(out_file)
             return os.path.join(config.output_dir, fmt, out_file)
 
-        input_filename = os.path.join(config.input_dir, track['filename'])
+        if track.get('filename'):
+            input_filename = os.path.join(config.input_dir, track['filename'])
+        else:
+            input_filename = ''
 
         if 'artwork' in track:
             track['artwork_path'] = os.path.join(
@@ -395,13 +398,14 @@ def encode_tracks(config, album, protections, pool, futures):
             if os.path.isfile(lyricfile):
                 track['lyrics'] = util.read_lines(lyricfile)
 
-        duration = util.get_audio_duration(input_filename)
-        track['duration'] = duration
-        track['duration_timestamp'] = seconds_to_timestamp(duration)
-        track['duration_datetime'] = seconds_to_datetime(duration)
+        if input_filename:
+            duration = util.get_audio_duration(input_filename)
+            track['duration'] = duration
+            track['duration_timestamp'] = seconds_to_timestamp(duration)
+            track['duration_datetime'] = seconds_to_datetime(duration)
 
         def enqueue(target, encode_func, input_filename, outfile, *args, **kwargs):
-            if outfile not in encode_files:
+            if input_filename and outfile not in encode_files:
                 futures[f'encode-{target}'].append(pool.submit(
                     encode_func,
                     input_filename,
@@ -410,7 +414,10 @@ def encode_tracks(config, album, protections, pool, futures):
                 encode_files.add(outfile)
 
         # generate preview track, if desired
-        if config.do_preview and not track.get('hidden') and track.get('preview', True):
+        if (config.do_preview
+            and input_filename
+            and not track.get('hidden')
+                and track.get('preview', True)):
             preview_fname = util.file_md5(input_filename)
             track['preview_mp3'] = f'{preview_fname}.mp3'
             enqueue('preview',

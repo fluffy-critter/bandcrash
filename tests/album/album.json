@@ -95,6 +95,9 @@
       {
          "filename": "test track.wav",
          "title": "Test Track"
+      },
+      {
+         "title": "no audio yet"
       }
    ],
    "_gui": {
