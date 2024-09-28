@@ -8,9 +8,10 @@ poetry run devpi use https://m.devpi.net/fluffy/prod
 poetry run devpi login fluffy
 
 pkg="$1"
+shift
 rm -f $pkg-*.whl
 for platform in macosx_10_10_x86_64 macosx_11_0_arm64 ; do
-    pip3 download --only-binary=:all: --platform $platform $pkg
+    poetry run pip3 download --only-binary=:all: --platform $platform $pkg "$@"
 done
 mkdir -p tmp
 poetry run delocate-fuse -w tmp  $pkg-*.whl
