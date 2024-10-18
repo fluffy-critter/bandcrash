@@ -17,6 +17,10 @@
       },
       {
          "filename": "test track.wav",
+         "title": "This: also has a title <silly> 💩🎱🐩"
+      },
+      {
+         "filename": "test track.wav",
          "preview": false,
          "title": "This has no preview blah blah blah"
       },
@@ -32,7 +36,7 @@
          "filename": "test track.wav",
          "group": "Meows I Have Known",
          "lyrics": "lyrics-iso8859.txt",
-         "title": "A different artist"
+         "title": "A different artist 🐱"
       },
       {
          "filename": "test track.wav",
