@@ -10,6 +10,8 @@ import subprocess
 import typing
 
 import chardet
+from unidecode import unidecode
+import demoji
 
 LOGGER = logging.getLogger(__name__)
 
@@ -23,7 +25,23 @@ def is_newer(src: str, dest: str) -> bool:
 
 def slugify_filename(fname: str) -> str:
     """ Generate a safe filename """
-    return re.sub(r'[^0-9a-zA-Z._ ]+', '-', fname)
+
+    # remove control characters
+    fname = fname.translate(dict.fromkeys(range(32)))
+
+    # convert emoji
+    fname = demoji.replace_with_desc(fname)
+
+    # translate unicode to ascii
+    fname = unidecode(fname)
+
+    # collapse/convert whitespace
+    fname = ' '.join(fname.split())
+
+    # convert runs of problematic characters to -
+    fname = re.sub(r'[\-\$/\\:\<\>\*\"\|&]+', '-', fname)
+
+    return fname
 
 
 def guess_track_title(fname: str) -> typing.Tuple[int, str]:
