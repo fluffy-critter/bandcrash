@@ -10,8 +10,8 @@ import subprocess
 import typing
 
 import chardet
-from unidecode import unidecode
 import demoji
+from unidecode import unidecode
 
 LOGGER = logging.getLogger(__name__)
 
