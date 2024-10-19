@@ -10,7 +10,6 @@ import subprocess
 import typing
 
 import chardet
-import demoji
 from unidecode import unidecode
 
 LOGGER = logging.getLogger(__name__)
@@ -28,9 +27,6 @@ def slugify_filename(fname: str) -> str:
 
     # remove control characters
     fname = fname.translate(dict.fromkeys(range(32)))
-
-    # convert emoji
-    fname = demoji.replace_with_desc(fname)
 
     # translate unicode to ascii
     fname = unidecode(fname)
