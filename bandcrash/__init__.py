@@ -148,11 +148,6 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
 def track_tag_title(track):
     """ Get the tag title for a track """
     title = track.get('title', None)
-    if track.get('explicit'):
-        if title is None:
-            title = '[explicit]'
-        else:
-            title += ' [explicit]'
     return title
 
 
