@@ -323,20 +323,6 @@ packaging = ">=20.9"
 typing-extensions = "*"
 
 [[package]]
-name = "demoji"
-version = "1.1.0"
-description = "Accurately remove and replace emojis in text strings"
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "demoji-1.1.0-py3-none-any.whl", hash = "sha256:6d3256c909aea299e97fe984f827a2a060c2a8f8bfcbafa7ec9659967c5df50f"},
-    {file = "demoji-1.1.0.tar.gz", hash = "sha256:072efaeca725e6f63ab59d83abeb55b178842538ed9256455a82ebbd055ff216"},
-]
-
-[package.extras]
-ujson = ["ujson"]
-
-[[package]]
 name = "devpi-client"
 version = "7.2.0"
 description = "devpi upload/install/... workflow commands for Python developers"
@@ -1455,4 +1441,4 @@ gui = ["pyside6"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "ee73e5e90df2067499bd1b46ed86faeb5710f8e3a95e21353a5803bdff1d07c1"
+content-hash = "c6fd123d2d5af136f950651c00b397f89315ea85627266217c1bdda0bdc97654"
