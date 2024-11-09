@@ -125,13 +125,13 @@ virtualenv = ["virtualenv (>=20.0.35)"]
 
 [[package]]
 name = "camptown"
-version = "0.3.12"
+version = "0.3.13"
 description = "Semantic-HTML player engine"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "camptown-0.3.12-py3-none-any.whl", hash = "sha256:4d53ad007c297b563c749adbfb88da5cca05bdd9ce6ad7df93f7a828c7f4de77"},
-    {file = "camptown-0.3.12.tar.gz", hash = "sha256:cf8562deb81293faa623db68ac68f5f821793ea316c4996cb99b80ad6c79e8f8"},
+    {file = "camptown-0.3.13-py3-none-any.whl", hash = "sha256:c805f0a856d964551b153f055a080a7dcee7b4767753b0ceac4caa7573c3eb55"},
+    {file = "camptown-0.3.13.tar.gz", hash = "sha256:9e1e242e9dc25ab66fa29c33a6d41f5181882068ae5d838ec0c362d8ea83cc44"},
 ]
 
 [package.dependencies]
@@ -688,13 +688,13 @@ files = [
 
 [[package]]
 name = "packaging"
-version = "24.1"
+version = "24.2"
 description = "Core utilities for Python packages"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "packaging-24.1-py3-none-any.whl", hash = "sha256:5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124"},
-    {file = "packaging-24.1.tar.gz", hash = "sha256:026ed72c8ed3fcce5bf8950572258698927fd1dbda10a5e981cdf0ac37f4f002"},
+    {file = "packaging-24.2-py3-none-any.whl", hash = "sha256:09abb1bccd265c01f4a3aa3f7a7db064b36514d2cba19a2f694fe6150451a759"},
+    {file = "packaging-24.2.tar.gz", hash = "sha256:c228a6dc5e932d346bc5739379109d49e8853dd8223571c7c5b55260edc0b97f"},
 ]
 
 [[package]]
