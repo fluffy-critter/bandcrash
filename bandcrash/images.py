@@ -61,17 +61,10 @@ def generate_rendition(in_path: str, out_dir: str, size: int) -> tuple[str, int,
     return out_file, image.width, image.height
 
 
-def generate_blob(in_path: str, size: int, ext: str = "jpeg") -> bytes:
-    """ Generate a data blob for a compressed image
-
-    :param str in_path: Path to the file
-    :param int size: Maximum rendition size
-    :param str format: Output file format
-
-    :returns: In-memory compressed file
-    """
+def make_blob(image: PIL.Image.Image, ext='jpeg') -> bytes:
+    """ Convert an image rendition to compressed bytes """
     buffer = io.BytesIO()
-    generate_image(in_path, size).convert('RGB').save(buffer, format=ext)
+    image.convert('RGB').save(buffer, format=ext)
     return buffer.getvalue()
 
 
