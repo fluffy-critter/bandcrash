@@ -32,14 +32,15 @@ def wait_futures(futures):
         task.result()
 
 
-def generate_id3_apic(album, track, size):
-    """ Generate the APIC tags for an mp3 track
+def generate_art_tags(album, track, size, make_tag_func):
+    """ Generate a set of art tags for a track
+
     :param dict album: The album's data
     :param dict track: The track's data
-    :param int size: Maximum rendition size
+    :param int size: The maximum rendition size
+    :param make_tag_func: Function to create the tag from the rendition
     """
     from mutagen import id3
-
     art_tags = []
     for container, picture_type, desc in (
         (album, id3.PictureType.COVER_FRONT, 'Front Cover'),
@@ -47,16 +48,12 @@ def generate_id3_apic(album, track, size):
     ):
         if 'artwork_path' in container:
             try:
-                img_data = images.generate_blob(container['artwork_path'],
-                                                size=size, ext='jpeg')
-                art_tags.append(id3.APIC(id3.Encoding.UTF8,
-                                         'image/jpeg',
-                                         picture_type,
-                                         desc,
-                                         img_data))
+                img = images.generate_image(container['artwork_path'], size)
+                art_tags.append(make_tag_func(img, picture_type, desc))
             except Exception:  # pylint:disable=broad-exception-caught
                 LOGGER.exception(
                     "Got an error converting image %s", container['artwork_path'])
+
     return art_tags
 
 
@@ -136,7 +133,12 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
             tags.setall(frame.__name__, [frame(text=val)])
 
     if cover_art:
-        art_tags = generate_id3_apic(album, track, cover_art)
+        def make_apic(img, picture_type, desc):
+            return id3.APIC(id3.Encoding.UTF8, 'image/jpeg',
+                            picture_type, desc,
+                            images.make_blob(img, ext='jpeg'))
+
+        art_tags = generate_art_tags(album, track, cover_art, make_apic)
         if art_tags:
             LOGGER.debug("%s: Adding %d artworks", out_path, len(art_tags))
             tags.setall('APIC', art_tags)
@@ -174,17 +176,17 @@ def tag_vorbis(tags, idx, album, track):
             tags[frame] = val
 
 
-def get_flac_picture(artwork_path, size):
-    """ Generate a FLAC picture frame """
-    from mutagen import flac, id3
-    img = images.generate_image(artwork_path, size)
+def make_flac_picture(img, picture_type, desc):
+    """ Given an image tag spec, generate a FLAC Picture element """
+    from mutagen import flac
 
     pic = flac.Picture()
-    pic.type = id3.PictureType.COVER_FRONT
+    pic.type = picture_type
+    pic.desc = desc
     pic.width = img.width
     pic.height = img.height
     pic.mime = "image/jpeg"
-    pic.data = images.generate_blob(artwork_path, size, ext='jpeg')
+    pic.data = images.make_blob(img, ext='jpeg')
 
     return pic
 
@@ -198,18 +200,18 @@ def encode_ogg(in_path, out_path, idx, album, track, encode_args, cover_art):
     tags = oggvorbis.OggVorbis(out_path)
     tag_vorbis(tags, idx, album, track)
 
-    artwork_path = track.get('artwork_path', album.get('artwork_path'))
+    if cover_art:
+        def make_ogg_picture(img, picture_type, desc):
+            picture_data = make_flac_picture(img, picture_type, desc).write()
+            return base64.b64encode(picture_data).decode('ascii')
 
-    if cover_art and artwork_path:
-        picture_data = get_flac_picture(
-            artwork_path, cover_art).write()
-        tags['metadata_block_picture'] = [
-            base64.b64encode(picture_data).decode("ascii")
-        ]
+        tags['metadata_block_picture'] =         generate_art_tags(
+            album, track, cover_art, make_ogg_picture)
 
     tags.save()
 
     LOGGER.info("Finished writing %s", out_path)
+
 
 def encode_flac(in_path, out_path, idx, album, track, encode_args, cover_art):
     """ Encode a track as ogg vorbis """
@@ -222,11 +224,9 @@ def encode_flac(in_path, out_path, idx, album, track, encode_args, cover_art):
 
     tags.clear_pictures()
 
-    artwork_path = track.get('artwork_path', album.get('artwork_path'))
-
-    if cover_art and artwork_path:
-        pic = get_flac_picture(artwork_path, cover_art)
-        tags.add_picture(pic)
+    if cover_art:
+        for picture in generate_art_tags(album, track, cover_art, make_flac_picture):
+            tags.add_picture(picture)
         LOGGER.debug("%s pictures=%s", out_path, tags.pictures)
 
     tags.save(deleteid3=True)
