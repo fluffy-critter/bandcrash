@@ -205,7 +205,7 @@ def encode_ogg(in_path, out_path, idx, album, track, encode_args, cover_art):
             picture_data = make_flac_picture(img, picture_type, desc).write()
             return base64.b64encode(picture_data).decode('ascii')
 
-        tags['metadata_block_picture'] =         generate_art_tags(
+        tags['metadata_block_picture'] = generate_art_tags(
             album, track, cover_art, make_ogg_picture)
 
     tags.save()
