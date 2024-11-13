@@ -198,15 +198,18 @@ def encode_ogg(in_path, out_path, idx, album, track, encode_args, cover_art):
     tags = oggvorbis.OggVorbis(out_path)
     tag_vorbis(tags, idx, album, track)
 
-    if cover_art and 'artwork_path' in track:
+    artwork_path = track.get('artwork_path', album.get('artwork_path'))
+
+    if cover_art and artwork_path:
         picture_data = get_flac_picture(
-            track['artwork_path'], cover_art).write()
+            artwork_path, cover_art).write()
         tags['metadata_block_picture'] = [
-            base64.b64encode(picture_data).decode("ascii")]
+            base64.b64encode(picture_data).decode("ascii")
+        ]
 
-    tags.save(out_path)
+    tags.save()
+
     LOGGER.info("Finished writing %s", out_path)
-
 
 def encode_flac(in_path, out_path, idx, album, track, encode_args, cover_art):
     """ Encode a track as ogg vorbis """
@@ -217,10 +220,20 @@ def encode_flac(in_path, out_path, idx, album, track, encode_args, cover_art):
     tags = flac.FLAC(out_path)
     tag_vorbis(tags.tags, idx, album, track)
 
-    if cover_art and 'artwork_path' in track:
-        tags.add_picture(get_flac_picture(track['artwork_path'], cover_art))
+    tags.clear_pictures()
 
-    tags.save(out_path)
+    artwork_path = track.get('artwork_path', album.get('artwork_path'))
+
+    if cover_art and artwork_path:
+        pic = get_flac_picture(artwork_path, cover_art)
+        tags.add_picture(pic)
+        LOGGER.debug("%s pictures=%s", out_path, tags.pictures)
+
+    tags.save(deleteid3=True)
+
+    tags = flac.FLAC(out_path)
+    LOGGER.debug("reload %s pictures=%s", out_path, tags.pictures)
+
     LOGGER.info("Finished writing %s", out_path)
 
 
