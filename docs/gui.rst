@@ -6,9 +6,9 @@ Installation
 
 The recommended way to install Bandcrash is from `the official builds on itch.io <https://fluffy.itch.io/bandcrash>`_, ideally via `the itch.io app <https://itch.io/app/>`_.
 
-If you already have Python on your system, you can also install it using ``pip`` or similar::
+If you already have Python on your system, you can also install it using ``pip`` or ``pipx`` or similar::
 
-   pip install bandcrash[gui]
+   pipx install bandcrash[gui]
 
 and then launch it with ``bandcrash-gui``.
 
