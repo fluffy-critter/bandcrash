@@ -8,7 +8,7 @@ The recommended way to install Bandcrash is from `the official builds on itch.io
 
 If you already have Python on your system, you can also install it using ``pip`` or ``pipx`` or similar::
 
-   pipx install bandcrash[gui]
+   pipx install 'bandcrash[gui]'
 
 and then launch it with ``bandcrash-gui``.
 
