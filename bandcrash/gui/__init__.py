@@ -177,7 +177,7 @@ class PreferencesWindow(QDialog):
 
     def connect_butler(self):
         """ Connect to butler """
-        connection = subprocess.run([self.butler_path.text(), 'login'],
+        connection = subprocess.run([self.butler_path.text(), 'login', '--assume-yes'],
                                     capture_output=True,
                                     check=False,
                                     creationflags=getattr(
