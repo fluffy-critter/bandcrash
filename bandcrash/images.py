@@ -12,6 +12,15 @@ from .util import slugify_filename
 LOGGER = logging.getLogger(__name__)
 
 
+def get_encoder_args(ext):
+    """ Get the encoder arguments for a filetype """
+    if ext.lower() in ('jpg', 'jpeg'):
+        return {'quality': 99, 'subsampling': 0}
+    if ext.lower() in ('webp'):
+        return {'quality': 95}
+    return {}
+
+
 def load_image(in_path: str) -> PIL.Image.Image:
     """ Load an image into memory, pooling it """
     if not os.path.isfile(in_path):
@@ -48,14 +57,15 @@ def generate_rendition(in_path: str, out_dir: str, size: int) -> tuple[str, int,
     basename, _ = os.path.splitext(os.path.basename(in_path))
 
     if image.mode in ('RGBA', 'LA', 'P'):
-        ext = 'png'
+        ext = 'webp'
         mode = 'RGBA'
     else:
         ext = 'jpg'
         mode = 'RGB'
 
     out_file = slugify_filename(f'{basename}.{image.height}.{ext}')
-    image.convert(mode).save(os.path.join(out_dir, out_file))
+    image.convert(mode).save(os.path.join(
+        out_dir, out_file), **get_encoder_args(ext))
     LOGGER.info("Wrote image %s", out_file)
 
     return out_file, image.width, image.height
@@ -64,7 +74,7 @@ def generate_rendition(in_path: str, out_dir: str, size: int) -> tuple[str, int,
 def make_blob(image: PIL.Image.Image, ext='jpeg') -> bytes:
     """ Convert an image rendition to compressed bytes """
     buffer = io.BytesIO()
-    image.convert('RGB').save(buffer, format=ext)
+    image.convert('RGB').save(buffer, format=ext, **get_encoder_args(ext))
     return buffer.getvalue()
 
 
