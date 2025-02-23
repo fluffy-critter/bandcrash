@@ -244,7 +244,7 @@ def make_web_preview(input_dir, output_dir, album, protections, futures):
     LOGGER.info("Preview: Building player in %s", output_dir)
 
     from .players import camptown
-    player = camptown.Player(art_size=200)
+    player = camptown.Player(art_size=200, fullsize_art_size=1600)
 
     # filter out all hidden tracks
     album = copy.deepcopy(album)
