@@ -365,13 +365,13 @@ profile = ["gprof2dot (>=2022.7.29)"]
 
 [[package]]
 name = "docutils"
-version = "0.18.1"
+version = "0.21.2"
 description = "Docutils -- Python Documentation Utilities"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+python-versions = ">=3.9"
 files = [
-    {file = "docutils-0.18.1-py2.py3-none-any.whl", hash = "sha256:23010f129180089fbcd3bc08cfefccb3b890b0050e1ca00c867036e9d161b98c"},
-    {file = "docutils-0.18.1.tar.gz", hash = "sha256:679987caf361a7539d76e584cbeddc311e3aee937877c87346f31debc63e9d06"},
+    {file = "docutils-0.21.2-py3-none-any.whl", hash = "sha256:dafca5b9e384f0e419294eb4d2ff9fa826435bf15f15b7bd45723e8ad76811b2"},
+    {file = "docutils-0.21.2.tar.gz", hash = "sha256:3a6b18732edf182daa3cd12775bbb338cf5691468f91eeeb109deff6ebfa986f"},
 ]
 
 [[package]]
@@ -424,13 +424,13 @@ type = ["pytest-mypy"]
 
 [[package]]
 name = "iniconfig"
-version = "2.0.0"
+version = "2.1.0"
 description = "brain-dead simple config-ini parsing"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "iniconfig-2.0.0-py3-none-any.whl", hash = "sha256:b6a85871a79d2e3b22d2d1b94ac2824226a63c6b741c88f7ae975f18b6778374"},
-    {file = "iniconfig-2.0.0.tar.gz", hash = "sha256:2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3"},
+    {file = "iniconfig-2.1.0-py3-none-any.whl", hash = "sha256:9deba5723312380e77435581c6bf4935c94cbfab9b1ed33ef8d238ea168eb760"},
+    {file = "iniconfig-2.1.0.tar.gz", hash = "sha256:3abbd2e30b36733fee78f9c7f7308f2d0050e88f0087fd25c2645f63c773e1c7"},
 ]
 
 [[package]]
@@ -589,13 +589,13 @@ files = [
 
 [[package]]
 name = "mistune"
-version = "3.1.2"
+version = "3.1.3"
 description = "A sane and fast Markdown parser with useful plugins and renderers"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mistune-3.1.2-py3-none-any.whl", hash = "sha256:4b47731332315cdca99e0ded46fc0004001c1299ff773dfb48fbe1fd226de319"},
-    {file = "mistune-3.1.2.tar.gz", hash = "sha256:733bf018ba007e8b5f2d3a9eb624034f6ee26c4ea769a98ec533ee111d504dff"},
+    {file = "mistune-3.1.3-py3-none-any.whl", hash = "sha256:1a32314113cff28aa6432e99e522677c8587fd83e3d51c29b82a52409c842bd9"},
+    {file = "mistune-3.1.3.tar.gz", hash = "sha256:a7035c21782b2becb6be62f8f25d3df81ccb4d6fa477a6525b15af06539f02a0"},
 ]
 
 [package.dependencies]
@@ -849,19 +849,19 @@ testing = ["pytest", "pytest-cov", "wheel"]
 
 [[package]]
 name = "platformdirs"
-version = "4.3.6"
+version = "4.3.7"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a `user data dir`."
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 files = [
-    {file = "platformdirs-4.3.6-py3-none-any.whl", hash = "sha256:73e575e1408ab8103900836b97580d5307456908a03e92031bab39e4554cc3fb"},
-    {file = "platformdirs-4.3.6.tar.gz", hash = "sha256:357fb2acbc885b0419afd3ce3ed34564c13c9b95c89360cd9563f73aa5e2b907"},
+    {file = "platformdirs-4.3.7-py3-none-any.whl", hash = "sha256:a03875334331946f13c549dbd8f4bac7a13a50a895a0eb1e8c6a8ace80d40a94"},
+    {file = "platformdirs-4.3.7.tar.gz", hash = "sha256:eb437d586b6a0986388f0d6f74aa0cde27b48d0e3d66843640bfb6bdcdb6e351"},
 ]
 
 [package.extras]
-docs = ["furo (>=2024.8.6)", "proselint (>=0.14)", "sphinx (>=8.0.2)", "sphinx-autodoc-typehints (>=2.4)"]
-test = ["appdirs (==1.4.4)", "covdefaults (>=2.3)", "pytest (>=8.3.2)", "pytest-cov (>=5)", "pytest-mock (>=3.14)"]
-type = ["mypy (>=1.11.2)"]
+docs = ["furo (>=2024.8.6)", "proselint (>=0.14)", "sphinx (>=8.1.3)", "sphinx-autodoc-typehints (>=3)"]
+test = ["appdirs (==1.4.4)", "covdefaults (>=2.3)", "pytest (>=8.3.4)", "pytest-cov (>=6)", "pytest-mock (>=3.14)"]
+type = ["mypy (>=1.14.1)"]
 
 [[package]]
 name = "pluggy"
@@ -880,13 +880,13 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "pycodestyle"
-version = "2.12.1"
+version = "2.13.0"
 description = "Python style guide checker"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 files = [
-    {file = "pycodestyle-2.12.1-py2.py3-none-any.whl", hash = "sha256:46f0fb92069a7c28ab7bb558f05bfc0110dac69a0cd23c61ea0040283a9d78b3"},
-    {file = "pycodestyle-2.12.1.tar.gz", hash = "sha256:6838eae08bbce4f6accd5d5572075c63626a15ee3e6f842df996bf62f6d73521"},
+    {file = "pycodestyle-2.13.0-py2.py3-none-any.whl", hash = "sha256:35863c5974a271c7a726ed228a14a4f6daf49df369d8c50cd9a6f58a5e143ba9"},
+    {file = "pycodestyle-2.13.0.tar.gz", hash = "sha256:c8415bf09abe81d9c7f872502a6eee881fbe85d8763dd5b9924bb0a01d67efae"},
 ]
 
 [[package]]
@@ -954,13 +954,13 @@ hook-testing = ["execnet (>=1.5.0)", "psutil", "pytest (>=2.7.3)"]
 
 [[package]]
 name = "pyinstaller-hooks-contrib"
-version = "2025.1"
+version = "2025.2"
 description = "Community maintained hooks for PyInstaller"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pyinstaller_hooks_contrib-2025.1-py3-none-any.whl", hash = "sha256:d3c799470cbc0bda60dcc8e6b4ab976777532b77621337f2037f558905e3a8e9"},
-    {file = "pyinstaller_hooks_contrib-2025.1.tar.gz", hash = "sha256:130818f9e9a0a7f2261f1fd66054966a3a50c99d000981c5d1db11d3ad0c6ab2"},
+    {file = "pyinstaller_hooks_contrib-2025.2-py3-none-any.whl", hash = "sha256:0b2bc7697075de5eb071ff13ef4a156d3beae6c19c7cbdcd70f37978d2013e30"},
+    {file = "pyinstaller_hooks_contrib-2025.2.tar.gz", hash = "sha256:ccdd41bc30290f725f3e48f4a39985d11855af81d614d167e3021e303acb9102"},
 ]
 
 [package.dependencies]
@@ -970,29 +970,29 @@ setuptools = ">=42.0.0"
 
 [[package]]
 name = "pylint"
-version = "3.3.5"
+version = "3.3.6"
 description = "python code static checker"
 optional = false
 python-versions = ">=3.9.0"
 files = [
-    {file = "pylint-3.3.5-py3-none-any.whl", hash = "sha256:7cb170929a371238530b2eeea09f5f28236d106b70308c3d46a9c0cf11634633"},
-    {file = "pylint-3.3.5.tar.gz", hash = "sha256:38d0f784644ed493d91f76b5333a0e370a1c1bc97c22068a77523b4bf1e82c31"},
+    {file = "pylint-3.3.6-py3-none-any.whl", hash = "sha256:8b7c2d3e86ae3f94fb27703d521dd0b9b6b378775991f504d7c3a6275aa0a6a6"},
+    {file = "pylint-3.3.6.tar.gz", hash = "sha256:b634a041aac33706d56a0d217e6587228c66427e20ec21a019bc4cdee48c040a"},
 ]
 
 [package.dependencies]
-astroid = ">=3.3.8,<=3.4.0-dev0"
+astroid = ">=3.3.8,<=3.4.0.dev0"
 colorama = {version = ">=0.4.5", markers = "sys_platform == \"win32\""}
 dill = [
     {version = ">=0.2", markers = "python_version < \"3.11\""},
     {version = ">=0.3.7", markers = "python_version >= \"3.12\""},
     {version = ">=0.3.6", markers = "python_version >= \"3.11\" and python_version < \"3.12\""},
 ]
-isort = ">=4.2.5,<5.13.0 || >5.13.0,<7"
+isort = ">=4.2.5,<5.13 || >5.13,<7"
 mccabe = ">=0.6,<0.8"
-platformdirs = ">=2.2.0"
-tomli = {version = ">=1.1.0", markers = "python_version < \"3.11\""}
+platformdirs = ">=2.2"
+tomli = {version = ">=1.1", markers = "python_version < \"3.11\""}
 tomlkit = ">=0.10.1"
-typing-extensions = {version = ">=3.10.0", markers = "python_version < \"3.10\""}
+typing-extensions = {version = ">=3.10", markers = "python_version < \"3.10\""}
 
 [package.extras]
 spelling = ["pyenchant (>=3.2,<4.0)"]
@@ -1112,18 +1112,18 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "setuptools"
-version = "76.1.0"
+version = "78.1.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "setuptools-76.1.0-py3-none-any.whl", hash = "sha256:34750dcb17d046929f545dec9b8349fe42bf4ba13ddffee78428aec422dbfb73"},
-    {file = "setuptools-76.1.0.tar.gz", hash = "sha256:4959b9ad482ada2ba2320c8f1a8d8481d4d8d668908a7a1b84d987375cd7f5bd"},
+    {file = "setuptools-78.1.0-py3-none-any.whl", hash = "sha256:3e386e96793c8702ae83d17b853fb93d3e09ef82ec62722e61da5cd22376dcd8"},
+    {file = "setuptools-78.1.0.tar.gz", hash = "sha256:18fd474d4a82a5f83dac888df697af65afa82dec7323d09c3e37d1f14288da54"},
 ]
 
 [package.extras]
 check = ["pytest-checkdocs (>=2.4)", "pytest-ruff (>=0.2.1)", "ruff (>=0.8.0)"]
-core = ["importlib_metadata (>=6)", "jaraco.collections", "jaraco.functools (>=4)", "jaraco.text (>=3.7)", "more_itertools", "more_itertools (>=8.8)", "packaging", "packaging (>=24.2)", "platformdirs (>=4.2.2)", "tomli (>=2.0.1)", "wheel (>=0.43.0)"]
+core = ["importlib_metadata (>=6)", "jaraco.functools (>=4)", "jaraco.text (>=3.7)", "more_itertools", "more_itertools (>=8.8)", "packaging (>=24.2)", "platformdirs (>=4.2.2)", "tomli (>=2.0.1)", "wheel (>=0.43.0)"]
 cover = ["pytest-cov"]
 doc = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "pygments-github-lexers (==0.0.5)", "pyproject-hooks (!=1.1)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-favicon", "sphinx-inline-tabs", "sphinx-lint", "sphinx-notfound-page (>=1,<2)", "sphinx-reredirects", "sphinxcontrib-towncrier", "towncrier (<24.7)"]
 enabler = ["pytest-enabler (>=2.2)"]
@@ -1166,27 +1166,27 @@ files = [
 
 [[package]]
 name = "sphinx"
-version = "7.3.7"
+version = "7.4.7"
 description = "Python documentation generator"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "sphinx-7.3.7-py3-none-any.whl", hash = "sha256:413f75440be4cacf328f580b4274ada4565fb2187d696a84970c23f77b64d8c3"},
-    {file = "sphinx-7.3.7.tar.gz", hash = "sha256:a4a7db75ed37531c05002d56ed6948d4c42f473a36f46e1382b0bd76ca9627bc"},
+    {file = "sphinx-7.4.7-py3-none-any.whl", hash = "sha256:c2419e2135d11f1951cd994d6eb18a1835bd8fdd8429f9ca375dc1f3281bd239"},
+    {file = "sphinx-7.4.7.tar.gz", hash = "sha256:242f92a7ea7e6c5b406fdc2615413890ba9f699114a9c09192d7dfead2ee9cfe"},
 ]
 
 [package.dependencies]
 alabaster = ">=0.7.14,<0.8.0"
-babel = ">=2.9"
-colorama = {version = ">=0.4.5", markers = "sys_platform == \"win32\""}
-docutils = ">=0.18.1,<0.22"
+babel = ">=2.13"
+colorama = {version = ">=0.4.6", markers = "sys_platform == \"win32\""}
+docutils = ">=0.20,<0.22"
 imagesize = ">=1.3"
-importlib-metadata = {version = ">=4.8", markers = "python_version < \"3.10\""}
-Jinja2 = ">=3.0"
-packaging = ">=21.0"
-Pygments = ">=2.14"
-requests = ">=2.25.0"
-snowballstemmer = ">=2.0"
+importlib-metadata = {version = ">=6.0", markers = "python_version < \"3.10\""}
+Jinja2 = ">=3.1"
+packaging = ">=23.0"
+Pygments = ">=2.17"
+requests = ">=2.30.0"
+snowballstemmer = ">=2.2"
 sphinxcontrib-applehelp = "*"
 sphinxcontrib-devhelp = "*"
 sphinxcontrib-htmlhelp = ">=2.0.0"
@@ -1197,8 +1197,8 @@ tomli = {version = ">=2", markers = "python_version < \"3.11\""}
 
 [package.extras]
 docs = ["sphinxcontrib-websupport"]
-lint = ["flake8 (>=3.5.0)", "importlib_metadata", "mypy (==1.9.0)", "pytest (>=6.0)", "ruff (==0.3.7)", "sphinx-lint", "tomli", "types-docutils", "types-requests"]
-test = ["cython (>=3.0)", "defusedxml (>=0.7.1)", "pytest (>=6.0)", "setuptools (>=67.0)"]
+lint = ["flake8 (>=6.0)", "importlib-metadata (>=6.0)", "mypy (==1.10.1)", "pytest (>=6.0)", "ruff (==0.5.2)", "sphinx-lint (>=0.9)", "tomli (>=2)", "types-docutils (==0.21.0.20240711)", "types-requests (>=2.30.0)"]
+test = ["cython (>=3.0)", "defusedxml (>=0.7.1)", "pytest (>=8.0)", "setuptools (>=70.0)", "typing_extensions (>=4.9)"]
 
 [[package]]
 name = "sphinx-copybutton"
@@ -1217,25 +1217,6 @@ sphinx = ">=1.8"
 [package.extras]
 code-style = ["pre-commit (==2.12.1)"]
 rtd = ["ipython", "myst-nb", "sphinx", "sphinx-book-theme", "sphinx-examples"]
-
-[[package]]
-name = "sphinx-rtd-theme"
-version = "1.3.0"
-description = "Read the Docs theme for Sphinx"
-optional = false
-python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,>=2.7"
-files = [
-    {file = "sphinx_rtd_theme-1.3.0-py2.py3-none-any.whl", hash = "sha256:46ddef89cc2416a81ecfbeaceab1881948c014b1b6e4450b815311a89fb977b0"},
-    {file = "sphinx_rtd_theme-1.3.0.tar.gz", hash = "sha256:590b030c7abb9cf038ec053b95e5380b5c70d61591eb0b552063fbe7c41f0931"},
-]
-
-[package.dependencies]
-docutils = "<0.19"
-sphinx = ">=1.6,<8"
-sphinxcontrib-jquery = ">=4,<5"
-
-[package.extras]
-dev = ["bump2version", "sphinxcontrib-httpdomain", "transifex-client", "wheel"]
 
 [[package]]
 name = "sphinxcontrib-applehelp"
@@ -1284,20 +1265,6 @@ files = [
 lint = ["mypy", "ruff (==0.5.5)", "types-docutils"]
 standalone = ["Sphinx (>=5)"]
 test = ["html5lib", "pytest"]
-
-[[package]]
-name = "sphinxcontrib-jquery"
-version = "4.1"
-description = "Extension to include jQuery on newer Sphinx releases"
-optional = false
-python-versions = ">=2.7"
-files = [
-    {file = "sphinxcontrib-jquery-4.1.tar.gz", hash = "sha256:1620739f04e36a2c779f1a131a2dfd49b2fd07351bf1968ced074365933abc7a"},
-    {file = "sphinxcontrib_jquery-4.1-py2.py3-none-any.whl", hash = "sha256:f936030d7d0147dd026a4f2b5a57343d233f1fc7b363f68b3d4f1cb0993878ae"},
-]
-
-[package.dependencies]
-Sphinx = ">=1.8"
 
 [[package]]
 name = "sphinxcontrib-jsmath"
@@ -1410,13 +1377,13 @@ files = [
 
 [[package]]
 name = "typing-extensions"
-version = "4.12.2"
+version = "4.13.2"
 description = "Backported and Experimental Type Hints for Python 3.8+"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "typing_extensions-4.12.2-py3-none-any.whl", hash = "sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d"},
-    {file = "typing_extensions-4.12.2.tar.gz", hash = "sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8"},
+    {file = "typing_extensions-4.13.2-py3-none-any.whl", hash = "sha256:a439e7c04b49fec3e5d3e2beaa21755cadbbdc391694e28ccdd36ca4a1408f8c"},
+    {file = "typing_extensions-4.13.2.tar.gz", hash = "sha256:e6c81219bd689f51865d9e372991c540bda33a0379d5573cddb9a3a23f7caaef"},
 ]
 
 [[package]]
@@ -1432,13 +1399,13 @@ files = [
 
 [[package]]
 name = "urllib3"
-version = "2.3.0"
+version = "2.4.0"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "urllib3-2.3.0-py3-none-any.whl", hash = "sha256:1cee9ad369867bfdbbb48b7dd50374c0967a0bb7710050facf0dd6911440e3df"},
-    {file = "urllib3-2.3.0.tar.gz", hash = "sha256:f8c5449b3cf0861679ce7e0503c7b44b5ec981bec0d1d3795a07f1ba96f0204d"},
+    {file = "urllib3-2.4.0-py3-none-any.whl", hash = "sha256:4e16665048960a0900c702d4a66415956a584919c03361cac9f1df5c5dd7e813"},
+    {file = "urllib3-2.4.0.tar.gz", hash = "sha256:414bc6535b787febd7567804cc015fee39daab8ad86268f1310a9250697de466"},
 ]
 
 [package.extras]
@@ -1472,4 +1439,4 @@ gui = ["pyside6"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "c6fd123d2d5af136f950651c00b397f89315ea85627266217c1bdda0bdc97654"
+content-hash = "7308530eb93aaa5b7fbf35c42c2f8709cceeb461f1e2624f5e05ec907815f150"

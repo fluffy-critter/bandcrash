@@ -63,6 +63,7 @@ upload: clean test build
 
 .PHONY: doc
 doc:
+	poetry export -o docs/requirements.txt --all-extras
 	poetry run sphinx-build -b html docs/ docs/_build -D html_theme=alabaster
 
 .PHONY: app
