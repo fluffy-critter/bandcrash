@@ -12,7 +12,7 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.13"
+python = ">=3.12,<3.13"
 mutagen = "^1.45.1"
 chardet = "^4.0.0"
 pyside6 = { version = ">=6.6,<6.7", optional = true }
