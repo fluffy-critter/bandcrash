@@ -153,6 +153,8 @@ class PreferencesWindow(QDialog):
         ):
             settings.setValue(key, value)
 
+        settings.sync()
+
     def reset_defaults(self):
         """ Reset to defaults """
         from .. import options
@@ -177,18 +179,52 @@ class PreferencesWindow(QDialog):
 
     def connect_butler(self):
         """ Connect to butler """
-        connection = subprocess.run([self.butler_path.text(), 'login', '--assume-yes'],
-                                    capture_output=True,
-                                    check=False,
-                                    creationflags=getattr(
-            subprocess, 'CREATE_NO_WINDOW', 0),
-        )
-        if connection.returncode:
-            QMessageBox.warning(
-                self, "Connection failed", connection.stdout.decode())
+
+        import ptyprocess
+
+        try:
+            process = ptyprocess.PtyProcessUnicode.spawn(
+                [self.butler_path.text(), 'login'])
+        except Exception as e:
+            QMessageBox.error(self, "Could not run butler login", e)
+            process.close(True)
+            return
+
+        data = process.read()
+        if "Your local credentials are valid" in data:
+            QMessageBox.information(self, "Butler already connected", data)
+            process.close(True)
+            return
+
+        while "open the following link" not in data and process.isalive():
+            data += process.read()
+
+        if "open the following link" not in data or not process.isalive():
+            QMessageBox.warning(self, "Something went wrong", data)
+            process.close(True)
+            return
+
+        progress = QProgressDialog("Signing in to itch...", "Cancel", 0, 0, self)
+        progress.setWindowModality(Qt.WindowModal)
+
+        data = ''
+        try:
+            while process.isalive() and not progress.wasCanceled():
+                data += process.read()
+        except EOFError:
+            pass
+
+        if progress.wasCanceled():
+            process.close(True)
+            return
+
+        progress.reset()
+
+        exitcode = process.wait()
+        if exitcode:
+            QMessageBox.warning(self, "Connection failed", data)
         else:
-            QMessageBox.information(
-                self, "Butler connected", connection.stdout.decode())
+            QMessageBox.information(self, "Butler connected", data)
 
     @staticmethod
     def show_preferences():

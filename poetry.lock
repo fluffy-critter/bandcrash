@@ -576,14 +576,14 @@ files = [
 
 [[package]]
 name = "mistune"
-version = "3.1.3"
+version = "3.1.4"
 description = "A sane and fast Markdown parser with useful plugins and renderers"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "mistune-3.1.3-py3-none-any.whl", hash = "sha256:1a32314113cff28aa6432e99e522677c8587fd83e3d51c29b82a52409c842bd9"},
-    {file = "mistune-3.1.3.tar.gz", hash = "sha256:a7035c21782b2becb6be62f8f25d3df81ccb4d6fa477a6525b15af06539f02a0"},
+    {file = "mistune-3.1.4-py3-none-any.whl", hash = "sha256:93691da911e5d9d2e23bc54472892aff676df27a75274962ff9edc210364266d"},
+    {file = "mistune-3.1.4.tar.gz", hash = "sha256:b5a7f801d389f724ec702840c11d8fc48f2b33519102fc7ee739e8177b672164"},
 ]
 
 [[package]]
@@ -896,6 +896,18 @@ dev = ["pre-commit", "tox"]
 testing = ["coverage", "pytest", "pytest-benchmark"]
 
 [[package]]
+name = "ptyprocess"
+version = "0.7.0"
+description = "Run a subprocess in a pseudo terminal"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "ptyprocess-0.7.0-py2.py3-none-any.whl", hash = "sha256:4b41f3967fce3af57cc7e94b888626c18bf37a083e3651ca8feeb66d492fef35"},
+    {file = "ptyprocess-0.7.0.tar.gz", hash = "sha256:5c5d0a3b48ceee0b48485e0c26037c0acd7d29765ca3fbb5cb3831d347423220"},
+]
+
+[[package]]
 name = "pycodestyle"
 version = "2.14.0"
 description = "Python style guide checker"
@@ -909,19 +921,19 @@ files = [
 
 [[package]]
 name = "pyffmpeg"
-version = "2.5.0.11"
+version = "2.5.1"
 description = "FFmpeg wrapper for python"
 optional = false
 python-versions = "*"
 groups = ["main"]
 files = [
-    {file = "pyffmpeg-2.5.0.11-py3-none-macosx_10_9_universal2.whl", hash = "sha256:32d3aa760d3b8b3ad1d492fcf05baac7378e94d5070f8e9b7b7fd1506aeae552"},
-    {file = "pyffmpeg-2.5.0.11-py3-none-macosx_10_9_x86_64.whl", hash = "sha256:5102e928cd62c9e3ccab96ebbb2f89fed944bed5e93597d7f7a02cd6892a04ab"},
-    {file = "pyffmpeg-2.5.0.11-py3-none-macosx_11_0_arm64.whl", hash = "sha256:1de438152fa2d575ba416b84aca2786b31f3ca307e8c1549c9f381c3d6be469e"},
-    {file = "pyffmpeg-2.5.0.11-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:45efa4b2a644e375e8676d7fe66f6f756a0f8df42c288925a48049fd2711970b"},
-    {file = "pyffmpeg-2.5.0.11-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b9d305bea87b7adb0d1ad0f5e718eca79301c498d5c8721562d1bffa60cb19fc"},
-    {file = "pyffmpeg-2.5.0.11-py3-none-win_amd64.whl", hash = "sha256:b8e69dd88cc45415e2f88748c3c0034bd8f84ac09cf5b05c9b907cc52b5ac49c"},
-    {file = "pyffmpeg-2.5.0.11.tar.gz", hash = "sha256:ecd942222b4eec9466336f3493231f36eebd18d5daa0924505fba73d7b1f71d0"},
+    {file = "pyffmpeg-2.5.1-py3-none-macosx_10_9_universal2.whl", hash = "sha256:e0afedc1c34dad5da5162dbef0a89c79753620100a9298a634dd7177d85b3a58"},
+    {file = "pyffmpeg-2.5.1-py3-none-macosx_10_9_x86_64.whl", hash = "sha256:8e760b486c65185401d0bac8f0904f436c918f9ffb3e434f3315188af2b60601"},
+    {file = "pyffmpeg-2.5.1-py3-none-macosx_11_0_arm64.whl", hash = "sha256:39a0de841d3a0cc4a9448c378a0d27fc8291c50951140295684b08ce4c9e5d49"},
+    {file = "pyffmpeg-2.5.1-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:6747dd80c0151fb62cddc0513cb58ac1f480b8125cc753e6a0142bac8c2c3897"},
+    {file = "pyffmpeg-2.5.1-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:66f60b9a4bab252170ecc82ddfcf8e8baa4e577f43b52ab0a4f2bd23dabbd6b8"},
+    {file = "pyffmpeg-2.5.1-py3-none-win_amd64.whl", hash = "sha256:8bb595626d9493968252fbcded40e8bca643bb02847aed6e298b45887040d2d1"},
+    {file = "pyffmpeg-2.5.1.tar.gz", hash = "sha256:d631868f5bf0e1f146790e5355e0177e1fb34bf50bf15223d18e10edf7de7e24"},
 ]
 
 [[package]]
@@ -1424,4 +1436,4 @@ gui = ["pyside6"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "75d43d13c60e15b03c99bf45a998fbc2c629769f1e5e86a86dda07f4abd5bb6d"
+content-hash = "d95e27ae4ca0c49187e107a7cb87a083cb29f43308fbcb257c835804f1fbf155"
