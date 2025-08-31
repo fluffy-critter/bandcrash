@@ -147,6 +147,72 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
     LOGGER.info("Finished writing %s", out_path)
 
 
+def encode_m4a(in_path, out_path, idx, album, track, encode_args, cover_art=None):
+    """ Encode a track as m4a
+
+    :param str in_path: Input file path
+    :param str out_path: Output file path
+    :param str idx: Track number
+    :param dict album: Album metadata
+    :param dict track: Track metadata
+    :param str encode_args: Arguments to pass along to FFmpeg
+    :param str cover_art: Artwork rendition size
+    """
+    from mutagen import mp4
+
+    run_encoder(in_path, out_path, encode_args)
+
+    out_file = mp4.MP4(out_path)
+
+    try:
+        out_file.add_tags()
+    except mp4.error:
+        pass
+
+    tags = out_file.tags
+
+    frames = {
+        '\xa9day': str(album['year']) if 'year' in album else None,
+        '\xa9alb': album.get('title'),
+
+        '\xa9ART': track.get('artist', album.get('artist')),
+        'aART': album.get('artist'),
+
+        # There is no formal spec for 'original performing artist,' thanks Apple
+        # TOPE: track.get('cover_of', album.get('cover_of')),
+
+        'trkn': (idx, len(album.get('tracks', []))) if idx is not None else None,
+        '\xa9grp': track.get('group'),
+        '\xa9nam': track_tag_title(track),
+
+        '\xa9gen': track.get('genre', album.get('genre')),
+        '\xa9wrt': track.get('composer', album.get('composer')),
+        '\xa9lyr': util.text_to_lines(track.get('lyrics')),
+
+        '\xa9cmt': track.get('comment'),
+    }
+
+    for frame, val in frames.items():
+        if val:
+            LOGGER.debug("%s: Setting %s to %s", out_path, frame, val)
+            tags[frame] = [val]
+
+    if cover_art:
+        def make_covr(img, picture_type, desc):
+            return mp4.MP4Cover(images.make_blob(img, ext='jpeg'),
+                                imageformat=mp4.AtomDataType.JPEG)
+
+        art_tags = generate_art_tags(album, track, cover_art, make_covr)
+        if art_tags:
+            LOGGER.debug("%s: Adding %d artworks", out_path, len(art_tags))
+            tags['covr'] = art_tags
+        else:
+            del tags['covr']
+
+    out_file.save()
+    LOGGER.info("Finished writing %s", out_path)
+
+
 def track_tag_title(track):
     """ Get the tag title for a track """
     title = track.get('title', None)
@@ -441,6 +507,13 @@ def encode_tracks(config, album, protections, pool, futures):
                     out_path('mp3'),
                     idx, album, track, config.mp3_encoder_args, cover_art=1500)
 
+        if config.do_m4a:
+            enqueue('m4a',
+                    encode_m4a,
+                    input_filename,
+                    out_path('m4a'),
+                    idx, album, track, config.m4a_encoder_args, cover_art=1500)
+
         if config.do_ogg:
             enqueue('ogg',
                     encode_ogg,
@@ -510,6 +583,7 @@ def process(config, album, pool, futures):
     for attrname, default in (
         ('do_preview', True),
         ('do_mp3', True),
+        ('do_m4a', True),
         ('do_ogg', True),
         ('do_flac', True),
         ('do_zip', True),
@@ -527,7 +601,7 @@ def process(config, album, pool, futures):
     LOGGER.info("Starting encode with configuration: %s", config)
 
     formats = set()
-    for target in ('preview', 'mp3', 'ogg', 'flac'):
+    for target in ('preview', 'mp3', 'm4a', 'ogg', 'flac'):
         attrname = f'do_{target}'
         if getattr(config, attrname) is None:
             LOGGER.debug(

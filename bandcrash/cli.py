@@ -48,6 +48,7 @@ def parse_args():
     for target, description, add_args in (
         ('preview', 'Build web player', True),
         ('mp3', 'Encode mp3 album', True),
+        ('m4a', 'Encode m4a (AAC) album', True),
         ('ogg', 'Encode ogg album', True),
         ('flac', 'Encode flac album', True),
         ('cleanup', 'Clean extraneous files in the output directories', False),

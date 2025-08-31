@@ -110,6 +110,10 @@ class PreferencesWindow(QDialog):
         self.ogg_encoder_args.setText(' '.join(defaults.ogg_encoder_args))
         layout.addRow("Ogg encoder options", self.ogg_encoder_args)
 
+        self.m4a_encoder_args = QLineEdit()
+        self.m4a_encoder_args.setText(' '.join(defaults.m4a_encoder_args))
+        layout.addRow("Ogg encoder options", self.m4a_encoder_args)
+
         self.flac_encoder_args = QLineEdit()
         self.flac_encoder_args.setText(' '.join(defaults.flac_encoder_args))
         layout.addRow("FLAC encoder options", self.flac_encoder_args)
@@ -147,6 +151,7 @@ class PreferencesWindow(QDialog):
             ('preview_encoder_args', self.preview_encoder_args.text()),
             ('mp3_encoder_args', self.mp3_encoder_args.text()),
             ('ogg_encoder_args', self.ogg_encoder_args.text()),
+            ('m4a_encoder_args', self.m4a_encoder_args.text()),
             ('flac_encoder_args', self.flac_encoder_args.text()),
 
             ('butler_path', self.butler_path.text()),
@@ -165,6 +170,7 @@ class PreferencesWindow(QDialog):
             ' '.join(defaults.preview_encoder_args))
         self.mp3_encoder_args.setText(' '.join(defaults.mp3_encoder_args))
         self.ogg_encoder_args.setText(' '.join(defaults.ogg_encoder_args))
+        self.m4a_encoder_args.setText(' '.join(defaults.m4a_encoder_args))
         self.flac_encoder_args.setText(' '.join(defaults.flac_encoder_args))
 
         LOGGER.debug("foo 2")
@@ -392,6 +398,8 @@ class AlbumEditor(QMainWindow):
         self.do_mp3.setToolTip("Generate an album in MP3 format")
         self.do_ogg = QCheckBox("Ogg Vorbis")
         self.do_ogg.setToolTip("Generate an album in Ogg Vorbis format")
+        self.do_m4a = QCheckBox("AAC")
+        self.do_m4a.setToolTip("Generate an album in MPEG 4 AAC format")
         self.do_flac = QCheckBox("FLAC")
         self.do_flac.setToolTip("Generate an album in FLAC lossless format")
         self.do_cleanup = QCheckBox("Clean up files")
@@ -401,6 +409,7 @@ class AlbumEditor(QMainWindow):
         checkboxes.addWidget(self.do_preview)
         checkboxes.addWidget(self.do_mp3)
         checkboxes.addWidget(self.do_ogg)
+        checkboxes.addWidget(self.do_m4a)
         checkboxes.addWidget(self.do_flac)
         checkboxes.addWidget(self.do_cleanup)
         checkboxes.addWidget(self.do_zip)
@@ -515,6 +524,8 @@ class AlbumEditor(QMainWindow):
             datatypes.to_checkstate(self.data.get('do_mp3', True)))
         self.do_ogg.setCheckState(
             datatypes.to_checkstate(self.data.get('do_ogg', True)))
+        self.do_m4a.setCheckState(
+            datatypes.to_checkstate(self.data.get('do_m4a', True)))
         self.do_flac.setCheckState(
             datatypes.to_checkstate(self.data.get('do_flac', True)))
         self.do_zip.setCheckState(
@@ -567,6 +578,7 @@ class AlbumEditor(QMainWindow):
             ('do_preview', self.do_preview, True),
             ('do_mp3', self.do_mp3, True),
             ('do_ogg', self.do_ogg, True),
+            ('do_m4a', self.do_m4a, True),
             ('do_flac', self.do_flac, True),
             ('do_zip', self.do_zip, True),
             ('do_cleanup', self.do_cleanup, True),
