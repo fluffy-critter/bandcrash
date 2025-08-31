@@ -67,6 +67,8 @@ class Options:
         default_factory="-q:a 5".split().copy)
     mp3_encoder_args: list[str] = dataclasses.field(
         default_factory="-q:a 0".split().copy)
+    m4a_encoder_args: list[str] = dataclasses.field(
+        default_factory="-q:a 0".split().copy)
     ogg_encoder_args: list[str] = dataclasses.field(
         default_factory="-q:a 5".split().copy)
     flac_encoder_args: list[str] = dataclasses.field(default_factory=list)
@@ -81,6 +83,8 @@ class Options:
     do_preview: typing.Optional[bool] = None  # Whether to build a web preview
     # Whether to build an MP3 album download
     do_mp3: typing.Optional[bool] = None
+    # Whether to build an AAC album download
+    do_m4a: typing.Optional[bool] = None
     # Whether to build an Ogg album download
     do_ogg: typing.Optional[bool] = None
     # Whether to build a FLAC album download
