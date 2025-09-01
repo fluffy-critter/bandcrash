@@ -6,7 +6,13 @@ The web player is provided as a folder (and possibly zip file) which contains th
 Embedding the player
 --------------------
 
-If your website operator allows you to write arbitrary HTML, then all you have to do to embed the player is to insert an ``<iframe>`` tag as raw HTML, with the ``src`` attribute pointing to the player; the specific details will depend on which hosting option you go with.
+If your website operator allows you to write arbitrary HTML, then all you have to do to embed the player is to insert an ``<iframe>`` tag as raw HTML, with the ``src`` attribute pointing to the player; the specific details will depend on which hosting option you go with, but it will generally look something like:
+
+.. code-block:: html
+
+    <iframe src="https://example.com/my-album/" width=640 height=480 seamless>
+      <a href="https://example.com/my-album/">Play my album</a>
+    </iframe>
 
 However, this isn't totally obvious on every website platform! So here's some quick tips for various popular platforms.
 
@@ -16,8 +22,105 @@ However, this isn't totally obvious on every website platform! So here's some qu
 
 If you know of others, please `let me know about them <https://github.com/fluffy-critter/bandcrash/issues/new>`_ so that I can share it here!
 
+Embedding options
+-----------------
+
+With the default Camptown player, you can specifically change the layout of the embedded player by appending a layout fragment to the end of the embed URL, e.g. ``https//example.com/my-album/#compact``. The currently-supported options are:
+
+* ``#noartwork``: Remove the album artwork
+* ``#compact``: Show just the player and the track listing
+* ``#playeronly``: Show just the player controls
+* ``#notracklist``: Show everything except the track listing
+* ``#albumart``: Show the full-size album art
+
+Here are some examples of how these different setups look:
+
+Default
+^^^^^^^
+
+.. raw:: html
+
+    <iframe src="https://cdn.sockpuppet.band/transitions/" width=100% height=480 seamless>
+      <a href="https://sockpuppet.band/album/transitions">Sockpuppet &mdash; Transitions</a>
+    </iframe>
+
+``#noartwork``
+^^^^^^^^^^^^^^
+
+.. raw:: html
+
+    <iframe src="https://cdn.sockpuppet.band/transitions/#noartwork" width=100% height=480 seamless>
+      <a href="https://sockpuppet.band/album/transitions">Sockpuppet &mdash; Transitions</a>
+    </iframe>
+
+``#compact``
+^^^^^^^^^^^^
+
+.. raw:: html
+
+    <iframe src="https://cdn.sockpuppet.band/transitions/#compact" width=100% height=480 seamless>
+      <a href="https://sockpuppet.band/album/transitions">Sockpuppet &mdash; Transitions</a>
+    </iframe>
+
+``#playeronly``
+^^^^^^^^^^^^^^^
+
+.. raw:: html
+
+    <iframe src="https://cdn.sockpuppet.band/transitions/#playeronly" width=480 height=65 seamless>
+      <a href="https://sockpuppet.band/album/transitions">Sockpuppet &mdash; Transitions</a>
+    </iframe>
+
+
+``#notracklist``
+^^^^^^^^^^^^^^^^
+
+.. raw:: html
+
+    <iframe src="https://cdn.sockpuppet.band/transitions/#notracklist" width=640 height=160 seamless>
+      <a href="https://sockpuppet.band/album/transitions">Sockpuppet &mdash; Transitions</a>
+    </iframe>
+
+``#albumart``
+^^^^^^^^^^^^^
+
+.. raw:: html
+
+    <iframe src="https://cdn.sockpuppet.band/transitions/#albumart" width=480 height=520 seamless>
+      <a href="https://sockpuppet.band/album/transitions">Sockpuppet &mdash; Transitions</a>
+    </iframe>
+
 Hosting options
 ---------------
+
+Static file hosting
+^^^^^^^^^^^^^^^^^^^
+
+If you already have your own website on a host that lets you upload and serve up raw files (such as `Dreamhost <https://dreamhost.com/>`_ or `Nearly Free Speech <https://nearlyfreespeech.net>`_ or the like), you can upload the player directly to your website and then point the ``<iframe>`` to it. For example, if you upload your preview directory to ``https://example.com/my-album/``, then you can embed it as:
+
+.. code-block:: html
+
+   <iframe src="https://example.com/my-album/" width=640 height=480 seamless>
+   <a href="https://example.com/my-album/">Listen to my album</a>
+   </iframe>
+
+For example:
+
+.. code-block:: html
+
+   <iframe frameborder="0" src="https://cdn.sockpuppet.band/novembeat-2021/" width="100%" height="480" seamless>
+   <a href="https://cdn.sockpuppet.band/novembeat-2021/">Lo-Fi Beats to Grind Coffee To</a>
+   </iframe>
+
+will look like:
+
+.. raw:: html
+
+   <iframe frameborder="0" src="https://cdn.sockpuppet.band/novembeat-2021/" width="100%" height="480" seamless>
+   <a href="https://cdn.sockpuppet.band/novembeat-2021/">Lo-Fi Beats to Grind Coffee To</a>
+   </iframe>
+
+All things considered, this is probably your best and cheapest option, if you already have compatible web hosting.
 
 itch.io
 ^^^^^^^
@@ -35,6 +138,8 @@ renders as:
     <iframe frameborder="0" src="https://itch.io/embed-upload/8976401?color=333333" allowfullscreen="" width="100%" height="620"><a href="https://fluffy.itch.io/novembeat-2017">Play Novembeat 2017 on itch.io</a></iframe>
 
 Due to Bandcrash's existing integration with the itch.io uploader (as well as itch.io's pre-existing payments platform), this is likely the easiest approach for most users.
+
+Note that due to the way that itch.io embeds work, you cannot use the embed options.
 
 Backblaze B2
 ^^^^^^^^^^^^
@@ -102,31 +207,3 @@ This list is non-exhaustive, and there are other CDNs out there with a different
 
 Advanced users will also probably want to use the `B2 command-line tools <https://www.backblaze.com/docs/cloud-storage-command-line-tools>`_ to manage their uploads, which can be a little easier to deal with especially if you have a tendency to fiddle a lot.
 
-Static file hosting
-^^^^^^^^^^^^^^^^^^^
-
-If you already have your own website on a host that lets you upload and serve up raw files (such as `Dreamhost <https://dreamhost.com/>`_ or `Nearly Free Speech <https://nearlyfreespeech.net>`_ or the like), you can upload the player directly to your website and then point the ``<iframe>`` to it. For example, if you upload your preview directory to ``https://example.com/my-album/``, then you can embed it as:
-
-.. code-block:: html
-
-   <iframe src="https://example.com/my-album/" width=640 height=480 seamless>
-   <a href="https://example.com/my-album/">Listen to my album</a>
-   </iframe>
-
-For example:
-
-.. code-block:: html
-
-   <iframe frameborder="0" src="https://cdn.sockpuppet.us/novembeat-2021/" width="100%" height="480" seamless>
-   <a href="https://cdn.sockpuppet.us/novembeat-2021/">Lo-Fi Beats to Grind Coffee To</a>
-   </iframe>
-
-will look like:
-
-.. raw:: html
-
-   <iframe frameborder="0" src="https://cdn.sockpuppet.us/novembeat-2021/" width="100%" height="480" seamless>
-   <a href="https://cdn.sockpuppet.us/novembeat-2021/">Lo-Fi Beats to Grind Coffee To</a>
-   </iframe>
-
-All things considered, this is probably your best and cheapest option, if you already have compatible web hosting.

@@ -126,14 +126,14 @@ virtualenv = ["virtualenv (>=20.11) ; python_version < \"3.10\"", "virtualenv (>
 
 [[package]]
 name = "camptown"
-version = "0.3.15"
+version = "0.3.18"
 description = "Semantic-HTML player engine"
 optional = false
 python-versions = "<4.0,>=3.11"
 groups = ["main"]
 files = [
-    {file = "camptown-0.3.15-py3-none-any.whl", hash = "sha256:194f28373782fef743019904665cc5ed0ca309f0b36ade027055446329053bfd"},
-    {file = "camptown-0.3.15.tar.gz", hash = "sha256:ad73367646c32ac5d0aed98e0285db6528ec1455af5f799dfc50125973034259"},
+    {file = "camptown-0.3.18-py3-none-any.whl", hash = "sha256:9c19075b1253a55a3fecd5b49b8edec0ab459195f8453ce000dbd9d8b1696fe9"},
+    {file = "camptown-0.3.18.tar.gz", hash = "sha256:9d1c097f7c6531280caa460e1be2d493e86a7d4477c204c561cff950180204c9"},
 ]
 
 [package.dependencies]
