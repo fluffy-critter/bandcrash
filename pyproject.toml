@@ -33,20 +33,9 @@ delocate = "^0.10.4"
 pyside6-stubs = "^6.4.2.0"
 sphinx = "^7.2.6"
 sphinx-copybutton = "^0.5.2"
-devpi-client = "^7.0.2"
 
 [tool.poetry.extras]
 gui = [ "pyside6" ]
-
-[[tool.poetry.source]]
-name = "PyPI"
-priority = "primary"
-
-
-[[tool.poetry.source]]
-name = "devpi-fluffy"
-url = "https://m.devpi.net/fluffy/prod/+simple"
-priority = "explicit"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -55,3 +44,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 bandcrash = 'bandcrash.cli:main'
 bandcrash-gui = 'bandcrash.gui:main'
+
+[tool.poetry.requires-plugins]
+poetry-plugin-export = ">=1.8"
+
