@@ -4,13 +4,23 @@ Using the GUI
 Installation
 ------------
 
-The recommended way to install Bandcrash is from `the official builds on itch.io <https://fluffy.itch.io/bandcrash>`_, ideally via `the itch.io app <https://itch.io/app/>`_.
+The recommended installation source is `the official builds on itch.io <https://fluffy.itch.io/bandcrash>`_, ideally via `the itch.io app <https://itch.io/app/>`_. However, some platforms have some extra notes:
 
-If you already have Python on your system, you can also install it using ``pip`` or ``pipx`` or similar::
+Linux/UNIX/FreeBSD/etc.
+^^^^^^^^^^^^^^^^^^^^^^^
 
-   pipx install 'bandcrash[gui]'
+If the itch.io build doesn't work, your best option is to install it using `pipx <https://pipx.pypa.io/>`_::
+
+  pipx install 'bandcrash[gui]'
 
 and then launch it with ``bandcrash-gui``.
+
+This method will also install the CLI.
+
+macOS
+^^^^^
+
+If you are running on an Intel-based Mac, you will probably need to `build from source <https://github.com/fluffy-critter/bandcrash/?tab=readme-ov-file#installation>`_.
 
 Launching
 ---------

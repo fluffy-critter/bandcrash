@@ -2,7 +2,7 @@
 
 Bandcrash is a standalone program that automatically encodes an album of songs into a bunch of different formats for distribution on various platforms, such as [itch.io](https://itch.io/), or for hosting on your own website.
 
-[See it in action](https://fluffy.itch.io/novembeat-2021)!
+[See it in action](https://fluffy.itch.io/transitions)!
 
 [![Documentation Status](https://readthedocs.org/projects/bandcrash/badge/?version=latest)](https://bandcrash.readthedocs.io/en/latest/?badge=latest)
 
@@ -13,17 +13,42 @@ Bandcrash is a standalone program that automatically encodes an album of songs i
 * High-quality encoding and metadata, with support for cover songs, per-track artwork, embedded lyrics, and more
 * Web player also supports per-track artwork
 
+## Installation
+
+For the CLI version, the best approach is to install it with [pipx](https://pipx.pypa.io/):
+
+    pipx install bandcrash
+
+On Windows, Apple Silicon-based Macs, and Intel machines running Ubuntu-based Linux, the best source for the GUI is [the itch.io store](https://fluffy.itch.io/bandcrash).
+
+If you are fine with launching the GUI from the terminal, the easiest option is to install it with:
+
+    pipx install 'bandcrash[gui]'
+
+and then launch it with `bandcrash-gui`.
+
+Otherwise, you'll probably need to build it from source.
+
+### Building from source
+
+You'll need to install a supported version of [Python](https://python.org/) (3.13 recommended) and [poetry](https://python-poetry.org) (which may also require installing [pipx](https://pipx.pypa.io/)).
+
+To build bandcrash, you should only need to run `make`, after which you will be able to run bandcrash from the project directory:
+
+    poetry run bandcrash       # CLI version
+    poetry run bandcrash-gui   # GUI version
+
+To build a standalone GUI application, you can run `make app` and the application will (hopefully) end up in the `dist` subdirectory.
+
 ## Usage
 
-Please see [the online documentation](https://bandcrash.readthedocs.io) for installation and usage instructions.
+See [the online documentation](https://bandcrash.readthedocs.io/) for detailed usage instructions.
 
 ## Contributing
 
 ### Development environment notes
 
 If you are developing under Windows, you will probably need to use a POSIX environment under Windows (such as [msys](https://www.msys2.org) or [Git Bash](https://git-scm.com)) rather than WSL.
-
-If you are developing under macOS, please use a `universal2` build of Python (such as the ones installable from [python.org](https://python.org)) and you need to ensure that you've created your environment against that (e.g. `poetry env use /usr/local/bin/python3.11`).
 
 ### Roadmap
 
