@@ -356,7 +356,7 @@ def submit_butler(config, target, futures):
 
 def seconds_to_timestamp(duration):
     """ Convert a duration (in seconds) to a timestamp like h:mm:ss """
-    minutes, seconds = divmod(duration, 60)
+    minutes, seconds = divmod(round(duration), 60)
     hours, minutes = divmod(minutes, 60)
 
     if hours:
