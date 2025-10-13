@@ -115,7 +115,7 @@ class CDWriter:
             cue.write(f"  TRACK {idx:02} AUDIO\n")
 
             if 'title' in track:
-                cue.write(f'    TITLE {cue_quote(track.get('title'))}\n')
+                cue.write(f'    TITLE {cue_quote(track.get("title"))}\n')
 
             if self.artist or 'artist' in track:
                 cue.write(
