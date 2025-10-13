@@ -68,6 +68,7 @@ This is where you set up which versions of the album to generate, and a couple o
 * **MP3**: This builds an album in MP3 format, which is what most people are going to download.
 * **Ogg Vorbis**: Certain free-software people prefer this format, although now that MP3's patents are expired it's less desirable. It's still nice to provide it though.
 * **FLAC**: This is a lossless (i.e. CD-quality) format. Most people can't tell the difference between MP3 and FLAC, but again, it's nice to provide this version.
+* **CD**: This builds ``.bin`` and ``.cue`` files for mass-replication in so-called "Compact Disc" format, a physical medium that some people still use, primarily as a collector's item.
 * **Build .zip files**: If this is selected, then Bandcrash will automatically produce .zip files which are easier to upload to your web host or digital downloads store.
 * **Clean extra files**: This will remove any files that have found their way into the output directory. Check this if you're going to tweak the track ordering or titles or the like; uncheck it if you've put extra bonus files into the output directory (although it's usually better to provide extra files as a separate download).
 

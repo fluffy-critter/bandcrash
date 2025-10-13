@@ -1,7 +1,7 @@
 Bandcrash
 =========
 
-Bandcrash is a system for automatically encoding and tagging music albums for download and/or purchase without being stuck on any particular hosting provider or storefront. It generates high-quality MP3, Ogg Vorbis, and FLAC renditions, and an easily-embedded web preview player that can be uploaded to your static hosting site or CDN of choice.
+Bandcrash is a system for automatically encoding and tagging music albums for download and/or purchase without being stuck on any particular hosting provider or storefront. It generates high-quality MP3, Ogg Vorbis, and FLAC renditions, and an easily-embedded web preview player that can be uploaded to your static hosting site or CDN of choice. Additionally, it can optionally generate ``.bin`` and ``.cue`` files for CD replication with services such as `Kunaki <https://kunaki.com/>`__.
 
 It is written in Python, and provides a CLI, an optional Qt-based GUI frontend, and a library which can potentially be embedded into other applications, including web services.
 

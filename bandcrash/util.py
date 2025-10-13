@@ -235,3 +235,34 @@ def file_md5(fname):
         for chunk in iter(lambda: f.read(4096), b''):
             md5.update(chunk)
     return md5.hexdigest()
+
+
+def run_encoder(infile, outfile, args):
+    """ Run an encoder; if the encode process fails, delete the file
+
+    :param str outfile: The output file path
+    :param list args: The entire arglist (including output file path)
+    """
+
+    if not os.path.isfile(infile):
+        raise FileNotFoundError(f"Can't encode {outfile}: {infile} not found")
+
+    if is_newer(infile, outfile):
+        try:
+            subprocess.run([ffmpeg_path(),
+                            '-hide_banner', '-loglevel', 'error',
+                            '-i', infile,
+                            *args,
+                            '-y', outfile], check=True,
+                           capture_output=True,
+                           creationflags=getattr(
+                               subprocess, 'CREATE_NO_WINDOW', 0),
+                           )
+        except subprocess.CalledProcessError as err:
+            os.remove(outfile)
+            raise RuntimeError(
+                f'Error {err.returncode} encoding {outfile}: {err.output}') from err
+        except KeyboardInterrupt as err:
+            os.remove(outfile)
+            raise RuntimeError(
+                f'User aborted while encoding {outfile}') from err

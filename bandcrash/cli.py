@@ -50,6 +50,7 @@ def parse_args():
         ('mp3', 'Encode mp3 album', True),
         ('ogg', 'Encode ogg album', True),
         ('flac', 'Encode flac album', True),
+        ('cdda', 'Generate .bin/.cue file for CD-R replication', False),
         ('cleanup', 'Clean extraneous files in the output directories', False),
         ('zip', 'Build a .zip archive', False),
         ('butler', 'Upload to itch.io using Butler', False),

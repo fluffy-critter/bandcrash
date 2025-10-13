@@ -85,6 +85,8 @@ class Options:
     do_ogg: typing.Optional[bool] = None
     # Whether to build a FLAC album download
     do_flac: typing.Optional[bool] = None
+    # Whether to build a CD-R bin/cue pair
+    do_cdda: typing.Optional[bool] = None
 
     # Whether to clean up extraneous files from the output directories
     do_cleanup: typing.Optional[bool] = None

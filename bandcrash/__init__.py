@@ -16,7 +16,7 @@ import shutil
 import subprocess
 import typing
 
-from . import images, util
+from . import cdda, images, util
 
 try:
     from .__version__ import __version__
@@ -57,37 +57,6 @@ def generate_art_tags(album, track, size, make_tag_func):
     return art_tags
 
 
-def run_encoder(infile, outfile, args):
-    """ Run an encoder; if the encode process fails, delete the file
-
-    :param str outfile: The output file path
-    :param list args: The entire arglist (including output file path)
-    """
-
-    if not os.path.isfile(infile):
-        raise FileNotFoundError(f"Can't encode {outfile}: {infile} not found")
-
-    if util.is_newer(infile, outfile):
-        try:
-            subprocess.run([util.ffmpeg_path(),
-                            '-hide_banner', '-loglevel', 'error',
-                            '-i', infile,
-                            *args,
-                            '-y', outfile], check=True,
-                           capture_output=True,
-                           creationflags=getattr(
-                               subprocess, 'CREATE_NO_WINDOW', 0),
-                           )
-        except subprocess.CalledProcessError as err:
-            os.remove(outfile)
-            raise RuntimeError(
-                f'Error {err.returncode} encoding {outfile}: {err.output}') from err
-        except KeyboardInterrupt as err:
-            os.remove(outfile)
-            raise RuntimeError(
-                f'User aborted while encoding {outfile}') from err
-
-
 def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None):
     """ Encode a track as mp3
 
@@ -101,7 +70,7 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
     """
     from mutagen import id3
 
-    run_encoder(in_path, out_path, encode_args + ['-c:a', 'libmp3lame'])
+    util.run_encoder(in_path, out_path, encode_args + ['-c:a', 'libmp3lame'])
 
     try:
         tags = id3.ID3(out_path)
@@ -195,7 +164,7 @@ def encode_ogg(in_path, out_path, idx, album, track, encode_args, cover_art):
     """ Encode a track as ogg vorbis """
     from mutagen import oggvorbis
 
-    run_encoder(in_path, out_path, encode_args)
+    util.run_encoder(in_path, out_path, encode_args)
 
     tags = oggvorbis.OggVorbis(out_path)
     tag_vorbis(tags, idx, album, track)
@@ -217,7 +186,7 @@ def encode_flac(in_path, out_path, idx, album, track, encode_args, cover_art):
     """ Encode a track as ogg vorbis """
     from mutagen import flac
 
-    run_encoder(in_path, out_path, encode_args)
+    util.run_encoder(in_path, out_path, encode_args)
 
     tags = flac.FLAC(out_path)
     tag_vorbis(tags.tags, idx, album, track)
@@ -507,12 +476,14 @@ def process(config, album, pool, futures):
     album = copy.deepcopy(album)
 
     # Coerce album configuration to app configuration if it hasn't been specified
+    LOGGER.debug("config = %s", config)
     for attrname, default in (
         ('do_preview', True),
         ('do_mp3', True),
         ('do_ogg', True),
         ('do_flac', True),
         ('do_zip', True),
+        ('do_cdda', False),
         ('do_butler', bool(album.get('butler_target'))),
         ('do_cleanup', True),
         ('butler_target', ''),
@@ -527,7 +498,7 @@ def process(config, album, pool, futures):
     LOGGER.info("Starting encode with configuration: %s", config)
 
     formats = set()
-    for target in ('preview', 'mp3', 'ogg', 'flac'):
+    for target in ('preview', 'mp3', 'ogg', 'flac', 'cdda'):
         attrname = f'do_{target}'
         if getattr(config, attrname) is None:
             LOGGER.debug(
@@ -554,8 +525,16 @@ def process(config, album, pool, futures):
         album['artwork_path'] = os.path.join(
             config.input_dir, album['artwork'])
 
-    # this populates encode-XXX futures
+    # this populates encode-XXX futures for most formats
     encode_tracks(config, album, protections, pool, futures)
+
+    if config.do_cdda:
+        # but cdda is a single serialized process
+        futures['encode-cdda'].append(pool.submit(cdda.encode, album,
+                                                  config.input_dir,
+                                                  os.path.join(
+                                                      config.output_dir, 'cdda'),
+                                                  protections['cdda']))
 
     # make build block on encode for all targets
     for target in formats:

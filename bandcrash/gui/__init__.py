@@ -394,6 +394,8 @@ class AlbumEditor(QMainWindow):
         self.do_ogg.setToolTip("Generate an album in Ogg Vorbis format")
         self.do_flac = QCheckBox("FLAC")
         self.do_flac.setToolTip("Generate an album in FLAC lossless format")
+        self.do_cdda = QCheckBox("CD")
+        self.do_cdda.setToolTip("Generate .bin/.cue files for CD replication")
         self.do_cleanup = QCheckBox("Clean up files")
         self.do_cleanup.setToolTip("Remove extraneous/left over files")
         self.do_zip = QCheckBox("Build .zip files")
@@ -402,6 +404,7 @@ class AlbumEditor(QMainWindow):
         checkboxes.addWidget(self.do_mp3)
         checkboxes.addWidget(self.do_ogg)
         checkboxes.addWidget(self.do_flac)
+        checkboxes.addWidget(self.do_cdda)
         checkboxes.addWidget(self.do_cleanup)
         checkboxes.addWidget(self.do_zip)
         layout.addRow("Build options", checkboxes)
@@ -517,6 +520,8 @@ class AlbumEditor(QMainWindow):
             datatypes.to_checkstate(self.data.get('do_ogg', True)))
         self.do_flac.setCheckState(
             datatypes.to_checkstate(self.data.get('do_flac', True)))
+        self.do_cdda.setCheckState(
+            datatypes.to_checkstate(self.data.get('do_cdda', False)))
         self.do_zip.setCheckState(
             datatypes.to_checkstate(self.data.get('do_zip', True)))
         self.do_cleanup.setCheckState(
@@ -568,6 +573,7 @@ class AlbumEditor(QMainWindow):
             ('do_mp3', self.do_mp3, True),
             ('do_ogg', self.do_ogg, True),
             ('do_flac', self.do_flac, True),
+            ('do_cdda', self.do_cdda, False),
             ('do_zip', self.do_zip, True),
             ('do_cleanup', self.do_cleanup, True),
             ('do_butler', self.do_butler, True),
