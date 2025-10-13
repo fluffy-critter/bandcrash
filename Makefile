@@ -20,7 +20,7 @@ test: setup
 	mkdir -p test_output/album/mp3/dir_should_be_removed
 	touch test_output/album/mp3/extraneous-file.txt
 	touch test_output/album/mp3/dir_should_be_removed/extraneous-file.txt
-	poetry run bandcrash -vvv tests/album test_output/album
+	poetry run bandcrash -vvv tests/album test_output/album --cdda
 	poetry run bandcrash tests/album/test-options.json test_output/test-options --no-butler
 	poetry run bandcrash -vvv --init tests/derived test_output/derived --json derived.json
 
