@@ -285,6 +285,7 @@ def clean_subdir(path: str, allowed: typing.Set[str], futures):
 
 def submit_butler(config, target, futures):
     """ Submit the directory to itch.io via butler """
+
     channel = f'{config.butler_target}:{config.butler_prefix}{target}'
 
     if target == 'preview':
@@ -561,23 +562,25 @@ def process(config, album, pool, futures):
 
     if config.do_butler and config.butler_target:
         for target in formats:
-            futures['butler'].append(pool.submit(
-                submit_butler,
-                config,
-                target,
-                futures[f'clean-{target}']))
+            if target not in ('cdda', ):
+                futures['butler'].append(pool.submit(
+                    submit_butler,
+                    config,
+                    target,
+                    futures[f'clean-{target}']))
 
     if config.do_zip:
         filename_parts = [album.get(field)
                           for field in ('artist', 'title')
                           if album.get(field)]
         for target in formats:
-            fname = os.path.join(config.output_dir,
-                                 util.slugify_filename(
-                                     ' - '.join([*filename_parts, target])))
-            futures['zip'].append(pool.submit(
-                make_zipfile,
-                os.path.join(config.output_dir, target),
-                fname,
-                futures[f'clean-{target}'])
-            )
+            if target not in ('cdda', ):
+                fname = os.path.join(config.output_dir,
+                                     util.slugify_filename(
+                                         ' - '.join([*filename_parts, target])))
+                futures['zip'].append(pool.submit(
+                    make_zipfile,
+                    os.path.join(config.output_dir, target),
+                    fname,
+                    futures[f'clean-{target}'])
+                )
