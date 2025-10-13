@@ -50,7 +50,7 @@ class CDWriter:
     # pylint:disable=too-many-instance-attributes
 
     def __init__(self, input_dir, output_dir, basename, album, protections):
-        # pylint:disable=too-many-positional-arguments,too-many-arguments
+        # pylint:disable=too-many-positional-arguments,too-many-arguments,too-many-locals
         self.protections = protections
 
         bin_filename = f'{basename}.bin'
@@ -91,6 +91,18 @@ class CDWriter:
 
         # track, idx, minutes, seconds, frames, pregap
         self.tracks = []
+
+        # generate a track listing in TSV format
+        tracklist = 'tracklist.tsv'
+        protections.add(tracklist)
+        with open(os.path.join(self.output_dir, tracklist), 'w', encoding='utf-8') as trackfile:
+            trackfile.write('track\ttitle\tduration\n')
+            for idx, track in enumerate(album['tracks'], start=1):
+                trackfile.write(f'{idx}\t{track.get("title")}')
+                if 'duration' in track:
+                    mm, ss = divmod(int(track['duration']+0.5), 60)
+                    trackfile.write(f'\t{mm}:{ss:02}')
+                trackfile.write('\n')
 
     @property
     def cue(self):
@@ -140,7 +152,7 @@ class CDWriter:
                 LOGGER.debug("Converting %s to %s as raw", infile, target)
                 try:
                     util.run_encoder(infile, target, [
-                                     '-f', 's16le', '-acodec', 'pcm_s16le'])
+                                     '-f', 's16le', '-acodec', 'pcm_s16le', '-ar', '44100'])
                     with self.bin as binfile:
                         with open(target, 'rb') as tempdata:
                             while chunk := tempdata.read(16384):
