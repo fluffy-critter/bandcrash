@@ -86,6 +86,9 @@ class CDWriter:
             cue.write(f'REM COMMENT "Authored by Bandcrash {__version__}"\n')
             cue.write(f'FILE "{basename}.bin" BINARY\n')
 
+        with open(self.bin_path, 'wb') as binfile:
+            pass
+
         # track, idx, minutes, seconds, frames, pregap
         self.tracks = []
 
