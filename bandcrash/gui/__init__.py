@@ -521,7 +521,7 @@ class AlbumEditor(QMainWindow):
         self.do_flac.setCheckState(
             datatypes.to_checkstate(self.data.get('do_flac', True)))
         self.do_cdda.setCheckState(
-            datatypes.to_checkstate(self.data.get('do_cdda', True)))
+            datatypes.to_checkstate(self.data.get('do_cdda', False)))
         self.do_zip.setCheckState(
             datatypes.to_checkstate(self.data.get('do_zip', True)))
         self.do_cleanup.setCheckState(
