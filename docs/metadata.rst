@@ -41,7 +41,9 @@ For the sake of clarity, here is a JSON file that represents a simple album.
           "foreground": "#7f7f7f",
           "background": "#ff00ff",
           "highlight": "#000000"
-       }
+       },
+       "do_cdda": true,
+       "do_mp3": false
     }
 
 Below is a description of the different metadata fields that are used by the encoder.
@@ -63,9 +65,10 @@ Album data
 * **artwork**: an image file to use for the album's cover art (relative or absolute paths okay)
 * **genre**: The default genre for all tracks
 * **tracks**: an array of track descriptions, in album order
-* **do_mp3**: Whether to build the album in MP3 format
-* **do_ogg**: Whether to build the album in Ogg Vorbis format
-* **do_flac**: Whether to build the album in FLAC format
+* **do_mp3**: Whether to build the album in MP3 format (default: ``true``)
+* **do_ogg**: Whether to build the album in Ogg Vorbis format (default: ``true``)
+* **do_flac**: Whether to build the album in FLAC format (default: ``true``)
+* **do_cdda**: Whether to build CD replication files (``.bin``/``.cue``) (default: ``false``)
 * **do_preview**: Whether to build the web preview
 * **do_zip**: Whether to build a zip file of each output format
 * **do_butler**: Whether to upload the builds to itch.io

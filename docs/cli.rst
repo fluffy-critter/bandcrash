@@ -38,6 +38,8 @@ If you want to override the encoder arguments, remember to put them in quotes; f
 
    bandcrash --mp3-encoder-args="-q:3 -joint_stereo:0"
 
+Output formats are mostly enabled by default, aside from CD authoring files, which must be enabled with ``--cdda`` or by setting the ``"cdda"`` flag in the album definition file. You can always force a format to be generated or not generated with e.g. ``--mp3``, ``--no-mp3``, and so on.
+
 Uploading to itch
 -----------------
 
