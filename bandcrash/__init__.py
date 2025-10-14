@@ -116,6 +116,26 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
     LOGGER.info("Finished writing %s", out_path)
 
 
+def encode_preview_mp3(in_path, out_dir, track, encode_args, protections):
+    """ encode a preview mp3, which also requires generating a filename from md5,
+        and doesn't need any tags et al
+        """
+    basename = util.file_md5(in_path)
+    preview_fname = f'{basename}.mp3'
+
+    track['preview_mp3'] = preview_fname
+    protections.add(preview_fname)
+
+    outfile = os.path.join(out_dir, preview_fname)
+
+    # In certain edge cases we might have multiple encoders running for the same
+    # output file (i.e. multiple .wav files with identical content) and this
+    # helps to prevent last-minute file stomping
+    if not os.path.isfile(outfile):
+        util.run_encoder(in_path, outfile, encode_args +
+                         ['-c:a', 'libmp3lame'])
+
+
 def track_tag_title(track):
     """ Get the tag title for a track """
     title = track.get('title', None)
@@ -253,6 +273,14 @@ def make_web_preview(input_dir, output_dir, album, protections, futures):
         LOGGER.debug("added preview protections %s", album['artwork_preview'])
 
     for track in album['tracks']:
+        if track.get('filename'):
+            input_filename = os.path.join(input_dir, track['filename'])
+
+            duration = util.get_audio_duration(input_filename)
+            track['duration'] = duration
+            track['duration_timestamp'] = seconds_to_timestamp(duration)
+            track['duration_datetime'] = seconds_to_datetime(duration)
+
         if 'artwork' in track:
             track['artwork_preview'] = gen_art_preview(
                 os.path.join(input_dir, track['artwork']))
@@ -335,7 +363,10 @@ def seconds_to_datetime(duration):
 def encode_tracks(config, album, protections, pool, futures):
     """ run the track encode process """
 
-    encode_files = set()
+    def enqueue(target, encode_func, input_filename, *args, **kwargs):
+        if input_filename:
+            futures[f'encode-{target}'].append(pool.submit(
+                encode_func, input_filename, *args, **kwargs))
 
     for idx, track in enumerate(album['tracks'], start=1):
         base_filename = f'{idx:02d} '
@@ -364,34 +395,6 @@ def encode_tracks(config, album, protections, pool, futures):
             if os.path.isfile(lyricfile):
                 track['lyrics'] = util.read_lines(lyricfile)
 
-        if input_filename:
-            duration = util.get_audio_duration(input_filename)
-            track['duration'] = duration
-            track['duration_timestamp'] = seconds_to_timestamp(duration)
-            track['duration_datetime'] = seconds_to_datetime(duration)
-
-        def enqueue(target, encode_func, input_filename, outfile, *args, **kwargs):
-            if input_filename and outfile not in encode_files:
-                futures[f'encode-{target}'].append(pool.submit(
-                    encode_func,
-                    input_filename,
-                    outfile,
-                    *args, **kwargs))
-                encode_files.add(outfile)
-
-        # generate preview track, if desired
-        if (config.do_preview
-            and input_filename
-            and not track.get('hidden')
-                and track.get('preview', True)):
-            preview_fname = util.file_md5(input_filename)
-            track['preview_mp3'] = f'{preview_fname}.mp3'
-            enqueue('preview',
-                    encode_mp3,
-                    input_filename,
-                    out_path('preview', 'mp3', preview_fname),
-                    None, album, {}, config.preview_encoder_args)
-
         if config.do_mp3:
             enqueue('mp3',
                     encode_mp3,
@@ -412,6 +415,18 @@ def encode_tracks(config, album, protections, pool, futures):
                     input_filename,
                     out_path('flac'),
                     idx, album, track, config.flac_encoder_args, cover_art=1500)
+
+        # only encode a preview track if it's going to be visible to the player
+        if (config.do_preview
+            and input_filename
+            and not track.get('hidden')
+                and track.get('preview', True)):
+            enqueue('preview',
+                    encode_preview_mp3,
+                    input_filename,
+                    # We don't know the filename until encode time
+                    os.path.join(config.output_dir, 'preview'),
+                    track, config.preview_encoder_args, protections['preview'])
 
 
 def make_zipfile(input_dir, output_file, futures):

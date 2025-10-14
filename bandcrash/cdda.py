@@ -64,7 +64,7 @@ class CDWriter:
         self.album = album
         self.protections = protections
 
-        # array of (track_dict, offset)
+        # array of (track_dict, offset, duration)
         self.tracks = []
 
         self.timecode = 0   # current timecode, in samples
@@ -84,7 +84,8 @@ class CDWriter:
         LOGGER.info("Encoding track %d - %s", idx,
                     track.get('title', '(no title)'))
 
-        self.tracks.append((track, self.timecode))
+        start_timecode = self.timecode
+        track_duration = 0
 
         if track.get('filename'):
             infile = os.path.join(self.input_dir, track['filename'])
@@ -103,8 +104,12 @@ class CDWriter:
                             raise RuntimeError(
                                 f"{size} bytes is not a multiple of {BYTES_PER_SAMPLE}")
                         self.timecode += size // BYTES_PER_SAMPLE
+                        track_duration = int(
+                            size/(BYTES_PER_SAMPLE*SAMPLES_PER_SECOND) + 0.5)
             finally:
                 os.remove(target)
+
+        self.tracks.append((track, start_timecode, track_duration))
 
     def commit(self, leadout=2*SAMPLES_PER_SECOND):
         """ commit the .bin, with a specified leadout size """
@@ -144,7 +149,7 @@ class CDWriter:
                     return None
                 return track.get(key, self.album.get(key) if fallback else None)
 
-            for idx, (track, offset) in enumerate(self.tracks, start=1):
+            for idx, (track, offset, _) in enumerate(self.tracks, start=1):
                 writeln(f"  TRACK {idx:02} AUDIO")
                 write_props([
                     ('TITLE', get_prop(track, 'title'), True),
@@ -200,7 +205,7 @@ class CDWriter:
             write_item(1, 1, 0, 0, 0)
 
             # each track, offset by the pregap size
-            for tnum, (_, offset) in enumerate(self.tracks, start=1):
+            for tnum, (_, offset, _) in enumerate(self.tracks, start=1):
                 write_item(1, tnum, 1, 0, offset + pregap)
 
             # lead-out
@@ -220,13 +225,12 @@ class CDWriter:
 
             def get_prop(track, key):
                 return ' '.join(track.get(key, self.album.get(key, '')).split())
-            for idx, (track, _) in enumerate(self.tracks, start=1):
+            for idx, (track, _, duration) in enumerate(self.tracks, start=1):
+                minutes, seconds = divmod(duration, 60)
                 print('\t'.join([
                     str(idx),
                     get_prop(track, 'title'),
-                    ':'.join([str(k)
-                             for k in divmod(track.get('duration'), 60)])
-                    if 'duration' in track else '',
+                    f'{minutes}:{seconds:02}',
                     get_prop(track, 'artist'),
                     get_prop(track, 'composer')
                 ]), file=tsv)
