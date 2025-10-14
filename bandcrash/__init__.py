@@ -116,24 +116,28 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
     LOGGER.info("Finished writing %s", out_path)
 
 
-def encode_preview_mp3(in_path, out_dir, track, encode_args, protections):
+def encode_preview_mp3(in_path, out_dir, filemap, track, encode_args, protections):
     """ encode a preview mp3, which also requires generating a filename from md5,
         and doesn't need any tags et al
         """
+    if in_path in filemap:
+        # We've already generated a preview for this file, so we can fast-exit
+        LOGGER.info("Already generated %s -> %s", in_path, filemap[in_path])
+        track['preview_mp3'] = filemap[in_path]
+        return
+
     basename = util.file_md5(in_path)
     preview_fname = f'{basename}.mp3'
+    filemap[in_path] = preview_fname
+
+    LOGGER.info("Encoding preview %s -> %s", in_path, preview_fname)
 
     track['preview_mp3'] = preview_fname
     protections.add(preview_fname)
 
     outfile = os.path.join(out_dir, preview_fname)
 
-    # In certain edge cases we might have multiple encoders running for the same
-    # output file (i.e. multiple .wav files with identical content) and this
-    # helps to prevent last-minute file stomping
-    if not os.path.isfile(outfile):
-        util.run_encoder(in_path, outfile, encode_args +
-                         ['-c:a', 'libmp3lame'])
+    util.run_encoder(in_path, outfile, encode_args + ['-c:a', 'libmp3lame'])
 
 
 def track_tag_title(track):
@@ -368,6 +372,9 @@ def encode_tracks(config, album, protections, pool, futures):
             futures[f'encode-{target}'].append(pool.submit(
                 encode_func, input_filename, *args, **kwargs))
 
+    # caches preview input file -> output filename
+    preview_filemap: dict[str, str] = {}
+
     for idx, track in enumerate(album['tracks'], start=1):
         base_filename = f'{idx:02d} '
         if 'artist' in track:
@@ -426,6 +433,7 @@ def encode_tracks(config, album, protections, pool, futures):
                     input_filename,
                     # We don't know the filename until encode time
                     os.path.join(config.output_dir, 'preview'),
+                    preview_filemap,
                     track, config.preview_encoder_args, protections['preview'])
 
 
