@@ -58,7 +58,7 @@ class CDWriter:
     # pylint:disable=too-many-instance-attributes
 
     def __init__(self, input_dir, output_dir, album, protections, fname='album.bin'):
-        # pylint:disable=too-many-positional-arguments,too-many-arguments,too-many-locals
+        # pylint:disable=too-many-positional-arguments,too-many-arguments
         self.input_dir = input_dir
         self.output_dir = output_dir
         self.album = album
