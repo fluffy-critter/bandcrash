@@ -30,18 +30,18 @@ Alternately, you can load it into something like `Audacity <https://audacityteam
 Kunaki uploads
 --------------
 
-When uploading to Kunaki, use the "ISO and CUE file" option. Kunaki is being imprecise here, as an ``.iso`` is a particular kind of a ``.bin`` but not all ``.bin``\ s are ``.iso``\ s. Further, Kunaki has what appears to be their own proprietary and undocumented ``.cue`` format, rather than using the standard cue sheet format.
+When uploading to Kunaki, use the "ISO and CUE file" option. Use ``album.bin`` for the ISO and ``kunaki.cue`` for the CUE.
 
-In any case, when uploading, use ``album.bin`` for the ISO and ``kunaki.cue`` for the CUE.
+As a note, Kunaki is using imprecise terminology, as an ``.iso`` is a particular kind of a ``.bin`` but not all ``.bin``\ s are ``.iso``\ s. Further, Kunaki has what appears to be their own proprietary and undocumented ``.cue`` format, rather than using the common text-based format understood by most CD burning tools.
 
 cdrdao
 ------
 
-While the CDDA standard and most tools expect little-endian (also called LSB) audio, cdrdao expects everything to be big-endian (aka MSB, sometimes called "Motorola"). Thus, when you burn a disc, you'll need to specify the ``--swap`` option, for example::
+The CDDA standard and most tools expect little-endian (also called LSB) audio, but cdrdao expects everything to be big-endian (aka MSB, sometimes called "Motorola"). Thus, when you burn a disc, you'll need to specify the ``--swap`` option, for example::
 
     cdrdao writecd --device /dev/sr0 --swap album.cue
 
-While the ``.cue`` format explicitly specifies the endianness of the file (using ``BINARY`` and ``MOTOROLA`` for little and big endian, respectively), cdrdao's parser ignores this.
+The ``.cue`` format explicitly specifies the endianness of the file (using ``BINARY`` and ``MOTOROLA`` for little and big endian, respectively), but unfortunately, cdrdao's parser ignores this.
 
 ImgBurn
 -------
