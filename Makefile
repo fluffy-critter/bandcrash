@@ -61,7 +61,7 @@ clean:
 	find . -name __pycache__ -print0 | xargs -0 rm -r
 
 .PHONY: upload
-upload: clean test build
+upload: clean test build doc
 	poetry publish
 
 .PHONY: doc
