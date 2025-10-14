@@ -30,7 +30,7 @@ Run Bandcrash with::
 
    bandcrash input_dir/album.json output_dir
 
-and it will automatically encode the album based on its settings and, if so configured, upload to itch.io. This will also work with ``.bcalbum`` files (which are just JSON with a different extension), e.g.
+and it will automatically encode the album based on its settings and, if so configured, upload to itch.io. This will also work with ``.bcalbum`` files (which are just JSON with a different extension), e.g.::
 
     bandcrash 'music/my album/my album.bcalbum' output_dir
 

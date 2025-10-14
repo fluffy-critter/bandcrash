@@ -57,7 +57,7 @@
       {
          "artwork": "hidden_track.png",
          "filename": "test track.wav",
-         "title": "This track is hidden",
+         "title": "This track is \n hidden",
          "preview": false,
          "hidden": true,
          "about": [

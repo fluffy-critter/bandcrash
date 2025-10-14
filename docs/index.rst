@@ -23,3 +23,4 @@ If you want to embed the player on your own website, :doc:`there's a doc for tha
     library
     player
     metadata
+    cd-authoring
