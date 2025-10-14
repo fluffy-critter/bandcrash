@@ -487,7 +487,7 @@ def process(config, album, pool, futures):
     LOGGER.info("Starting encode with configuration: %s", config)
 
     formats = set()
-    for target in ('preview', 'mp3', 'ogg', 'flac', 'cdda'):
+    for target in ('preview', 'mp3', 'ogg', 'flac'):
         attrname = f'do_{target}'
         if getattr(config, attrname) is None:
             LOGGER.debug(
@@ -514,21 +514,23 @@ def process(config, album, pool, futures):
         album['artwork_path'] = os.path.join(
             config.input_dir, album['artwork'])
 
-    # this populates encode-XXX futures for most formats
+    # this populates encode-XXX futures for all formats
     encode_tracks(config, album, protections, pool, futures)
 
-    if config.do_cdda:
-        # but cdda is a single serialized process
-        futures['encode-cdda'].append(pool.submit(cdda.encode, album,
-                                                  config.input_dir,
-                                                  os.path.join(
-                                                      config.output_dir, 'cdda'),
-                                                  protections['cdda']))
+    def submit_cleanup(target):
+        if config.do_cleanup:
+            futures[f'clean'].append(pool.submit(
+                clean_subdir, os.path.join(config.output_dir, target),
+                protections[target], futures[f'build-{target}']))
+        else:
+            futures[f'clean'].append(pool.submit(
+                wait_futures, futures[f'build-{target}']))
 
     # make build block on encode for all targets
     for target in formats:
         futures[f'build-{target}'].append(pool.submit(wait_futures,
                                                       futures[f'encode-{target}']))
+        submit_cleanup(target)
 
     if config.do_preview:
         futures['build-preview'].append(pool.submit(make_web_preview,
@@ -538,37 +540,34 @@ def process(config, album, pool, futures):
                                                     album, protections['preview'],
                                                     futures['encode-preview']))
 
-    # make clean block on build for all targets
-    for target in formats:
-        if config.do_cleanup:
-            futures[f'clean-{target}'].append(pool.submit(
-                clean_subdir, os.path.join(config.output_dir, target),
-                protections[target], futures[f'build-{target}']))
-        else:
-            futures[f'clean-{target}'].append(pool.submit(
-                wait_futures, futures[f'build-{target}']))
+    if config.do_cdda:
+        os.makedirs(os.path.join(config.output_dir, 'cdda'), exist_ok=True)
+        futures['build-cdda'].append(pool.submit(cdda.encode, album,
+                                                 config.input_dir,
+                                                 os.path.join(
+                                                     config.output_dir, 'cdda'),
+                                                 protections['cdda']))
+        submit_cleanup('cdda')
 
     if config.do_butler and config.butler_target:
         for target in formats:
-            if target not in ('cdda', ):
-                futures['butler'].append(pool.submit(
-                    submit_butler,
-                    config,
-                    target,
-                    futures[f'clean-{target}']))
+            futures['butler'].append(pool.submit(
+                submit_butler,
+                config,
+                target,
+                futures[f'clean']))
 
     if config.do_zip:
         filename_parts = [album.get(field)
                           for field in ('artist', 'title')
                           if album.get(field)]
         for target in formats:
-            if target not in ('cdda', ):
-                fname = os.path.join(config.output_dir,
-                                     util.slugify_filename(
-                                         ' - '.join([*filename_parts, target])))
-                futures['zip'].append(pool.submit(
-                    make_zipfile,
-                    os.path.join(config.output_dir, target),
-                    fname,
-                    futures[f'clean-{target}'])
-                )
+            fname = os.path.join(config.output_dir,
+                                 util.slugify_filename(
+                                     ' - '.join([*filename_parts, target])))
+            futures['zip'].append(pool.submit(
+                make_zipfile,
+                os.path.join(config.output_dir, target),
+                fname,
+                futures[f'clean-{target}'])
+            )
