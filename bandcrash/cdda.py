@@ -18,15 +18,13 @@ LOGGER = logging.getLogger(__name__)
 BYTES_PER_SAMPLE = 4
 SAMPLES_PER_SECOND = 44100
 FRAMES_PER_SECOND = 75
-LEAD_IN = 0x0
-LEAD_OUT = 0xAA
 
 
-def cue_quote(text):
+def cue_quote(text, force_quote=False):
     """ Quote a string for a cue file """
 
     # normalize whitespace
-    text = ' '.join(text.split())
+    text = ' '.join(str(text).split())
 
     # replace " with '' because some tools are really silly
     text = text.replace('"', "''")
@@ -34,10 +32,14 @@ def cue_quote(text):
     # remove nonprintable characters
     text = re.sub(r'[\x00-\x1F\x7F-\x9F]', '', text)
 
-    return f'"{text}"'
+    # quote values with spaces
+    if force_quote or ' ' in text:
+        text = f'"{text}"'
+
+    return text
 
 
-def get_position(samples):
+def parse_time(samples):
     """ Convert a sample count to minutes/seconds/frames """
     frames = int(samples*FRAMES_PER_SECOND/SAMPLES_PER_SECOND)
     seconds, frames = divmod(frames, FRAMES_PER_SECOND)
@@ -45,139 +47,131 @@ def get_position(samples):
     return minutes, seconds, frames
 
 
+def format_time(samples):
+    """ format a timecode in MM:SS:FF """
+    mm, ss, ff = parse_time(samples)
+    return f'{mm:02}:{ss:02}:{ff:02}'
+
+
 class CDWriter:
     """ class for building the .bin and .cue file """
     # pylint:disable=too-many-instance-attributes
 
-    def __init__(self, input_dir, output_dir, basename, album, protections):
+    def __init__(self, input_dir, output_dir, album, protections, fname='album.bin'):
         # pylint:disable=too-many-positional-arguments,too-many-arguments,too-many-locals
-        self.protections = protections
-
-        bin_filename = f'{basename}.bin'
-        cue_filename = f'{basename}.cue'
-        bcue_filename = f'{basename}.kunaki.cue'
-        protections.add(bin_filename)
-        protections.add(cue_filename)
-        protections.add(bcue_filename)
-
-        self.bin_path = os.path.join(output_dir, bin_filename)
-        self.cue_path = os.path.join(output_dir, cue_filename)
-        self.bcue_path = os.path.join(output_dir, bcue_filename)
-
         self.input_dir = input_dir
         self.output_dir = output_dir
+        self.album = album
+        self.protections = protections
+
+        # array of (track_dict, offset)
+        self.tracks = []
+
         self.timecode = 0   # current timecode, in samples
-        self.artist = None
 
-        LOGGER.info("bin=%s", self.bin_path)
-        LOGGER.info("cue=%s", self.cue_path)
+        self.protections.add(fname)
+        self.bin_fname = fname
+        self.bin_path = os.path.join(self.output_dir, fname)
 
-        # create the empty files
-        with open(self.cue_path, 'w', encoding='iso-8859-1') as cue:
-            if 'artist' in album:
-                cue.write(f'PERFORMER {cue_quote(album["artist"])}\n')
-                self.artist = album['artist']
-            if 'title' in album:
-                cue.write(f'TITLE {cue_quote(album["title"])}\n')
-            if 'genre' in album:
-                cue.write(f"REM GENRE {album['genre']}\n")
-            if 'year' in album:
-                cue.write(f"REM DATE {album['year']}\n")
-            cue.write(f'REM COMMENT "Authored by Bandcrash {__version__}"\n')
-            cue.write(f'FILE "{basename}.bin" BINARY\n')
-
+        # create the empty binfile
         with open(self.bin_path, 'wb') as _:
             pass
 
-        # track, idx, minutes, seconds, frames, pregap
-        self.tracks = []
-
-        # generate a track listing in TSV format
-        tracklist = 'tracklist.tsv'
-        protections.add(tracklist)
-        with open(os.path.join(self.output_dir, tracklist), 'w', encoding='utf-8') as trackfile:
-            trackfile.write('track\ttitle\tduration\n')
-            for idx, track in enumerate(album['tracks'], start=1):
-                trackfile.write(f'{idx}\t{track.get("title")}')
-                if 'duration' in track:
-                    mm, ss = divmod(int(track['duration']+0.5), 60)
-                    trackfile.write(f'\t{mm}:{ss:02}')
-                trackfile.write('\n')
-
-    @property
-    def cue(self):
-        """ returns a handle for the cuefile """
-        return open(self.cue_path, 'a',
-                    encoding='iso-8859-1',
-                    errors='replace',
-                    newline='\r\n')
-
-    @property
-    def bin(self):
-        """ returns a handle for the binfile """
-        return open(self.bin_path, 'ab')
-
-    def add_track(self, idx, track):
+    def add_track(self, track):
         """ Add a track to the bin and cue """
 
+        idx = len(self.tracks) + 1
         LOGGER.info("Encoding track %d - %s", idx,
                     track.get('title', '(no title)'))
 
-        with self.cue as cue:
-            cue.write(f"  TRACK {idx:02} AUDIO\n")
+        self.tracks.append((track, self.timecode))
 
-            if 'title' in track:
-                cue.write(f'    TITLE {cue_quote(track.get("title"))}\n')
+        if track.get('filename'):
+            infile = os.path.join(self.input_dir, track['filename'])
+            target = os.path.join(self.output_dir, f'track-{idx}.tmp.pcm')
+            LOGGER.debug("Converting %s to %s as raw", infile, target)
+            try:
+                util.run_encoder(infile, target, [
+                                 '-f', 's16le', '-acodec', 'pcm_s16le', '-ar', '44100'])
+                with open(self.bin_path, 'ab') as binfile:
+                    with open(target, 'rb') as tempdata:
+                        size = 0
+                        while chunk := tempdata.read(16384):
+                            binfile.write(chunk)
+                            size += len(chunk)
+                        if size % BYTES_PER_SAMPLE != 0:
+                            raise RuntimeError(
+                                f"{size} bytes is not a multiple of {BYTES_PER_SAMPLE}")
+                        self.timecode += size // BYTES_PER_SAMPLE
+            finally:
+                os.remove(target)
 
-            if self.artist or 'artist' in track:
-                cue.write(
-                    f'    PERFORMER {cue_quote(track.get("artist", self.artist))}\n')
+    def commit(self, leadout=2*SAMPLES_PER_SECOND):
+        """ commit the .bin, with a specified leadout size """
+        with open(self.bin_path, 'ab') as binfile:
+            binfile.write(bytearray(leadout * BYTES_PER_SAMPLE))
 
-            if not self.timecode:
-                # Generate a pregap rather than baking it in
-                cue.write('    PREGAP 00:02:00\n')
-                self.tracks.append((LEAD_IN, 0, 0, 0, 0))
-                self.tracks.append((1, 0, 0, 0, 0))
-                self.timecode = 2 * SAMPLES_PER_SECOND
+    def write_cue(self, fname='album.cue'):
+        """ write the text cuefile """
+        LOGGER.info("Writing text-format cue file to %s", fname)
 
-            minutes, seconds, frames = get_position(self.timecode)
+        with open(os.path.join(self.output_dir, fname), 'w',
+                  encoding='iso-8859-1', errors='replace', newline='\r\n') as cue:
+            def writeln(line):
+                print(line, file=cue)
 
-            cue.write(f'    INDEX 01 {minutes:02}:{seconds:02}:{frames:02}\n')
-            self.tracks.append((idx, 1, minutes, seconds, frames))
+            def write_props(props, indent=''):
+                """ write an array of properties, formatted as key, value, force_quote """
+                for key, value, force_quote in props:
+                    if value is not None:
+                        writeln(
+                            f'{indent}{key} {cue_quote(value, force_quote)}')
 
-            # convert and append the data
-            if track.get('filename'):
-                infile = os.path.join(self.input_dir, track['filename'])
-                target = os.path.join(self.output_dir, f'track-{idx}.tmp.pcm')
-                LOGGER.debug("Converting %s to %s as raw", infile, target)
-                try:
-                    util.run_encoder(infile, target, [
-                                     '-f', 's16le', '-acodec', 'pcm_s16le', '-ar', '44100'])
-                    with self.bin as binfile:
-                        with open(target, 'rb') as tempdata:
-                            while chunk := tempdata.read(16384):
-                                binfile.write(chunk)
-                                self.timecode += len(chunk) // BYTES_PER_SAMPLE
-                finally:
-                    os.remove(target)
+            write_props([
+                ('PERFORMER', self.album.get('artist'), True),
+                ('SONGWRITER', self.album.get('composer'), True),
+                ('TITLE', self.album.get('title'), True),
+                ('CATALOG', self.album.get('upc'), False),
+                ('REM GENRE', self.album.get('genre'), True),
+                ('REM DATE', self.album.get('year'), False),
+                ('REM COMMENT', f'Authored by Bandcrash {__version__}', True),
+            ])
 
-    def commit(self):
-        """ Close the session """
+            writeln(f'FILE "{self.bin_fname}" BINARY')
 
-        # add a 5-second lead-out to the last track
-        minutes, seconds, frames = get_position(self.timecode)
-        self.tracks.append((LEAD_OUT, 1, minutes, seconds, frames))
+            def get_prop(track, key, fallback=False):
+                if not track:
+                    return None
+                return track.get(key, self.album.get(key) if fallback else None)
 
-        with self.cue as cue:
-            cue.write(f"REM LEAD-OUT {minutes:02}:{seconds:02}:{frames:02}\n")
-        with self.bin as binfile:
-            binfile.write(bytearray(5 * SAMPLES_PER_SECOND * BYTES_PER_SAMPLE))
+            for idx, (track, offset) in enumerate(self.tracks, start=1):
+                writeln(f"  TRACK {idx:02} AUDIO")
+                write_props([
+                    ('TITLE', get_prop(track, 'title'), True),
+                    ('PERFORMER', get_prop(track, 'artist', True), True),
+                    ('SONGWRITER', get_prop(track, 'composer', True), True),
+                    ('REM GENRE', get_prop(track, 'genre'), True),
+                    ('ISRC', get_prop(track, 'isrc'), False),
+                    ('INDEX 01', format_time(offset), False)
+                ], indent='    ')
 
-        # Kunaki's proprietary CUE format semi-documented at
+            writeln(f"REM LEAD-OUT {format_time(self.timecode)}")
+
+        self.protections.add(fname)
+
+    def write_kunaki_cue(self, fname='kunaki.cue'):
+        """ write the kunaki-format cuefile """
+        LOGGER.info("Writing Kunaki-format cue file to %s", fname)
+
+        # Kunaki's proprietary CUE format is semi-documented at
         # https://gist.github.com/LoneRabbit/36f2a74c27a7d6a3b443b44d27fd2702
-        # from which this code is adapted
+        # from which this code is adapted. It appears to be a subset of the
+        # raw data stored in a CD's TOC.
+        #
+        # Each track record looks like:
         #
         # <ctrl><adr> <tt> <ii> <xx> 00 <mm> <ss> <ff>
+        #
         # where ctrl is 4 bits: quad 0 copy-allowed pre-emphasis
         # adr = 1 for track info, 3 for EOF marker
         # xx = lead in/out? generated pregap maybe?
@@ -186,35 +180,67 @@ class CDWriter:
         # In Kunaki's generated cuefiles, ctrl|adr is always 01 for tracks, 03 for EOF
         # and xx is 1 for lead-in and lead-out, 0 otherwise
         #
-        # Puzzlingly, track 1 index 0 indicates 2 seconds of lead-in on the track
-        # but there is no corresponding blank data in the binfile.
-        #
-        # Someday it would be nice to add pregap-hidden audio and index markers
-        # but that will have to wait until Kunaki actually documents their format,
-        # which doesn't seem likely to happen any time soon.
-        with open(self.bcue_path, 'wb') as bcue:
-            for track, index, minutes, seconds, frames in self.tracks:
-                ctrl = 0
-                adr = 1
-                if track in (LEAD_IN, LEAD_OUT):
-                    xx = 1
-                else:
-                    xx = 0
+        # The puzzling thing is that their TOC shows the actual track starts
+        # as offset by the pregap size, but there is no corresponding pregap
+        # within the .bin file (which Kunaki erroneously calls an "iso").
+        # Baking in a pregap as one would expect causes the tracks to be offset
+        # by that amount. So there seems to be some magic pregap logic happening
+        # on Kunaki's side.
 
-                LOGGER.debug("ctrl=%d adr=%d track=%d idx=%d xx=%d m=%d s=%d f=%d",
-                             ctrl, adr, track, index, xx, minutes, seconds, frames)
+        pregap = 2*SAMPLES_PER_SECOND
 
-                bcue.write(struct.pack('BBBBBBBB',
-                                       1, track, index, xx,
-                                       0, minutes, seconds, frames))
+        with open(os.path.join(self.output_dir, fname), 'wb') as cue:
+            def write_item(adr, track, index, xx, timecode):
+                mm, ss, ff = parse_time(timecode)
+                cue.write(struct.pack('B'*8,
+                                      adr, track, index, xx, 0, mm, ss, ff))
+
+            # pregap
+            write_item(1, 0, 0, 1, 0)
+            write_item(1, 1, 0, 0, 0)
+
+            # each track, offset by the pregap size
+            for tnum, (_, offset) in enumerate(self.tracks, start=1):
+                write_item(1, tnum, 1, 0, offset + pregap)
+
+            # lead-out
+            write_item(1, 0xAA, 1, 1, self.timecode + pregap)
 
             # EOF marker
-            bcue.write(struct.pack('B', 3))
+            cue.write(struct.pack('B', 3))
+
+        self.protections.add(fname)
+
+    def write_tsv(self, fname='tracklist.tsv'):
+        """ Write out an easily-parsed track listing file """
+        LOGGER.info("Writing TSV file to %s", fname)
+
+        with open(os.path.join(self.output_dir, fname), 'w', encoding='utf-8') as tsv:
+            print('Index\tTitle\tDuration\tPerformer\tComposer', file=tsv)
+
+            def get_prop(track, key):
+                return ' '.join(track.get(key, self.album.get(key, '')).split())
+            for idx, (track, _) in enumerate(self.tracks, start=1):
+                print('\t'.join([
+                    str(idx),
+                    get_prop(track, 'title'),
+                    ':'.join([str(k)
+                             for k in divmod(track.get('duration'), 60)])
+                    if 'duration' in track else '',
+                    get_prop(track, 'artist'),
+                    get_prop(track, 'composer')
+                ]), file=tsv)
+
+        self.protections.add(fname)
 
 
 def encode(album, input_dir, output_dir, protections):
     """ Run the bincue output process """
-    processor = CDWriter(input_dir, output_dir, 'album', album, protections)
-    for idx, track in enumerate(album['tracks'], start=1):
-        processor.add_track(idx, track)
+    processor = CDWriter(input_dir, output_dir, album, protections)
+    for track in album['tracks']:
+        processor.add_track(track)
+
     processor.commit()
+    processor.write_cue()
+    processor.write_kunaki_cue()
+    processor.write_tsv()
