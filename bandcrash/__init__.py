@@ -519,11 +519,11 @@ def process(config, album, pool, futures):
 
     def submit_cleanup(target):
         if config.do_cleanup:
-            futures[f'clean'].append(pool.submit(
+            futures['clean'].append(pool.submit(
                 clean_subdir, os.path.join(config.output_dir, target),
                 protections[target], futures[f'build-{target}']))
         else:
-            futures[f'clean'].append(pool.submit(
+            futures['clean'].append(pool.submit(
                 wait_futures, futures[f'build-{target}']))
 
     # make build block on encode for all targets
@@ -555,7 +555,7 @@ def process(config, album, pool, futures):
                 submit_butler,
                 config,
                 target,
-                futures[f'clean']))
+                futures['clean']))
 
     if config.do_zip:
         filename_parts = [album.get(field)
@@ -569,5 +569,5 @@ def process(config, album, pool, futures):
                 make_zipfile,
                 os.path.join(config.output_dir, target),
                 fname,
-                futures[f'clean-{target}'])
+                futures['clean'])
             )
