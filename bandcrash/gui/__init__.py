@@ -880,7 +880,7 @@ class BandcrashApplication(QApplication):
         QtCore.QTimer.singleShot(100, self.open_on_startup)
 
     @staticmethod
-    def instance() -> BandcrashApplication:
+    def instance():
         """ Get the current app instance """
         return typing.cast(BandcrashApplication, QApplication.instance())
 
