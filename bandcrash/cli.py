@@ -81,6 +81,9 @@ def parse_args():
                         help="Prefix for the Butler channel name",
                         default=None)
 
+    parser.add_argument('--butler-args', type=str, default='',
+                        help="Extra arguments to provide to butler")
+
     return parser.parse_args()
 
 

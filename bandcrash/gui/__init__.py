@@ -761,6 +761,8 @@ class AlbumEditor(QMainWindow):
         config.output_dir = os.path.join(
             self.output_dir, util.slugify_filename(' - '.join(filename_parts)))
 
+        config.butler_args = BandcrashApplication.instance().config.butler_args.split()
+
         LOGGER.info("Album data: %s", self.data)
         LOGGER.info("Config options: %s", config)
 
@@ -865,12 +867,14 @@ class AlbumEditor(QMainWindow):
 class BandcrashApplication(QApplication):
     """ Application event handler """
 
-    def __init__(self, open_files):
+    def __init__(self, config):
         super().__init__()
+
+        self.config = config
 
         self.windows: set[AlbumEditor] = set()
 
-        for path in open_files:
+        for path in config.open_files:
             self.open_file(os.path.abspath(path))
 
         QtCore.QTimer.singleShot(100, self.open_on_startup)
@@ -939,6 +943,8 @@ def main():
     parser.add_argument('--version', action='version',
                         version=f"%(prog)s {__version__}")
     parser.add_argument('open_files', type=str, nargs='*')
+    parser.add_argument('--butler-args', type=str, default='',
+                        help='Options to pass along to butler push')
     options = parser.parse_args()
 
     logging.basicConfig(level=LOG_LEVELS[min(
@@ -948,7 +954,7 @@ def main():
     LOGGER.debug(
         "Opening bandcrash GUI with provided files: %s", options.open_files)
 
-    app = BandcrashApplication(options.open_files)
+    app = BandcrashApplication(options)
 
     app.exec()
 
