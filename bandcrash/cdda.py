@@ -222,16 +222,17 @@ class CDWriter:
         LOGGER.info("Writing TSV file to %s", fname)
 
         with open(os.path.join(self.output_dir, fname), 'w', encoding='utf-8') as tsv:
-            print('Index\tTitle\tDuration\tPerformer\tComposer', file=tsv)
+            print('Index\tTitle\tDuration\tStart Time\tPerformer\tComposer', file=tsv)
 
             def get_prop(track, key):
                 return ' '.join(track.get(key, self.album.get(key, '')).split())
-            for idx, (track, _, duration) in enumerate(self.tracks, start=1):
+            for idx, (track, offset, duration) in enumerate(self.tracks, start=1):
                 minutes, seconds = divmod(duration, 60)
                 print('\t'.join([
                     str(idx),
                     get_prop(track, 'title'),
                     f'{int(minutes)}:{int(seconds+0.5):02}',
+                    format_time(offset),
                     get_prop(track, 'artist'),
                     get_prop(track, 'composer')
                 ]), file=tsv)
