@@ -527,7 +527,7 @@ def process(config, album, pool, futures):
         LOGGER.warning("Couldn't find tool 'butler'; disabling upload")
         config.do_butler = False
 
-    if not formats:
+    if not formats and not config.do_cdda:
         raise RuntimeError("No targets specified and nothing to do")
 
     protections: typing.Dict[str, typing.Set[str]
