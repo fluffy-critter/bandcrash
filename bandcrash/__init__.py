@@ -571,14 +571,13 @@ def process(config, album, pool, futures):
                 protections[target], [*futures[target]]))
 
     # PHASE 3: Distribution
-    for target in DIST_TARGETS:
+    for target in (t for t in DIST_TARGETS if t in formats):
         if config.do_butler and config.butler_target:
-            if target in formats:
-                futures['butler'].append(pool.submit(
-                    submit_butler,
-                    config,
-                    target,
-                    futures[target]))
+            futures['butler'].append(pool.submit(
+                submit_butler,
+                config,
+                target,
+                futures[target]))
 
         if config.do_zip:
             filename_parts = [album.get(field)
