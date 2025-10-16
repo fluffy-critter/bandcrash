@@ -230,7 +230,7 @@ class CDWriter:
                 print('\t'.join([
                     str(idx),
                     get_prop(track, 'title'),
-                    f'{minutes}:{seconds:02}',
+                    f'{int(minutes)}:{int(seconds+0.5):02.2}',
                     get_prop(track, 'artist'),
                     get_prop(track, 'composer')
                 ]), file=tsv)
