@@ -1,5 +1,6 @@
 """ bin/cue generator """
 
+import concurrent.futures
 import logging
 import os
 import os.path
@@ -230,7 +231,7 @@ class CDWriter:
                 print('\t'.join([
                     str(idx),
                     get_prop(track, 'title'),
-                    f'{int(minutes)}:{int(seconds+0.5):02.2}',
+                    f'{int(minutes)}:{seconds+0.5:02.2}',
                     get_prop(track, 'artist'),
                     get_prop(track, 'composer')
                 ]), file=tsv)
@@ -238,13 +239,32 @@ class CDWriter:
         self.protections.add(fname)
 
 
-def encode(album, input_dir, output_dir, protections):
+def encode(album, input_dir, output_dir, protections, pool):
     """ Run the bincue output process """
     processor = CDWriter(input_dir, output_dir, album, protections)
-    for track in album['tracks']:
-        processor.add_track(track)
+    futures: list[concurrent.futures.Future] = []
 
-    processor.commit()
-    processor.write_cue()
-    processor.write_kunaki_cue()
-    processor.write_tsv()
+    def task(wait_for, func, *args):
+        if wait_for:
+            wait_for.result()
+        func(*args)
+
+    def submit(wait_for, func, *args):
+        future = pool.submit(task, wait_for, func, *args)
+        futures.append(future)
+        return future
+
+    last_step = None
+
+    for track in album['tracks']:
+        last_step = submit(last_step, processor.add_track, track)
+
+    last_step = submit(last_step, processor.commit)
+
+    # these can all run in parallel, so they don't need to update last_step
+    for step in (processor.write_cue,
+                 processor.write_kunaki_cue,
+                 processor.write_tsv):
+        submit(last_step, step)
+
+    return futures

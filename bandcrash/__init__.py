@@ -25,6 +25,9 @@ except ImportError:
 
 LOGGER = logging.getLogger(__name__)
 
+DIST_TARGETS = ('mp3', 'ogg', 'flac', 'preview')
+ALL_TARGETS = ('mp3', 'ogg', 'flac', 'preview', 'cdda')
+
 
 def wait_futures(futures):
     """ Waits for some futures to complete. If any exceptions happen, they propagate up. """
@@ -318,26 +321,29 @@ def clean_subdir(path: str, allowed: typing.Set[str], futures):
 def submit_butler(config, target, futures):
     """ Submit the directory to itch.io via butler """
 
+    output_dir = os.path.join(config.output_dir, target)
+
     if target == 'preview':
         target = 'html'
 
     channel = f'{config.butler_target}:{config.butler_prefix}{target}'
-
-    output_dir = os.path.join(config.output_dir, target)
 
     LOGGER.info("Butler: Waiting for %s (%d tasks)", output_dir, len(futures))
     wait_futures(futures)
 
     LOGGER.info("Butler: pushing '%s' to channel '%s'", output_dir, channel)
     try:
-        subprocess.run([config.butler_path, 'push', *config.butler_args,
-                       output_dir, channel],
-                       stdin=subprocess.DEVNULL,
-                       capture_output=True,
-                       check=True,
-                       creationflags=getattr(
-                           subprocess, 'CREATE_NO_WINDOW', 0),
-                       )
+        result = subprocess.run([config.butler_path, 'push', *config.butler_args,
+                                 output_dir, channel],
+                                stdin=subprocess.DEVNULL,
+                                capture_output=True,
+                                check=True,
+                                creationflags=getattr(
+            subprocess, 'CREATE_NO_WINDOW', 0),
+        )
+
+        LOGGER.info("butler completed successfully: %s",
+                    result.stdout.decode())
     except subprocess.CalledProcessError as err:
         if 'Please set BUTLER_API_KEY' in err.output.decode():
             raise RuntimeError("Butler login needed") from err
@@ -369,7 +375,7 @@ def encode_tracks(config, album, protections, pool, futures):
 
     def enqueue(target, encode_func, input_filename, *args, **kwargs):
         if input_filename:
-            futures[f'encode-{target}'].append(pool.submit(
+            futures[target].append(pool.submit(
                 encode_func, input_filename, *args, **kwargs))
 
     # caches preview input file -> output filename
@@ -510,7 +516,7 @@ def process(config, album, pool, futures):
     LOGGER.info("Starting encode with configuration: %s", config)
 
     formats = set()
-    for target in ('preview', 'mp3', 'ogg', 'flac'):
+    for target in ALL_TARGETS:
         attrname = f'do_{target}'
         if getattr(config, attrname) is None:
             LOGGER.debug(
@@ -537,54 +543,47 @@ def process(config, album, pool, futures):
         album['artwork_path'] = os.path.join(
             config.input_dir, album['artwork'])
 
-    # this populates encode-XXX futures for all formats
+    # PHASE 1: Encode
+
     encode_tracks(config, album, protections, pool, futures)
 
-    def submit_cleanup(target):
-        if config.do_cleanup:
-            futures['clean'].append(pool.submit(
-                clean_subdir, os.path.join(config.output_dir, target),
-                protections[target], futures[f'build-{target}']))
-        else:
-            futures['clean'].append(pool.submit(
-                wait_futures, futures[f'build-{target}']))
-
-    # make build block on encode for all targets
-    for target in formats:
-        futures[f'build-{target}'].append(pool.submit(wait_futures,
-                                                      futures[f'encode-{target}']))
-        submit_cleanup(target)
+    if config.do_cdda:
+        futures['cdda'] = cdda.encode(album,
+                                      config.input_dir,
+                                      os.path.join(config.output_dir, 'cdda'),
+                                      protections['cdda'],
+                                      pool
+                                      )
 
     if config.do_preview:
-        futures['build-preview'].append(pool.submit(make_web_preview,
-                                                    config.input_dir,
-                                                    os.path.join(config.output_dir,
-                                                                 'preview'),
-                                                    album, protections['preview'],
-                                                    futures['encode-preview']))
+        futures['preview'].append(pool.submit(make_web_preview,
+                                              config.input_dir,
+                                              os.path.join(config.output_dir,
+                                                           'preview'),
+                                              album, protections['preview'],
+                                              [*futures['preview']]))
 
-    if config.do_cdda:
-        os.makedirs(os.path.join(config.output_dir, 'cdda'), exist_ok=True)
-        futures['build-cdda'].append(pool.submit(cdda.encode, album,
-                                                 config.input_dir,
-                                                 os.path.join(
-                                                     config.output_dir, 'cdda'),
-                                                 protections['cdda']))
-        submit_cleanup('cdda')
-
-    if config.do_butler and config.butler_target:
+    # PHASE 2: Clean
+    if config.do_cleanup:
         for target in formats:
-            futures['butler'].append(pool.submit(
-                submit_butler,
-                config,
-                target,
-                futures['clean']))
+            futures[target].append(pool.submit(
+                clean_subdir, os.path.join(config.output_dir, target),
+                protections[target], [*futures[target]]))
 
-    if config.do_zip:
-        filename_parts = [album.get(field)
-                          for field in ('artist', 'title')
-                          if album.get(field)]
-        for target in formats:
+    # PHASE 3: Distribution
+    for target in DIST_TARGETS:
+        if config.do_butler and config.butler_target:
+            if target in formats:
+                futures['butler'].append(pool.submit(
+                    submit_butler,
+                    config,
+                    target,
+                    futures[target]))
+
+        if config.do_zip:
+            filename_parts = [album.get(field)
+                              for field in ('artist', 'title')
+                              if album.get(field)]
             fname = os.path.join(config.output_dir,
                                  util.slugify_filename(
                                      ' - '.join([*filename_parts, target])))
@@ -592,5 +591,5 @@ def process(config, album, pool, futures):
                 make_zipfile,
                 os.path.join(config.output_dir, target),
                 fname,
-                futures['clean'])
+                futures[target])
             )
