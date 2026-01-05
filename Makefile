@@ -79,7 +79,7 @@ upload-mac: doc app preflight
 	mkdir -p dist/macos
 	cp -a dist/Bandcrash.app dist/macos
 	cp -a docs/_build dist/macos/docs
-	butler push dist/macos fluffy/bandcrash:macos \
+	butler push dist/macos fluffy/bandcrash:macos-$(uname -m) \
 		--userversion=$(shell ./get-version.sh) \
 		--fix-permissions
 
