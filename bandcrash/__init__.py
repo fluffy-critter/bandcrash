@@ -324,9 +324,11 @@ def submit_butler(config, target, futures):
     output_dir = os.path.join(config.output_dir, target)
 
     if target == 'preview':
-        target = 'html'
+        chan_target = 'html'
+    else:
+        chan_target = target
 
-    channel = f'{config.butler_target}:{config.butler_prefix}{target}'
+    channel = f'{config.butler_target}:{config.butler_prefix}{chan_target}'
 
     LOGGER.info("Butler: Waiting for %s (%d tasks)", output_dir, len(futures))
     wait_futures(futures)
