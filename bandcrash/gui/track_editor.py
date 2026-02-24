@@ -60,7 +60,6 @@ class TrackEditor(QScrollArea):
         self.lyrics = QPlainTextEdit()
         self.comment = QLineEdit()
         self.about = QPlainTextEdit()
-        self.slug = QLineEdit()
 
         layout.addRow("Audio file", self.filename)
         layout.addRow("Title", self.title)
@@ -94,7 +93,6 @@ class TrackEditor(QScrollArea):
         layout.addRow("Lyrics", self.lyrics)
         layout.addRow("Track comment", self.comment)
         layout.addRow("Track details", self.about)
-        layout.addRow("Link slug", self.slug)
 
     def reset(self, data: datatypes.TrackData):
         """ Reset to the specified backing data """
