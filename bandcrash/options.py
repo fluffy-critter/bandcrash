@@ -72,7 +72,7 @@ class Options:
     mp3_encoder_args: list[str] = dataclasses.field(
         default_factory=["-q:a", "0"].copy)
     ogg_encoder_args: list[str] = dataclasses.field(
-        default_factory=["-q:a 0", "0"].copy
+        default_factory=["-q:a", "0"].copy
     )
     flac_encoder_args: list[str] = dataclasses.field(default_factory=list)
 
