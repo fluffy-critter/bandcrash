@@ -1,6 +1,6 @@
 """ Bandcrash GUI """
 # pylint:disable=invalid-name,too-few-public-methods,too-many-ancestors
-# type: ignore
+
 import argparse
 import collections
 import concurrent.futures
@@ -19,8 +19,9 @@ from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QApplication, QCheckBox, QDialog, QErrorMessage,
                                QFileDialog, QFormLayout, QFrame, QHBoxLayout,
-                               QLabel, QLineEdit, QMainWindow, QMessageBox,
-                               QProgressDialog, QPushButton, QSpinBox, QWidget)
+                               QLabel, QLayout, QLineEdit, QMainWindow,
+                               QMessageBox, QProgressDialog, QPushButton,
+                               QSpinBox, QWidget)
 
 from .. import __version__, util
 from ..players import camptown
@@ -120,7 +121,8 @@ class PreferencesWindow(QDialog):
             FileRole.BINARY, text=defaults.butler_path)
         layout.addRow("Butler binary", self.butler_path)
         connect_button = QPushButton("Connect")
-        self.butler_path.layout().addWidget(connect_button)
+        typing.cast(QLayout, self.butler_path.layout()
+                    ).addWidget(connect_button)
         connect_button.clicked.connect(self.connect_butler)
 
         buttons = QHBoxLayout()
@@ -784,8 +786,9 @@ class AlbumEditor(QMainWindow):
                 self,
                 "Encode complete",
                 f"{task_names} completed successfully",
-                QMessageBox.StandardButton.Open | QMessageBox.StandardButton.Ok,
-                QMessageBox.StandardButton.Open)  # type:ignore
+                buttons=QMessageBox.StandardButton.Open | QMessageBox.StandardButton.Ok,
+                # type:ignore[assignment]
+                defaultButton=QMessageBox.StandardButton.Open)
             if result == QMessageBox.StandardButton.Open:
                 QtGui.QDesktopServices.openUrl(
                     QtCore.QUrl.fromLocalFile(config.output_dir))
@@ -920,7 +923,7 @@ class BandcrashApplication(QApplication):
         if not self.windows:
             self.file_open(or_new=True)
 
-    def event(self, evt):
+    def event(self, evt):  # type:ignore
         """ Handle an application-level event """
         LOGGER.debug("Event: %s", evt)
         if evt.type() == QtCore.QEvent.Type.FileOpen:
