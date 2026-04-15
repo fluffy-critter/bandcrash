@@ -1,4 +1,4 @@
-""" Encoder options """
+"""Encoder options"""
 
 import dataclasses
 import os
@@ -7,18 +7,20 @@ import typing
 
 
 def default_path(tool):
-    """ Wrapper to keep Sphinx from exposing local build info to the world """
+    """Wrapper to keep Sphinx from exposing local build info to the world"""
+
     def get():
         return shutil.which(tool)
+
     return get
 
 
-DEFAULT_BUTLER_PATH = shutil.which('butler')
+DEFAULT_BUTLER_PATH = shutil.which("butler")
 
 
 @dataclasses.dataclass
 class Options:
-    """ Encoder options for processing an album.
+    """Encoder options for processing an album.
 
     The following parameters are set by whatever is running the album's process.
 
@@ -57,6 +59,7 @@ class Options:
     :param str butler_prefix: A prefix to add to the Butler channel name; used for
         variations (e.g. ``bob-`` gives channel names of ``bob-mp3``, ``bob-flac``, etc.)
     """
+
     # pylint:disable=too-many-instance-attributes
     input_dir: typing.Optional[str] = None  # Base directory for all inputs
     output_dir: typing.Optional[str] = None  # Base directory for all outputs
@@ -64,15 +67,17 @@ class Options:
     num_threads: int = os.cpu_count() or 4  # Number of threads to use for encoding
 
     preview_encoder_args: list[str] = dataclasses.field(
-        default_factory="-q:a 5".split().copy)
+        default_factory=["-q:a", "5"].copy
+    )
     mp3_encoder_args: list[str] = dataclasses.field(
-        default_factory="-q:a 0".split().copy)
+        default_factory=["-q:a", "0"].copy)
     ogg_encoder_args: list[str] = dataclasses.field(
-        default_factory="-q:a 0".split().copy)
+        default_factory=["-q:a 0", "0"].copy
+    )
     flac_encoder_args: list[str] = dataclasses.field(default_factory=list)
 
-    butler_path: typing.Optional[str] = dataclasses.field(
-        default_factory=default_path('butler'))
+    butler_path: str = dataclasses.field(
+        default_factory=default_path("butler"))
     butler_args: list[str] = dataclasses.field(default_factory=list)
 
     # The following options can override the values set in the album specification
@@ -103,5 +108,5 @@ class Options:
 
 
 def fields():
-    """ Get the dataclass fields """
+    """Get the dataclass fields"""
     return dataclasses.fields(Options)

@@ -21,7 +21,7 @@ from . import cdda, images, util
 try:
     from .__version__ import __version__
 except ImportError:
-    __version__ = '(unknown)'
+    __version__ = '(unknown)'  # ty:ignore[invalid-assignment]
 
 LOGGER = logging.getLogger(__name__)
 

@@ -3,12 +3,14 @@
 import logging
 import os
 import os.path
+import typing
 
 from PySide6.QtCore import QMargins, QPoint, QRect, QSize, Qt
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (QColorDialog, QDialog, QFileDialog, QHBoxLayout,
-                               QLabel, QLayout, QLineEdit, QPlainTextEdit,
-                               QPushButton, QSizePolicy, QVBoxLayout, QWidget)
+                               QLabel, QLayout, QLayoutItem, QLineEdit,
+                               QPlainTextEdit, QPushButton, QSizePolicy,
+                               QVBoxLayout, QWidget)
 
 from .. import util
 from .file_utils import FileRole
@@ -85,6 +87,9 @@ class FileSelector(QWidget):
         # pylint:disable=invalid-name
         return self.file_path.setText(text)
 
+    def layout(self) -> QLayout:
+        return typing.cast(QLayout, super(self))
+
 
 class FlowLayout(QLayout):
     """ Layout with reflow
@@ -105,8 +110,8 @@ class FlowLayout(QLayout):
         while item:
             item = self.takeAt(0)
 
-    def addItem(self, item):
-        self._item_list.append(item)
+    def addItem(self, item: QLayoutItem, *args, **kws):
+        self._item_list.append(item, *args, **kws)
 
     def count(self):
         return len(self._item_list)
@@ -129,13 +134,15 @@ class FlowLayout(QLayout):
     def hasHeightForWidth(self):
         return True
 
-    def heightForWidth(self, width):
+    def heightForWidth(self, width, *args, **kws):
+        # pylint:disable=unused-argument
         height = self._do_layout(QRect(0, 0, width, 0), True)
         return height
 
-    def setGeometry(self, rect):
-        super().setGeometry(rect)
+    def setGeometry(self, rect, *args, **kws):
+        ret = super().setGeometry(rect, *args, **kws)
         self._do_layout(rect, False)
+        return ret
 
     def sizeHint(self):
         return self.minimumSize()

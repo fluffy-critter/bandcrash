@@ -1,4 +1,4 @@
-all: setup format mypy pylint
+all: setup format typing pylint
 
 .PHONY: setup
 setup:
@@ -31,9 +31,9 @@ test: setup
 pylint:
 	poetry run pylint bandcrash --extension-pkg-allow-list=PySide6
 
-.PHONY: mypy
-mypy:
-	poetry run mypy -p bandcrash --ignore-missing-imports --check-untyped-defs
+.PHONY: typing
+typing:
+	poetry run ty check
 
 .PHONY: preflight
 preflight:
@@ -102,4 +102,3 @@ upload-linux: doc app preflight
 	butler push dist/linux fluffy/bandcrash:linux \
 		--userversion=$(shell ./get-version.sh) \
 		--fix-permissions
-
