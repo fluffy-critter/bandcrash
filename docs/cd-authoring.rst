@@ -46,4 +46,4 @@ The ``.cue`` format explicitly specifies the endianness of the file (using ``BIN
 ImgBurn
 -------
 
-The ``.bin`` and ``.cue`` file work without any extra effort. Point it to the ``.cue``.
+The ``.bin`` and ``.cue`` file work without any extra effort. Point it to the ``album.cue`` and the rest should work automatically, including CD-Text.
