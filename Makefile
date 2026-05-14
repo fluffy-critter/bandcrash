@@ -70,7 +70,7 @@ doc:
 	poetry run sphinx-build -b html docs/ docs/_build -D html_theme=alabaster
 
 .PHONY: app
-app: setup format pylint mypy
+app: setup format pylint typing
 	poetry run pyinstaller Bandcrash.spec -y --clean
 
 .PHONY: upload-mac
