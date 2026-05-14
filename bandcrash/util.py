@@ -8,9 +8,9 @@ import re
 import string
 import subprocess
 import typing
-import mistune
 
 import chardet
+import mistune
 from unidecode import unidecode
 
 LOGGER = logging.getLogger(__name__)
@@ -228,8 +228,11 @@ def text_to_lines(text):
         text = '\n'.join(text)
     return text
 
+
 def strip_markdown(text):
+    """ Remove Markdown from a chunk of text """
     markdown = mistune.Markdown()(text)
+
     def render(nodes):
         LOGGER.debug("%s", nodes)
         text = ''
@@ -247,6 +250,7 @@ def strip_markdown(text):
         return text
 
     return render(markdown)
+
 
 def file_md5(fname):
     """ Get the md5sum of a file """
