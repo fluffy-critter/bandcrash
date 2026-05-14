@@ -1,4 +1,4 @@
-all: setup format typing pylint
+all: setup format typing pylint doc-requirements
 
 .PHONY: setup
 setup:
@@ -52,7 +52,7 @@ preflight:
 		&& exit 1 || exit 0
 
 .PHONY: build
-build: setup preflight pylint
+build: setup preflight pylint typing
 	poetry build
 
 .PHONY: clean
@@ -64,13 +64,17 @@ clean:
 upload: clean test build doc
 	poetry publish
 
-.PHONY: doc
-doc:
+.PHONY: doc-requirements
+doc-requirements: docs/requirements.txt
+docs/requirements.txt: poetry.lock
 	poetry export -o docs/requirements.txt --all-extras --with=dev
+
+.PHONY: doc
+doc: doc-requirements
 	poetry run sphinx-build -b html docs/ docs/_build -D html_theme=alabaster
 
 .PHONY: app
-app: setup format pylint typing
+app: setup format pylint typing doc-requirements
 	poetry run pyinstaller Bandcrash.spec -y --clean
 
 .PHONY: upload-mac
