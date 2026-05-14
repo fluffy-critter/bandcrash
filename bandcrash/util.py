@@ -8,6 +8,7 @@ import re
 import string
 import subprocess
 import typing
+import mistune
 
 import chardet
 from unidecode import unidecode
@@ -224,9 +225,28 @@ def get_audio_duration(path):
 def text_to_lines(text):
     """ Convert a string or a list of strings into a single string, newline-separated """
     if isinstance(text, list):
-        return '\n'.join(text)
+        text = '\n'.join(text)
     return text
 
+def strip_markdown(text):
+    markdown = mistune.Markdown()(text)
+    def render(nodes):
+        LOGGER.debug("%s", nodes)
+        text = ''
+        for item in nodes:
+            if item['type'] in ('text', 'codespan'):
+                text += item['raw']
+            elif item['type'] == 'softbreak':
+                text += '\n'
+
+            if 'children' in item:
+                text += render(item['children'])
+
+            if item['type'] == 'paragraph':
+                text += '\n\n'
+        return text
+
+    return render(markdown)
 
 def file_md5(fname):
     """ Get the md5sum of a file """

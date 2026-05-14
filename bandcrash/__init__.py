@@ -94,7 +94,7 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
 
         id3.TCON: track.get('genre', album.get('genre')),
         id3.TCOM: track.get('composer', album.get('composer')),
-        id3.USLT: util.text_to_lines(track.get('lyrics')),
+        id3.USLT: util.strip_markdown(util.text_to_lines(track.get('lyrics'))),
 
         id3.COMM: track.get('comment'),
     }
@@ -157,7 +157,7 @@ def tag_vorbis(tags, idx, album, track):
         'TITLE': track_tag_title(track),
         'TRACKNUMBER': str(idx),
         'GENRE': track.get('genre', album.get('genre')),
-        'LYRICS': util.text_to_lines(track.get('lyrics')),
+        'LYRICS': util.strip_markdown(util.text_to_lines(track.get('lyrics'))),
         'DESCRIPTION': track.get('comment'),
     }
     if track.get('cover_of', album.get('cover_of')):
