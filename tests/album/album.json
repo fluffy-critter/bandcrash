@@ -17,7 +17,7 @@
       },
       {
          "filename": "test track.wav",
-         "title": "This: also has a title <silly> 💩🎱🐩"
+         "title": "This: also has a title <silly> \ud83d\udca9\ud83c\udfb1\ud83d\udc29"
       },
       {
          "filename": "test track.wav",
@@ -36,7 +36,7 @@
          "filename": "test track.wav",
          "group": "Meows I Have Known",
          "lyrics": "lyrics-iso8859.txt",
-         "title": "A different artist 🐱"
+         "title": "A different artist \ud83d\udc31"
       },
       {
          "filename": "test track.wav",
@@ -102,6 +102,23 @@
       },
       {
          "title": "no audio yet"
+      },
+      {
+         "filename": "test track.wav",
+         "title": "\u201csmart\u201d quotes are dumb\n",
+         "genre": "smart\u2019s",
+         "artist": "smart\u2019s",
+         "composer": "smart\u2019s",
+         "cover_of": "smart\u2019s",
+         "group": "smart\u2019s",
+         "lyrics": [
+            "Let\u2019s make sure that \u201csmart\u201d quotes do not make it into file tags",
+            ""
+         ],
+         "about": [
+            "But someone\u2018s \u201dweird\u201c typographical choices should be preserved",
+            ""
+         ]
       }
    ],
    "_gui": {

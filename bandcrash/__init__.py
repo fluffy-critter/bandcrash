@@ -15,6 +15,7 @@ import os.path
 import shutil
 import subprocess
 import typing
+import smartquote
 
 from . import cdda, images, util
 
@@ -102,7 +103,7 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
     for frame, val in frames.items():
         if val:
             LOGGER.debug("%s: Setting %s to %s", out_path, frame.__name__, val)
-            tags.setall(frame.__name__, [frame(text=val)])
+            tags.setall(frame.__name__, [frame(text=smartquote.substitute(val))])
 
     if cover_art:
         def make_apic(img, picture_type, desc):
@@ -169,7 +170,7 @@ def tag_vorbis(tags, idx, album, track):
 
     for frame, val in frames.items():
         if val:
-            tags[frame] = val
+            tags[frame] = smartquote.substitute(val)
 
 
 def make_flac_picture(img, picture_type, desc):

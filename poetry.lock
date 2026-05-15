@@ -1171,6 +1171,17 @@ files = [
 markers = {main = "extra == \"gui\""}
 
 [[package]]
+name = "smartquote"
+version = "0.1.0"
+description = "substitute or remove “smart” quotes"
+optional = false
+python-versions = ">=3.7"
+groups = ["main"]
+files = [
+    {file = "smartquote-0.1.0.tar.gz", hash = "sha256:a4c66dba2a726fe3c22fe860b6f73d5d8f937ba286bf90ca1d096101fbda1ed4"},
+]
+
+[[package]]
 name = "smartypants"
 version = "2.0.2"
 description = "Python with the SmartyPants"
@@ -1458,4 +1469,4 @@ gui = ["pyside6"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.14"
-content-hash = "603b565b880c01f1f9d184f17d316ee2e2a797d8403dd645b75bb8da5269ccf9"
+content-hash = "775c914ae9c3f41b365af1d070033c1aa7380fd51917ad60cc06da28b838a7e6"
