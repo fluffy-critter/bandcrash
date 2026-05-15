@@ -237,9 +237,10 @@ def strip_markdown(text):
         LOGGER.debug("%s", nodes)
         text = ''
         for item in nodes:
-            if item['type'] in ('text', 'codespan'):
+            if 'raw' in item:
                 text += item['raw']
-            elif item['type'] == 'softbreak':
+
+            if item['type'] == 'softbreak':
                 text += '\n'
 
             if 'children' in item:
