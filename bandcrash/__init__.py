@@ -15,6 +15,7 @@ import os.path
 import shutil
 import subprocess
 import typing
+
 import smartquote
 
 from . import cdda, images, util
@@ -76,12 +77,16 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
 
     util.run_encoder(in_path, out_path, encode_args + ['-c:a', 'libmp3lame'])
 
-    try:
-        tags = id3.ID3(out_path)
-    except id3.ID3NoHeaderError:
-        tags = id3.ID3()
+    art_tags = None
+    if cover_art:
+        def make_apic(img, picture_type, desc):
+            return id3.APIC(id3.Encoding.UTF8, 'image/jpeg',
+                            picture_type, desc,
+                            images.make_blob(img, ext='jpeg'))
 
-    frames = {
+        art_tags = generate_art_tags(album, track, cover_art, make_apic)
+
+    tag_mp3(out_path, {
         id3.TYER: str(album['year']) if 'year' in album else None,
         id3.TALB: album.get('title'),
 
@@ -98,32 +103,40 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
         id3.USLT: util.strip_markdown(util.text_to_lines(track.get('lyrics'))),
 
         id3.COMM: track.get('comment'),
-    }
+    }, art_tags)
+
+
+def tag_mp3(out_path, frames, /, reset=False, art_tags=None):
+    """ Set the id3 tags for an MP3 file """
+    from mutagen import id3
+
+    tags = id3.ID3()
+    if not reset:
+        try:
+            tags = id3.ID3(out_path)
+        except id3.ID3NoHeaderError:
+            pass
 
     for frame, val in frames.items():
         if val:
             LOGGER.debug("%s: Setting %s to %s", out_path, frame.__name__, val)
-            tags.setall(frame.__name__, [frame(text=smartquote.substitute(val))])
+            tags.setall(frame.__name__, [
+                        frame(text=smartquote.substitute(val))])
 
-    if cover_art:
-        def make_apic(img, picture_type, desc):
-            return id3.APIC(id3.Encoding.UTF8, 'image/jpeg',
-                            picture_type, desc,
-                            images.make_blob(img, ext='jpeg'))
-
-        art_tags = generate_art_tags(album, track, cover_art, make_apic)
-        if art_tags:
-            LOGGER.debug("%s: Adding %d artworks", out_path, len(art_tags))
-            tags.setall('APIC', art_tags)
+    if art_tags:
+        LOGGER.debug("%s: Adding %d artworks", out_path, len(art_tags))
+        tags.setall('APIC', art_tags)
 
     tags.save(out_path, v2_version=3)
     LOGGER.info("Finished writing %s", out_path)
 
 
-def encode_preview_mp3(in_path, out_dir, filemap, track, encode_args, protections):
+def encode_preview_mp3(in_path, out_dir, filemap, track, album, encode_args, protections):
     """ encode a preview mp3, which also requires generating a filename from md5,
         and doesn't need any tags et al
         """
+    from mutagen import id3
+
     if in_path in filemap:
         # We've already generated a preview for this file, so we can fast-exit
         LOGGER.info("Already generated %s -> %s", in_path, filemap[in_path])
@@ -142,6 +155,21 @@ def encode_preview_mp3(in_path, out_dir, filemap, track, encode_args, protection
     outfile = os.path.join(out_dir, preview_fname)
 
     util.run_encoder(in_path, outfile, encode_args + ['-c:a', 'libmp3lame'])
+
+    comment = 'Preview version'
+    if 'album_url' in album or 'artist_url' in album:
+        info_url = album.get("album_url", album.get("artist_url"))
+        comment += f' - get the full-quality version at {info_url}'
+    tag_mp3(outfile, {
+        id3.TALB: 'preview',
+
+        id3.TPE1: track.get('artist', album.get('artist', 'preview')),
+        id3.TOPE: track.get('cover_of'),
+
+        id3.TIT2: 'preview',
+
+        id3.COMM: comment
+    }, reset=True)
 
 
 def track_tag_title(track):
@@ -443,7 +471,8 @@ def encode_tracks(config, album, protections, pool, futures):
                     # We don't know the filename until encode time
                     os.path.join(config.output_dir, 'preview'),
                     preview_filemap,
-                    track, config.preview_encoder_args, protections['preview'])
+                    track, album,
+                    config.preview_encoder_args, protections['preview'])
 
 
 def make_zipfile(input_dir, output_file, futures):
