@@ -66,7 +66,7 @@ upload: clean test build doc
 
 .PHONY: doc-requirements
 doc-requirements: docs/requirements.txt
-docs/requirements.txt: poetry.lock
+docs/requirements.txt: setup poetry.lock
 	poetry export -o docs/requirements.txt --all-extras --with=dev
 
 .PHONY: doc
