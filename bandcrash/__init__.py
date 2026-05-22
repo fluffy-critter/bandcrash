@@ -15,6 +15,7 @@ import os.path
 import shutil
 import subprocess
 import typing
+import datetime
 
 import smartquote
 
@@ -484,6 +485,14 @@ def make_zipfile(input_dir, output_file, futures):
     LOGGER.info("Building %s.zip from directory %s", output_file, input_dir)
     shutil.make_archive(output_file, 'zip', input_dir)
 
+def set_butler_options(config):
+    """ If there's no butler --userversion option, generate one from the current timestamp """
+    for item in config.butler_args:
+        if item.startswith("--userversion"):
+            return
+
+    timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+    config.butler_args.append(f'--userversion={timestamp}')
 
 def process(config, album, pool, futures):
     """
@@ -574,6 +583,9 @@ def process(config, album, pool, futures):
     if 'artwork' in album:
         album['artwork_path'] = os.path.join(
             config.input_dir, album['artwork'])
+
+    if config.do_butler:
+        set_butler_options(config)
 
     # PHASE 1: Encode
 
