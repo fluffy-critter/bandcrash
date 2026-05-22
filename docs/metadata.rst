@@ -61,6 +61,8 @@ Album data
 * **artist**: The artist for the album as a whole
 * **title**: The album's title
 * **year**: The release year
+* **album_url**: The album's canonical website
+* **artist_url**: The artist's canonical website
 * **composer**: The album's composer
 * **artwork**: an image file to use for the album's cover art (relative or absolute paths okay)
 * **genre**: The default genre for all tracks
