@@ -24,7 +24,9 @@ from . import cdda, images, util
 try:
     from .__version__ import __version__
 except ImportError:
-    __version__ = '(unknown)'  # ty:ignore[invalid-assignment]
+    import importlib.metadata
+    __version__ = importlib.metadata.version(
+        'bandcrash')  # ty:ignore[invalid-assignment]
 
 LOGGER = logging.getLogger(__name__)
 
@@ -161,7 +163,7 @@ def encode_preview_mp3(in_path, out_dir, filemap, track, album, encode_args, pro
 
     info_url = album.get("album_url", album.get("artist_url"))
     if info_url:
-        comment = "Get the full-quality version at {info_url}"
+        comment = f"Get the full-quality version at {info_url}"
     else:
         comment = None
 

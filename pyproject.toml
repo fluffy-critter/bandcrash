@@ -1,15 +1,12 @@
 [tool.poetry]
 name = "bandcrash"
-version = "0.9.8"
+version = "0.9.9"
 description = "Tools for publishing albums to the web and digital stores"
 authors = ["fluffy <fluffy@beesbuzz.biz>"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/fluffy-critter/bandcrash"
 documentation = "https://bandcrash.readthedocs.io/"
-include = [
-    "bandcrash/__version__.py"
-]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.14"
@@ -49,4 +46,3 @@ bandcrash-gui = 'bandcrash.gui:main'
 
 [tool.poetry.requires-plugins]
 poetry-plugin-export = ">=1.8"
-
