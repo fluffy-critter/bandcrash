@@ -276,6 +276,7 @@ def run_encoder(infile, outfile, args):
         try:
             subprocess.run([ffmpeg_path(),
                             '-hide_banner', '-loglevel', 'error',
+                            '-nostdin',
                             '-i', infile,
                             *args,
                             '-y', outfile], check=True,
