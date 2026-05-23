@@ -6,6 +6,7 @@ import base64
 import collections
 import concurrent.futures
 import copy
+import datetime
 import functools
 import itertools
 import json
@@ -15,7 +16,6 @@ import os.path
 import shutil
 import subprocess
 import typing
-import datetime
 
 import smartquote
 
@@ -128,6 +128,8 @@ def tag_mp3(out_path, frames, /, reset=False, art_tags=None):
         LOGGER.debug("%s: Adding %d artworks", out_path, len(art_tags))
         tags.setall('APIC', art_tags)
 
+    tags.add(id3.TENC(text=f"bandcrash {__version__}"))
+
     tags.save(out_path, v2_version=3)
     LOGGER.info("Finished writing %s", out_path)
 
@@ -157,17 +159,19 @@ def encode_preview_mp3(in_path, out_dir, filemap, track, album, encode_args, pro
 
     util.run_encoder(in_path, outfile, encode_args + ['-c:a', 'libmp3lame'])
 
-    comment = 'Preview version'
-    if 'album_url' in album or 'artist_url' in album:
-        info_url = album.get("album_url", album.get("artist_url"))
-        comment += f' - get the full-quality version at {info_url}'
+    info_url = album.get("album_url", album.get("artist_url"))
+    if info_url:
+        comment = "Get the full-quality version at {info_url}"
+    else:
+        comment = None
+
     tag_mp3(outfile, {
-        id3.TALB: 'preview',
+        id3.TALB: 'WEB PREVIEW',
 
         id3.TPE1: track.get('artist', album.get('artist', 'preview')),
         id3.TOPE: track.get('cover_of'),
 
-        id3.TIT2: 'preview',
+        id3.TIT2: f"{track.get('title', '')} [WEB PREVIEW]",
 
         id3.COMM: comment
     }, reset=True)
@@ -189,6 +193,7 @@ def tag_vorbis(tags, idx, album, track):
         'GENRE': track.get('genre', album.get('genre')),
         'LYRICS': util.strip_markdown(util.text_to_lines(track.get('lyrics'))),
         'DESCRIPTION': track.get('comment'),
+        'ENCODER': f'bandcrash {__version__}',
     }
     if track.get('cover_of', album.get('cover_of')):
         # Covers are handled weirdly in Vorbiscomment; see https://dogphilosophy.net/?page_id=66
@@ -485,6 +490,7 @@ def make_zipfile(input_dir, output_file, futures):
     LOGGER.info("Building %s.zip from directory %s", output_file, input_dir)
     shutil.make_archive(output_file, 'zip', input_dir)
 
+
 def set_butler_options(config):
     """ If there's no butler --userversion option, generate one from the current timestamp """
     for item in config.butler_args:
@@ -493,6 +499,7 @@ def set_butler_options(config):
 
     timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
     config.butler_args.append(f'--userversion={timestamp}')
+
 
 def process(config, album, pool, futures):
     """
