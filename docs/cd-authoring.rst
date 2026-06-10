@@ -3,7 +3,11 @@ CD Authoring
 
 As of version 0.9, Bandcrash supports authoring audio CDs for use with full-disc CD imaging tools. This is primarily for simplifying on-demand manufacturing with e.g. `Kunaki <https://kunaki.com>`_, but it's also useful for simplifying DIY CD replication.
 
-When generating CDDA output (which you do by checking the "CD" output option), Bandcrash will generate the following files in the ``cdda`` directory:
+.. image:: cd-authoring-settings.png
+    :scale: 33%
+    :alt: The necessary setting to enable CD authoring
+
+When generating CDDA output (which you do by checking the "CD" output option, as shown above), Bandcrash will generate the following files in the ``cdda`` directory:
 
 * ``album.bin``: The raw audio track (16-bit 44100 stereo little-endian)
 * ``album.cue``: a `CUE file <https://wiki.hydrogenaudio.org/index.php?title=Cue_sheet>`_ for use with standard disc-at-once burning software (e.g. `cdrdao <https://cdrdao.sourceforge.net/>`_, `ImgBurn <https://www.imgburn.com/>`_, and many others)
@@ -18,7 +22,7 @@ Verifying playback
 If you want to verify the correct audio on the ``.bin`` file, you can load it into something like `Audacity <https://audacityteam.org/>`_ by importing it as raw data set to 16-bit, 44100Hz, little-endian stereo:
 
 .. image:: audacity-import.png
-   :scale: 50 %
+   :scale: 50%
    :alt: Importing the raw audio into Audacity
 
 If you prefer the command line, the ``ffplay`` tool from `FFmpeg <https://ffmpeg.org>`_ can be used to ensure that the audio is correct. You can play the album audio with the following command::
@@ -34,6 +38,11 @@ When uploading to Kunaki, use the "ISO and CUE file" option. Use ``album.bin`` f
     :class: with-border
     :scale: 50%
     :alt: The Kunaki upload option to use with these files
+
+.. image:: kunaki-upload.png
+    :class: with-border
+    :scale: 50%
+    :alt: Which files to place where on the upload form
 
 As a note, Kunaki is using imprecise terminology, as an ``.iso`` is a particular kind of a ``.bin`` but not all ``.bin``\ s are ``.iso``\ s. Further, Kunaki has what appears to be their own proprietary and undocumented ``.cue`` format, rather than using the common text-based format understood by most CD burning tools.
 
