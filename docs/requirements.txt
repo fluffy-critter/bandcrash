@@ -195,9 +195,9 @@ dill==0.4.1 ; python_version >= "3.11" and python_version < "3.14" \
 docutils==0.21.2 ; python_version >= "3.11" and python_version < "3.14" \
     --hash=sha256:3a6b18732edf182daa3cd12775bbb338cf5691468f91eeeb109deff6ebfa986f \
     --hash=sha256:dafca5b9e384f0e419294eb4d2ff9fa826435bf15f15b7bd45723e8ad76811b2
-idna==3.16 ; python_version >= "3.11" and python_version < "3.14" \
-    --hash=sha256:cc246e3a3f89580c3a951b5ad298ca4638078b2cdd4f115654332b5c26daded5 \
-    --hash=sha256:d7a6da03db833450fca25d2358ac9ff06cd624577a4aea3a596d5c0f77b8e03d
+idna==3.18 ; python_version >= "3.11" and python_version < "3.14" \
+    --hash=sha256:7f952cbe720b688055e3f87de14f5c3e5fdaa8bc3928985c4077ca689de849a2 \
+    --hash=sha256:ffb385a7e039654cef1ab9ef32c6fafe283c0c0467bba1d9029738ce4a14a848
 imagesize==2.0.0 ; python_version >= "3.11" and python_version < "3.14" \
     --hash=sha256:5667c5bbb57ab3f1fa4bc366f4fbc971db3d5ed011fd2715fd8001f782718d96 \
     --hash=sha256:8e8358c4a05c304f1fccf7ff96f036e7243a189e9e42e90851993c558cfe9ee3
@@ -564,9 +564,9 @@ pillow==11.3.0 ; python_version >= "3.11" and python_version < "3.14" \
     --hash=sha256:f944255db153ebb2b19c51fe85dd99ef0ce494123f21b9db4877ffdfc5590c7c \
     --hash=sha256:fdae223722da47b024b867c1ea0be64e0df702c5e0a60e27daad39bf960dd1e4 \
     --hash=sha256:fe27fb049cdcca11f11a7bfda64043c37b30e6b91f10cb5bab275806c32f6ab3
-platformdirs==4.9.6 ; python_version >= "3.11" and python_version < "3.14" \
-    --hash=sha256:3bfa75b0ad0db84096ae777218481852c0ebc6c727b3168c1b9e0118e458cf0a \
-    --hash=sha256:e61adb1d5e5cb3441b4b7710bea7e4c12250ca49439228cc1021c00dcfac0917
+platformdirs==4.10.0 ; python_version >= "3.11" and python_version < "3.14" \
+    --hash=sha256:31e761a6a0ca04faf7353ea759bdba55652be214725111e5aac52dfa29d4bef7 \
+    --hash=sha256:fb516cdb12eb0d857d0cd85a7c57cea4d060bee4578d6cf5a14dfdf8cbf8784a
 pycodestyle==2.14.0 ; python_version >= "3.11" and python_version < "3.14" \
     --hash=sha256:c4b5b517d278089ff9d0abdec919cd97262a3367449ea1c8b49b91529167b783 \
     --hash=sha256:dd6bf7cb4ee77f8e016f9c8e74a35ddd9f67e1d5fd4184d86c3b98e07099f42d
@@ -581,9 +581,9 @@ pyffmpeg==2.5.2.3.2 ; python_version >= "3.11" and python_version < "3.14" \
 pygments==2.20.0 ; python_version >= "3.11" and python_version < "3.14" \
     --hash=sha256:6757cd03768053ff99f3039c1a36d6c0aa0b263438fcab17520b30a303a82b5f \
     --hash=sha256:81a9e26dd42fd28a23a2d169d86d7ac03b46e2f8b59ed4698fb4785f946d0176
-pyinstaller-hooks-contrib==2026.5 ; python_version >= "3.11" and python_version < "3.14" \
-    --hash=sha256:ea1535783fbdac4626351709e83f3ea80b681d3a4745763ebb407b5e27342eb9 \
-    --hash=sha256:f066dfca8f7c45ff6336c9cf9fe25b4e48bfeb322a1aa24faaedfb8a8d1b0b08
+pyinstaller-hooks-contrib==2026.6 ; python_version >= "3.11" and python_version < "3.14" \
+    --hash=sha256:bef5002c32f4f50bd55b005da12cff64eca8783e7eaf86a06a62410164bab725 \
+    --hash=sha256:fd13b8ac126b35361175edacd41a0d97080b75dd5f4b594ecefefff969509dd3
 pyinstaller==6.20.0 ; python_version >= "3.11" and python_version < "3.14" \
     --hash=sha256:03696bb6350177c6bc23bcaf78e71a33c4a89b6754dd90d1be2f318e978c918b \
     --hash=sha256:0ab39c690abad26ba148e8f664f0478acc82a733997f4f22e757774832802da9 \
@@ -637,9 +637,9 @@ smartquote==0.1.0 ; python_version >= "3.11" and python_version < "3.14" \
 smartypants==2.0.2 ; python_version >= "3.11" and python_version < "3.14" \
     --hash=sha256:39d64ce1d7cc6964b698297bdf391bc12c3251b7f608e6e55d857cd7c5f800c6 \
     --hash=sha256:9471578606e8ee0740065bf8771f55fec8c83313cb98c5d1c1864ddd389d0f3a
-snowballstemmer==3.0.1 ; python_version >= "3.11" and python_version < "3.14" \
-    --hash=sha256:6cd7b3897da8d6c9ffb968a6781fa6532dce9c3618a4b127d920dab764a19064 \
-    --hash=sha256:6d5eeeec8e9f84d4d56b847692bacf79bc2c8e90c7f80ca4444ff8b6f2e52895
+snowballstemmer==3.1.1 ; python_version >= "3.11" and python_version < "3.14" \
+    --hash=sha256:7e207fa178741da09cdee59d3ecec3827ad5f92b1fc5c9ff3755b639f71f5752 \
+    --hash=sha256:e07bbc54a0d798fe6010a12398422e62a8bfbba95c394fd0956ef58cb4d3e260
 sphinx-copybutton==0.5.2 ; python_version >= "3.11" and python_version < "3.14" \
     --hash=sha256:4cf17c82fb9646d1bc9ca92ac280813a3b605d8c421225fd9913154103ee1fbd \
     --hash=sha256:fb543fd386d917746c9a2c50360c7905b605726b9355cd26e9974857afeae06e
