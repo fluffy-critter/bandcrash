@@ -50,14 +50,6 @@ See [the online documentation](https://bandcrash.readthedocs.io/) for detailed u
 
 If you are developing under Windows, you will probably need to use a POSIX environment under Windows (such as [msys](https://www.msys2.org) or [Git Bash](https://git-scm.com)) rather than WSL.
 
-### Roadmap
-
-See the [github issues](https://github.com/fluffy-critter/bandcrash/issues) for details, but roughly:
-
-* Local GUI and/or web UI to make setting up the `album.json` easier (and easier installation, especially on Windows!)
-* Various player improvements
-* Easy embedding into websites (opengraph et al)
-
 ## FAQ
 
 ### How is this different from blamscamp, scritch, etc.?
