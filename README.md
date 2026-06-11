@@ -12,6 +12,7 @@ Bandcrash is a standalone program that automatically encodes an album of songs i
 * Optionally upload everything to your page on itch using [butler](https://itch.io/docs/butler/)
 * High-quality encoding and metadata, with support for cover songs, per-track artwork, embedded lyrics, and more
 * Web player also supports per-track artwork
+* Build master files (bin/cue) for disc-at-once CD replication
 
 ## Installation
 
@@ -48,21 +49,29 @@ See [the online documentation](https://bandcrash.readthedocs.io/) for detailed u
 
 ### Development environment notes
 
-If you are developing under Windows, you will probably need to use a POSIX environment under Windows (such as [msys](https://www.msys2.org) or [Git Bash](https://git-scm.com)) rather than WSL.
+If you are developing under Windows, you will probably need to use a POSIX environment under Windows (such as [msys](https://www.msys2.org) or [Git Bash](https://git-scm.com)) rather than WSL, as WSL can only produce Linux binaries.
 
 ## FAQ
 
 ### How is this different from blamscamp, scritch, etc.?
 
-[Blamscamp](https://suricrasia.online/blamscamp/) and [scritch](https://torcado.itch.io/scritch-editor) are both great programs for publishing previews of already-encoded on itch.io and other websites! However, their functionality is only to bundle prepared audio files into a web-based player, and they don't presently handle encoding or tagging, two things that are historically tedious and difficult to do well.
+[Blamscamp](https://suricrasia.online/blamscamp/) and [scritch](https://torcado.itch.io/scritch-editor) are both great programs for publishing previews of already-encoded albums on itch.io and other websites! However, their functionality is only to bundle prepared audio files into a web-based player, and they don't presently handle encoding or tagging, two things that are historically tedious and difficult to do well.
 
-Bandcrash is a full end-to-end system for preparing an album for both sale and preview online in a variety of formats.
+Additionally, since they are ephemeral web-based applications, they do not lend themselves well for things where you might want to make tweaks and adjustments down the road, as you have to restart the player creation process from scratch each time.
+
+Bandcrash is a full end-to-end system for preparing an album for both sale and preview online in a variety of formats, and it also will automatically upload and update complete albums for both preview and download to itch.io.
+
+Additionally, it can be used to master CDs for on-demand disc replication with services such as [Kunaki](https://kunaki.com/).
 
 ### What about Faircamp?
 
 [Faircamp](https://simonrepp.com/faircamp/) does handle the end-to-end encoding and processing and builds a quite beautiful static website! If you just want to build a site to host your music and handle your own payments, it's totally usable for that.
 
-Bandcrash is for people who want to be able to host their downloads and web-based preview on existing marketplaces such as [itch.io](https://itch.io/), [gumroad](https://gumroad.com/), [ko-fi](https://ko-fi.com/), etc., or who want to be able to embed their preview on their website under their own terms, rather than being beholden to a specific static site template.
+Bandcrash is for people who want to be able to host their downloads and web-based preview on existing marketplaces such as [itch.io](https://itch.io/) and [ko-fi](https://ko-fi.com/), or who want to be able to embed their preview on their website under their own terms, rather than using a predetermined static site setup.
+
+Additionally, Bandcrash works on only a single album at a time, rather than having to maintain and build an entire website all at once, so you don't need all of your music content to live in one place.
+
+Neither approach is superior to the other, and both have pluses and minuses, but it's a difference in opinion. Both of them work well, they're just different designs with different goals.
 
 ### What player does Bandcrash use?
 
@@ -82,7 +91,7 @@ Basically, it's easier for everyone.
 
 Sometimes local apps are just Better™.
 
-That said, Bandcrash is also embeddable as a library, so someone could conceivably build a web-based system that uses it for encoding and tagging files.
+That said, Bandcrash is also embeddable as a library, so someone could conceivably build a web-based system that uses it for encoding and tagging files. If someone builds such a thing, please make it so that you can import and export the raw album data files!
 
 ## Credits
 
