@@ -61,11 +61,11 @@ Additionally, since they are ephemeral web-based applications, they do not lend 
 
 Bandcrash is a full end-to-end system for preparing an album for both sale and preview online in a variety of formats, and it also will automatically upload and update complete albums for both preview and download to itch.io.
 
-Additionally, it can be used to master CDs for on-demand disc replication with services such as [Kunaki](https://kunaki.com/).
+Additionally, it can be used to master CDs for disc replication with services such as [Kunaki](https://kunaki.com/) or anything else that accepts disc-at-once `.bin`/`.cue` files.
 
 ### What about Faircamp?
 
-[Faircamp](https://simonrepp.com/faircamp/) does handle the end-to-end encoding and processing and builds a quite beautiful static website! If you just want to build a site to host your music and handle your own payments, it's totally usable for that.
+[Faircamp](https://faircamp.org/) does handle the end-to-end encoding and processing and builds a quite beautiful static website! If you just want to build a site to host your music and handle your own payments, it's totally usable for that.
 
 Bandcrash is for people who want to be able to host their downloads and web-based preview on existing marketplaces such as [itch.io](https://itch.io/) and [ko-fi](https://ko-fi.com/), or who want to be able to embed their preview on their website under their own terms, rather than using a predetermined static site setup.
 
