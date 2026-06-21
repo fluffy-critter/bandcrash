@@ -111,7 +111,7 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
     }, art_tags=art_tags)
 
 
-def tag_mp3(out_path, frames, /, reset=False, art_tags=None):
+def tag_mp3(out_path, frames, *, reset: bool = False, art_tags=None):
     """ Set the id3 tags for an MP3 file """
     from mutagen import id3
 
@@ -138,7 +138,8 @@ def tag_mp3(out_path, frames, /, reset=False, art_tags=None):
     LOGGER.info("Finished writing %s", out_path)
 
 
-def encode_preview_mp3(in_path, out_dir, filemap, track, album, encode_args, protections):
+def encode_preview_mp3(in_path: str, out_dir: str, filemap, track: dict,
+                       album: dict, encode_args: list, protections):
     """ encode a preview mp3, which also requires generating a filename from md5,
         and doesn't need any tags et al
         """
