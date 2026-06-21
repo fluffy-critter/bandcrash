@@ -88,6 +88,8 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
                             images.make_blob(img, ext='jpeg'))
 
         art_tags = generate_art_tags(album, track, cover_art, make_apic)
+        if art_tags:
+            LOGGER.info("%s: Got art tags of size %d", out_path, len(art_tags))
 
     tag_mp3(out_path, {
         id3.TYER: str(album['year']) if 'year' in album else None,
@@ -106,7 +108,7 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
         id3.USLT: util.strip_markdown(util.text_to_lines(track.get('lyrics'))),
 
         id3.COMM: track.get('comment'),
-    }, art_tags)
+    }, art_tags=art_tags)
 
 
 def tag_mp3(out_path, frames, /, reset=False, art_tags=None):
