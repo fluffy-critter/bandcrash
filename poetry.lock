@@ -130,14 +130,14 @@ smartypants = ">=2.0.1,<3.0.0"
 
 [[package]]
 name = "certifi"
-version = "2026.6.17"
+version = "2026.7.22"
 description = "Python package for providing Mozilla's CA Bundle."
 optional = false
 python-versions = ">=3.7"
 groups = ["dev"]
 files = [
-    {file = "certifi-2026.6.17-py3-none-any.whl", hash = "sha256:2227dcbaafe0d2f59279d1762ddddc37783ed4354594f194ffc31d20f41fc3db"},
-    {file = "certifi-2026.6.17.tar.gz", hash = "sha256:024c88eeec92ca068db80f02b8b07c9cef7b9fe261d1d535abfd5abd6f6af432"},
+    {file = "certifi-2026.7.22-py3-none-any.whl", hash = "sha256:62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775"},
+    {file = "certifi-2026.7.22.tar.gz", hash = "sha256:741e2c3b351ddf169a738da9f2c048608ff7f2c5cc02f1ebc6b118bb090d5d55"},
 ]
 
 [[package]]
@@ -588,14 +588,14 @@ files = [
 
 [[package]]
 name = "mistune"
-version = "3.3.3"
+version = "3.3.4"
 description = "A sane and fast Markdown parser with useful plugins and renderers"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "mistune-3.3.3-py3-none-any.whl", hash = "sha256:99de1585e42dcbd826faa9e11a202727a5e202e4e4722a4c69ac1ff615793dd7"},
-    {file = "mistune-3.3.3.tar.gz", hash = "sha256:c4c6c0c840b8637a2e9b8b6d607eb7c8f00888bf14c754409bcd339e848c2477"},
+    {file = "mistune-3.3.4-py3-none-any.whl", hash = "sha256:ee015381e955e370962968befe1d729ab60fafb6a715ac6751763fbce38c8d4a"},
+    {file = "mistune-3.3.4.tar.gz", hash = "sha256:58b5c96d6fcb61190dfe5fae498d2b2065f99cf61e9649418fd54cf1ada86dfe"},
 ]
 
 [[package]]
@@ -860,14 +860,14 @@ xmp = ["defusedxml"]
 
 [[package]]
 name = "platformdirs"
-version = "4.10.0"
+version = "4.11.0"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a `user data dir`."
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "platformdirs-4.10.0-py3-none-any.whl", hash = "sha256:fb516cdb12eb0d857d0cd85a7c57cea4d060bee4578d6cf5a14dfdf8cbf8784a"},
-    {file = "platformdirs-4.10.0.tar.gz", hash = "sha256:31e761a6a0ca04faf7353ea759bdba55652be214725111e5aac52dfa29d4bef7"},
+    {file = "platformdirs-4.11.0-py3-none-any.whl", hash = "sha256:360ccded2b7fce0af0ff80cc8f5942a1c5d99b0e856033acb030bfc634709e74"},
+    {file = "platformdirs-4.11.0.tar.gz", hash = "sha256:0555d18370482847566ffabcaa53ad7c6c1c29f195989ae1ed634a05f76ea1e0"},
 ]
 
 [[package]]
@@ -1330,14 +1330,14 @@ test = ["pytest"]
 
 [[package]]
 name = "tomlkit"
-version = "0.15.0"
+version = "0.15.1"
 description = "Style preserving TOML library"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "tomlkit-0.15.0-py3-none-any.whl", hash = "sha256:4dbc8f0fc024412b57ced8757ac7461305126a648ff8c2c807fcb8e133a78738"},
-    {file = "tomlkit-0.15.0.tar.gz", hash = "sha256:7d1a9ecba3086638211b13814ea79c90dd54dd11993564376f3aa92271f5c7a3"},
+    {file = "tomlkit-0.15.1-py3-none-any.whl", hash = "sha256:177a05aece5a8ca5266fd3c448abb47b8d352f09d477d3ca8332db4d89b24304"},
+    {file = "tomlkit-0.15.1.tar.gz", hash = "sha256:e25bbf38843005246210a12982776f27f99cb9be67160e14434d0c0d21ee1e97"},
 ]
 
 [[package]]
