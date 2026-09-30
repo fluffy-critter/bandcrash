@@ -459,10 +459,10 @@ class AlbumEditor(QMainWindow):
         self.reset()
 
         for widget in (self.artist,
-            self.title,
-            self.genre,
-            self.composer,
-            self.artwork.file_path):
+                       self.title,
+                       self.genre,
+                       self.composer,
+                       self.artwork.file_path):
             widget.textChanged.connect(self.apply)
 
         self.apply()
