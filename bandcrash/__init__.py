@@ -600,7 +600,7 @@ def process(config, album, pool, futures):
         album['artwork_path'] = os.path.join(
             config.input_dir, album['artwork'])
 
-        if config.cover_art_size:
+        if config.cover_art_size and config.cover_art_filename:
             cover_image = images.generate_image(os.path.join(
                 config.input_dir, album['artwork']), config.cover_art_size)
             if os.path.splitext(config.cover_art_filename)[1].casefold() in ('.png', '.webp'):

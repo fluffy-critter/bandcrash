@@ -92,6 +92,7 @@ def parse_args():
     feature.add_argument('--no-cover-image',
                          dest='cover_art_filename',
                          action='store_const',
+                         const='',
                          help="Don't generate a cover art file")
 
     parser.add_argument('--cover-image-size', type=int,
