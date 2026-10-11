@@ -17,6 +17,7 @@ import shutil
 import subprocess
 import typing
 
+import PIL.Image
 import smartquote
 
 from . import cdda, images, util
@@ -75,6 +76,8 @@ def encode_mp3(in_path, out_path, idx, album, track, encode_args, cover_art=None
     :param dict track: Track metadata
     :param str encode_args: Arguments to pass along to FFmpeg
     :param str cover_art: Artwork rendition size
+
+    :returns: output path
     """
     from mutagen import id3
 
@@ -182,7 +185,7 @@ def encode_preview_mp3(in_path: str, out_dir: str, filemap, track: dict,
     }, reset=True)
 
 
-def track_tag_title(track):
+def track_tag_title(track) -> str:
     """ Get the tag title for a track """
     title = track.get('title', None)
     return title
@@ -540,7 +543,7 @@ def process(config, album, pool, futures):
         concurrent.futures.wait(all_futures)
 
     """
-    # pylint:disable=too-many-branches
+    # pylint:disable=too-many-branches,too-many-statements
 
     # Make a copy of the dict, since some pipeline steps mutate it and we want
     # to be nice to the caller
@@ -592,9 +595,18 @@ def process(config, album, pool, futures):
     protections: typing.Dict[str, typing.Set[str]
                              ] = collections.defaultdict(set)
 
+    cover_image: typing.Optional[PIL.Image.Image] = None
     if 'artwork' in album:
         album['artwork_path'] = os.path.join(
             config.input_dir, album['artwork'])
+
+        if config.cover_art_size and config.cover_art_filename:
+            cover_image = images.generate_image(os.path.join(
+                config.input_dir, album['artwork']), config.cover_art_size)
+            if os.path.splitext(config.cover_art_filename)[1].casefold() in ('.png', '.webp'):
+                cover_image = cover_image.convert('RGBA')
+            else:
+                cover_image = cover_image.convert('RGB')
 
     if config.do_butler:
         set_butler_options(config)
@@ -618,6 +630,14 @@ def process(config, album, pool, futures):
                                                            'preview'),
                                               album, protections['preview'],
                                               [*futures['preview']]))
+
+    if cover_image:
+        for target in (t for t in DIST_TARGETS if t in formats and t != 'preview'):
+            LOGGER.debug("Saving image %s to target %s",
+                         config.cover_art_filename, target)
+            cover_image.save(os.path.join(config.output_dir,
+                             target, config.cover_art_filename))
+            protections[target].add(config.cover_art_filename)
 
     # PHASE 2: Clean
     if config.do_cleanup:

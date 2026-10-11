@@ -84,6 +84,22 @@ def parse_args():
     parser.add_argument('--butler-args', type=str, default='',
                         help="Extra arguments to provide to butler")
 
+    feature = parser.add_mutually_exclusive_group(required=False)
+    feature.add_argument('--cover-image', type=str,
+                         dest='cover_art_filename',
+                         help="Filename for the album's cover art",
+                         default=defaults.cover_art_filename)
+    feature.add_argument('--no-cover-image',
+                         dest='cover_art_filename',
+                         action='store_const',
+                         const='',
+                         help="Don't generate a cover art file")
+
+    parser.add_argument('--cover-image-size', type=int,
+                        dest='cover_art_size',
+                        help='Maximum square resolution of the cover art image',
+                        default=defaults.cover_art_size)
+
     return parser.parse_args()
 
 
@@ -93,6 +109,7 @@ def get_config(args) -> options.Options:
     config = options.Options()
 
     for field in dataclasses.fields(config):
+        LOGGER.debug("config %s", field.name)
         value = getattr(args, field.name, None)
         if value is not None:
             if field.type == list[str]:
@@ -110,11 +127,11 @@ def main():
     """ Main entry point """
     # pylint:disable=too-many-branches,too-many-statements,too-many-locals
     args = parse_args()
-    config = get_config(args)
-
     logging.basicConfig(level=LOG_LEVELS[min(
         args.verbosity, len(LOG_LEVELS) - 1)],
         format='%(message)s')
+
+    config = get_config(args)
 
     if os.path.isdir(args.input):
         config.input_dir = args.input
