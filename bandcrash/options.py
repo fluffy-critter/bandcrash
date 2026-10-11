@@ -107,7 +107,7 @@ class Options:
     butler_prefix: typing.Optional[str] = None
 
     # The maximum resolution of the generated cover art image
-    cover_art_size: typing.Optional[int] = 1200
+    cover_art_size: typing.Optional[int] = 1500
     # The filename of the generated cover art
     cover_art_filename: typing.Optional[str] = 'cover.jpg'
 
